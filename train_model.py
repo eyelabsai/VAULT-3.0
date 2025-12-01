@@ -24,6 +24,9 @@ import pickle
 import warnings
 warnings.filterwarnings('ignore')
 
+# Import performance tracking
+from track_performance import save_run
+
 
 def load_and_prepare_data():
     """Load training data and prepare features/targets."""
@@ -33,10 +36,19 @@ def load_and_prepare_data():
     
     df = pd.read_csv('training_data.csv')
     
-    # Keep only complete cases
-    feature_cols = ['Eye', 'Age', 'WTW', 'ACD_internal', 'ACV', 'ACA_global', 
-                    'Pupil_diameter', 'AC_shape_ratio', 'TCRP_Km', 'TCRP_Astigmatism', 
-                    'SEQ', 'SimK_steep', 'CCT', 'BAD_D']
+    # OPTIMAL FEATURE SET (as of 68 training cases)
+    # Found by feature_selection_analysis.py progressive addition method
+    # 5 features → 86.8% lens accuracy, 141.9µm vault MAE
+    # vs 13 features → 69.0% lens accuracy, 142.2µm vault MAE
+    #
+    # NOTE: All 13 features are still extracted by extract_features.py
+    # Re-run feature_selection_analysis.py every ~20-30 new cases to reassess
+    feature_cols = ['Age', 'WTW', 'ACD_internal', 'SEQ', 'CCT']
+    
+    # ALL AVAILABLE FEATURES (still extracted, can test anytime):
+    # ['Age', 'WTW', 'ACD_internal', 'ACV', 'ACA_global', 
+    #  'Pupil_diameter', 'AC_shape_ratio', 'TCRP_Km', 'TCRP_Astigmatism', 
+    #  'SEQ', 'SimK_steep', 'CCT', 'BAD_D']
     target_cols = ['Lens_Size', 'Vault']
     
     # Filter complete cases
@@ -58,11 +70,8 @@ def load_and_prepare_data():
         print("\n⚠️  WARNING: Very small dataset. Results may not be reliable.")
         print("   Consider collecting more data or using simpler models.")
     
-    # Prepare features
+    # Prepare features (Eye laterality removed - contributed only 0.01% importance)
     X = df_complete[feature_cols].copy()
-    
-    # One-hot encode Eye (OD/OS)
-    X = pd.get_dummies(X, columns=['Eye'], drop_first=True)
     
     # Targets
     y_lens = df_complete['Lens_Size'].values
@@ -300,6 +309,14 @@ def main():
     print("  2. Collect more data to improve model performance")
     print("  3. Consider feature selection if adding more data")
     print("="*70)
+    
+    # Log performance for tracking
+    save_run(
+        num_cases=len(df_complete),
+        lens_accuracy=lens_score,
+        vault_mae=vault_mae,
+        notes=f"Lens: {lens_name}, Vault: {vault_name}"
+    )
 
 
 if __name__ == '__main__':

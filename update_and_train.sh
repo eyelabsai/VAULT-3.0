@@ -80,3 +80,10 @@ echo ""
 echo "Next: Review flagged_incomplete_cases.csv (if it exists)"
 echo ""
 
+# Step 4: Show learning progress
+echo "========================================================================"
+echo "  📊 LEARNING PROGRESS"
+echo "========================================================================"
+echo ""
+python track_performance.py
+

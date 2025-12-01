@@ -1,0 +1,37 @@
+[
+  {
+    "timestamp": "2025-11-14 08:25:35",
+    "training_cases": 68,
+    "lens_size_accuracy": 0.6758241758241759,
+    "vault_mae": 142.75133059449075,
+    "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
+  },
+  {
+    "timestamp": "2025-11-14 09:02:08",
+    "training_cases": 68,
+    "lens_size_accuracy": 0.6901098901098901,
+    "vault_mae": 142.18621965489172,
+    "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
+  },
+  {
+    "timestamp": "2025-11-14 14:43:23",
+    "training_cases": 68,
+    "lens_size_accuracy": 0.7516483516483516,
+    "vault_mae": 143.6851693680127,
+    "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
+  },
+  {
+    "timestamp": "2025-11-16 08:13:26",
+    "training_cases": 68,
+    "lens_size_accuracy": 0.868131868131868,
+    "vault_mae": 141.89388806083687,
+    "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
+  },
+  {
+    "timestamp": "2025-12-01 17:37:00",
+    "training_cases": 77,
+    "lens_size_accuracy": 0.8175000000000001,
+    "vault_mae": 131.7132425388936,
+    "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
+  }
+]

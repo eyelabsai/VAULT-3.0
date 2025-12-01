@@ -151,13 +151,15 @@ if os.path.exists('training_data.csv'):
     df = pd.read_csv('training_data.csv')
     
     both_outcomes = df[['Vault','Lens_Size']].notna().all(axis=1)
-    all_features = df[['Age','WTW','ACD','ACV','SEQ','SimK_steep','CCT','BAD_D']].notna().all(axis=1)
+    # Check core features used in training (BAD_D removed - see feature_selection_analysis.py)
+    all_features = df[['Age','WTW','ACD','ACV','SEQ','SimK_steep','CCT']].notna().all(axis=1)
+    # all_features = df[['Age','WTW','ACD','ACV','SEQ','SimK_steep','CCT','BAD_D']].notna().all(axis=1)  # Uncomment to add BAD_D back
     complete = all_features & both_outcomes
     
     print()
     print(f"Total XML files processed: {len(df)}")
     print(f"  With Vault + Lens Size: {both_outcomes.sum()}")
-    print(f"  With all 8 features: {all_features.sum()}")
+    print(f"  With core 7 features: {all_features.sum()}")
     print()
     print(f"🎯 COMPLETE TRAINING CASES: {complete.sum()}/{len(df)}")
     
