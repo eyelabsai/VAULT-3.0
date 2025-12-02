@@ -1,0 +1,475 @@
+#!/usr/bin/env python3
+"""
+ICL Vault Prediction - Streamlit Web Application
+Clinical Decision Support Tool for ICL Size and Vault Prediction
+"""
+
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+from predict_icl import predict_patient, load_models
+import numpy as np
+
+# Page configuration
+st.set_page_config(
+    page_title="Vault 3.0",
+    page_icon="👁️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    /* Light elegant background */
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    
+    /* Content area background */
+    .main .block-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-header {
+        font-size: 4.5rem;
+        font-weight: bold;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background-color: #f0f2f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    .recommendation-box {
+        background-color: #e8f4f8;
+        border-left: 5px solid #1f77b4;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.3rem;
+    }
+    .warning-box {
+        background-color: #fff3cd;
+        border-left: 5px solid #ffc107;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.3rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+def main():
+    # Header
+    st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Sidebar - Patient Input
+    with st.sidebar:
+        st.header("⚙️ Prediction Mode")
+        
+        # Mode selection
+        prediction_mode = st.radio(
+            "Choose mode:",
+            ["Single Recommendation", "Multiple Options"],
+            index=0,  # Default to Single
+            help="Single: One recommendation | Multiple: All options with probabilities"
+        )
+        
+        st.markdown("---")
+        
+        st.header("📋 Patient Information")
+        st.markdown("Enter patient measurements:")
+        
+        # Input fields
+        age = st.number_input(
+            "Age (years)",
+            min_value=18,
+            max_value=70,
+            value=32,
+            help="Patient age in years"
+        )
+        
+        wtw = st.number_input(
+            "WTW (mm)",
+            min_value=10.0,
+            max_value=14.0,
+            value=11.8,
+            step=0.1,
+            format="%.1f",
+            help="White-to-White diameter in millimeters"
+        )
+        
+        acd = st.number_input(
+            "ACD Internal (mm)",
+            min_value=2.0,
+            max_value=5.0,
+            value=3.2,
+            step=0.1,
+            format="%.1f",
+            help="Anterior Chamber Depth (internal)"
+        )
+        
+        seq = st.number_input(
+            "SEQ (D)",
+            min_value=-20.0,
+            max_value=5.0,
+            value=-8.5,
+            step=0.25,
+            format="%.2f",
+            help="Spherical Equivalent (Sphere + Cyl/2)"
+        )
+        
+        cct = st.number_input(
+            "CCT (µm)",
+            min_value=400,
+            max_value=700,
+            value=540,
+            step=1,
+            help="Central Corneal Thickness in micrometers"
+        )
+        
+        st.markdown("---")
+        predict_button = st.button("🔮 Generate Prediction", type="primary", use_container_width=True)
+    
+    # Main content area
+    if predict_button:
+        try:
+            # Prepare patient data
+            patient_data = {
+                'Age': age,
+                'WTW': wtw,
+                'ACD_internal': acd,
+                'SEQ': seq,
+                'CCT': cct
+            }
+            
+            # Show loading spinner
+            with st.spinner("Analyzing patient data and generating recommendations..."):
+                prediction = predict_patient(patient_data)
+            
+            # Display results
+            st.success("✅ Prediction Complete!")
+            
+            # Get top recommendation
+            top_lens = prediction['lens_options'][0]
+            
+            # === SINGLE RECOMMENDATION MODE ===
+            if prediction_mode == "Single Recommendation":
+                st.markdown("---")
+                st.subheader("Recommendation")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric(
+                        label="Recommended Lens Size",
+                        value=f"{top_lens['size']:.1f} mm",
+                        help=f"{top_lens['confidence_pct']:.0f}% confidence"
+                    )
+                
+                with col2:
+                    st.metric(
+                        label="Predicted Vault",
+                        value=f"{prediction['predicted_vault']:.0f} µm",
+                        help=f"Expected range: {prediction['vault_confidence_interval']['lower']:.0f}-{prediction['vault_confidence_interval']['upper']:.0f}µm"
+                    )
+                
+                # Vault interpretation
+                st.markdown("---")
+                vault_val = prediction['predicted_vault']
+                
+                if vault_val < 250:
+                    st.error("⚠️ **Low Vault Predicted** - Risk of contact. Consider larger size if available.")
+                elif vault_val < 400:
+                    st.warning("✓ **Lower Optimal Range** - Acceptable but monitor closely.")
+                elif vault_val < 750:
+                    st.success("✅ **Optimal Vault Range** - Good clearance expected.")
+                elif vault_val < 1000:
+                    st.warning("⚠️ **Upper Optimal Range** - Acceptable but on higher end.")
+                else:
+                    st.error("⚠️ **High Vault Predicted** - Consider smaller size if available.")
+                
+                # Show prediction details in expander
+                with st.expander("📊 View Detailed Analysis", expanded=True):
+                    st.markdown(f"""
+                    **Confidence Level:** {top_lens['confidence_pct']:.1f}%
+                    
+                    **Vault Range:** {prediction['vault_confidence_interval']['lower']:.0f}-{prediction['vault_confidence_interval']['upper']:.0f}µm (±{prediction['vault_confidence_interval']['mae']:.0f}µm)
+                    
+                    **Model Performance:**
+                    - Lens Size Accuracy: 81.8%
+                    - Vault MAE: 131.7µm
+                    - 75% within ±200µm of actual vault
+                    """)
+                    
+                    if len(prediction['lens_options']) > 1:
+                        alt = prediction['lens_options'][1]
+                        if alt['confidence_pct'] > 25:
+                            st.info(f"ℹ️ Alternative option: {alt['size']:.1f}mm ({alt['confidence_pct']:.0f}% confidence) - Consider if clinical factors suggest different vault target.")
+            
+            # === MULTIPLE OPTIONS MODE ===
+            else:
+                # Top recommendation banner
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric(
+                        label="🎯 Recommended Lens Size",
+                        value=f"{top_lens['size']:.1f} mm",
+                        delta=f"{top_lens['confidence_pct']:.0f}% confidence"
+                    )
+                
+                with col2:
+                    st.metric(
+                        label="📊 Predicted Vault",
+                        value=f"{prediction['predicted_vault']:.0f} µm",
+                        delta=f"±{prediction['vault_confidence_interval']['mae']:.0f}µm"
+                    )
+                
+                with col3:
+                    vault_status = "Optimal" if 250 <= prediction['predicted_vault'] <= 750 else "Review"
+                    vault_color = "normal" if vault_status == "Optimal" else "inverse"
+                    st.metric(
+                        label="✓ Vault Status",
+                        value=vault_status,
+                        delta=f"{prediction['vault_confidence_interval']['lower']:.0f}-{prediction['vault_confidence_interval']['upper']:.0f}µm"
+                    )
+                
+                st.markdown("---")
+                
+                # Detailed lens size options
+                st.subheader("📋 All Lens Size Options")
+                
+                # Create DataFrame for display
+                options_df = pd.DataFrame(prediction['lens_options'])
+                options_df['Size (mm)'] = options_df['size'].apply(lambda x: f"{x:.1f}")
+                options_df['Confidence'] = options_df['confidence_pct'].apply(lambda x: f"{x:.1f}%")
+                options_df['Predicted Vault (µm)'] = options_df['predicted_vault'].apply(lambda x: f"{x:.0f}")
+                options_df['Vault Range (µm)'] = options_df['vault_range']
+                
+                display_df = options_df[['Size (mm)', 'Confidence', 'Predicted Vault (µm)', 'Vault Range (µm)']]
+                
+                # Highlight top recommendation
+                def highlight_top(s):
+                    return ['background-color: #e8f4f8; font-weight: bold' if i == 0 else '' 
+                           for i in range(len(s))]
+                
+                st.dataframe(
+                    display_df.style.apply(highlight_top, axis=0),
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                st.markdown("---")
+                
+                # Visualization
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.subheader("📊 Lens Size Confidence")
+                    
+                    # Bar chart of probabilities
+                    fig_lens = go.Figure(data=[
+                        go.Bar(
+                            x=[f"{opt['size']:.1f}mm" for opt in prediction['lens_options']],
+                            y=[opt['confidence_pct'] for opt in prediction['lens_options']],
+                            marker_color=['#1f77b4' if i == 0 else '#7fcdbb' 
+                                         for i in range(len(prediction['lens_options']))],
+                            text=[f"{opt['confidence_pct']:.1f}%" for opt in prediction['lens_options']],
+                            textposition='outside'
+                        )
+                    ])
+                    
+                    fig_lens.update_layout(
+                        yaxis_title="Confidence (%)",
+                        xaxis_title="Lens Size",
+                        showlegend=False,
+                        height=400
+                    )
+                    
+                    st.plotly_chart(fig_lens, use_container_width=True)
+                
+                with col2:
+                    st.subheader("📈 Vault Distribution")
+                    
+                    # Create vault range visualization
+                    vault_pred = prediction['predicted_vault']
+                    vault_lower = prediction['vault_confidence_interval']['lower']
+                    vault_upper = prediction['vault_confidence_interval']['upper']
+                    
+                    # Normal distribution approximation
+                    x_vault = np.linspace(vault_lower - 100, vault_upper + 100, 200)
+                    # Simple triangular distribution for visualization
+                    y_vault = np.maximum(0, 1 - np.abs((x_vault - vault_pred) / (vault_upper - vault_pred)))
+                    
+                    fig_vault = go.Figure()
+                    
+                    # Add distribution curve
+                    fig_vault.add_trace(go.Scatter(
+                        x=x_vault,
+                        y=y_vault,
+                        fill='tozeroy',
+                        fillcolor='rgba(31, 119, 180, 0.3)',
+                        line=dict(color='#1f77b4', width=2),
+                        name='Probability'
+                    ))
+                    
+                    # Add predicted vault line
+                    fig_vault.add_vline(
+                        x=vault_pred,
+                        line_dash="dash",
+                        line_color="red",
+                        annotation_text=f"Predicted: {vault_pred:.0f}µm"
+                    )
+                    
+                    # Add optimal range
+                    fig_vault.add_vrect(
+                        x0=250, x1=750,
+                        fillcolor="green",
+                        opacity=0.1,
+                        annotation_text="Optimal Range",
+                        annotation_position="top left"
+                    )
+                    
+                    fig_vault.update_layout(
+                        xaxis_title="Vault (µm)",
+                        yaxis_title="Likelihood",
+                        showlegend=False,
+                        height=400
+                    )
+                    
+                    st.plotly_chart(fig_vault, use_container_width=True)
+                
+                st.markdown("---")
+                
+                # Clinical guidance
+                st.subheader("🩺 Clinical Guidance")
+                
+                # Determine recommendation type
+                if len(prediction['lens_options']) > 1 and prediction['lens_options'][1]['confidence_pct'] > 25:
+                    st.markdown(f"""
+                    <div class="warning-box">
+                        <strong>⚠️ Multiple Viable Options</strong><br>
+                        Two lens sizes show significant probability. Consider:
+                        <ul>
+                            <li><strong>{prediction['lens_options'][0]['size']:.1f}mm</strong> ({prediction['lens_options'][0]['confidence_pct']:.0f}% confidence) - Primary recommendation</li>
+                            <li><strong>{prediction['lens_options'][1]['size']:.1f}mm</strong> ({prediction['lens_options'][1]['confidence_pct']:.0f}% confidence) - Viable alternative</li>
+                        </ul>
+                        Consider patient-specific factors and vault target when making final decision.
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown(f"""
+                    <div class="recommendation-box">
+                        <strong>✅ Clear Recommendation</strong><br>
+                        Model strongly suggests <strong>{prediction['lens_options'][0]['size']:.1f}mm</strong> with {prediction['lens_options'][0]['confidence_pct']:.0f}% confidence.
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Vault guidance
+                if prediction['predicted_vault'] < 250:
+                    st.warning("⚠️ Low vault predicted. Consider larger lens size if available.")
+                elif prediction['predicted_vault'] > 750:
+                    st.warning("⚠️ High vault predicted. Consider smaller lens size if available.")
+                else:
+                    st.info("✓ Predicted vault is within optimal range (250-750µm).")
+                
+                st.markdown("---")
+                
+                # Model performance info
+                with st.expander("📊 Model Performance Information"):
+                    st.markdown("""
+                    **Training Data:** 77 complete cases
+                    
+                    **Lens Size Model Performance:**
+                    - Overall Accuracy: 81.8%
+                    - When incorrect: 86% are only one size off
+                    - Algorithm: Gradient Boosting Classifier
+                    
+                    **Vault Model Performance:**
+                    - Mean Absolute Error (MAE): 131.7µm
+                    - 58% of predictions within ±100µm
+                    - 75% of predictions within ±200µm
+                    - Algorithm: Gradient Boosting Regressor
+                    
+                    **Feature Importance (Lens Size):**
+                    1. Age (33%)
+                    2. WTW (29%)
+                    3. SEQ (20%)
+                    4. CCT (17%)
+                    5. ACD Internal (2%)
+                    
+                    **Feature Importance (Vault):**
+                    1. SEQ (29%)
+                    2. ACD Internal (23%)
+                    3. CCT (18%)
+                    4. WTW (17%)
+                    5. Age (12%)
+                    """)
+            
+        except Exception as e:
+            st.error(f"❌ Error generating prediction: {str(e)}")
+            st.info("Please ensure all patient measurements are entered correctly.")
+    
+    else:
+        # Welcome screen
+        st.info("👈 Select prediction mode and enter patient measurements in the sidebar")
+        
+        st.markdown("""
+        ### About Vault 3.0
+        
+        Machine learning system that predicts:
+        - **ICL Lens Size** with confidence scores
+        - **Post-operative Vault** with expected range
+        
+        ### Two Prediction Modes
+        
+        **🎯 Single Recommendation (Default)**
+        - Simple, fast result
+        - One recommended lens size
+        - Predicted vault with interpretation
+        - Best for routine cases
+        
+        **📊 Multiple Options**
+        - All lens size options with probabilities
+        - Confidence scores for each option
+        - Visual charts and comparisons
+        - Best when choosing between close options
+        
+        ### Required Measurements
+        - **Age:** Patient age in years
+        - **WTW:** White-to-White diameter (Pentacam)
+        - **ACD Internal:** Anterior chamber depth from endothelium (Pentacam)
+        - **SEQ:** Spherical equivalent refraction (Sphere + Cyl/2)
+        - **CCT:** Central corneal thickness (Pentacam)
+        
+        ### Model Performance
+        - Trained on **77 complete cases**
+        - Lens Size: **81.8% accuracy**
+        - Vault: **131.7µm mean error**
+        - **75%** of predictions within ±200µm of actual vault
+        
+        ### How to Use
+        1. Enter patient measurements in the sidebar
+        2. Click "Generate Prediction"
+        3. Review lens size options and predicted vaults
+        4. Consider clinical factors alongside model recommendations
+        
+        ---
+        
+        ⚕️ **Note:** This tool is for clinical decision support only. Final lens selection should 
+        incorporate clinical judgment and patient-specific factors.
+        """)
+
+
+if __name__ == '__main__':
+    main()
+
