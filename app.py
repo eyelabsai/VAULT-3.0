@@ -30,22 +30,25 @@ st.markdown("""
     /* Content area background */
     .main .block-container {
         background-color: rgba(255, 255, 255, 0.95);
-        padding: 2rem;
+        padding: 1rem 2rem;
+        padding-top: 1rem;
         border-radius: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
     .main-header {
-        font-size: 12rem;
+        font-size: 10rem;
         font-weight: 900;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-align: center;
-        margin-bottom: 2rem;
+        margin: 0;
+        margin-bottom: 0.5rem;
+        padding: 0;
+        line-height: 1;
         letter-spacing: 0.05em;
-        text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .metric-card {
         background-color: #f0f2f6;
@@ -74,7 +77,6 @@ st.markdown("""
 def main():
     # Header
     st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
-    st.markdown("---")
     
     # Sidebar - Patient Input
     with st.sidebar:
@@ -168,34 +170,31 @@ def main():
             
             # === SINGLE RECOMMENDATION MODE ===
             if prediction_mode == "Single Recommendation":
-                st.markdown("---")
                 
                 # Round vault values to nearest 10
                 vault_lower_rounded = round(prediction['vault_confidence_interval']['lower'] / 10) * 10
                 vault_upper_rounded = round(prediction['vault_confidence_interval']['upper'] / 10) * 10
                 
-                # Create elegant recommendation display
+                # Create elegant compact recommendation display
                 st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 0.8rem; color: white; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); margin-bottom: 1rem;">
-                    <h2 style="margin: 0 0 1rem 0; font-size: 1.8rem; font-weight: 700;">Recommendation</h2>
-                    <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
-                        <div style="margin: 0.5rem;">
-                            <p style="font-size: 1rem; margin: 0; opacity: 0.9;">Recommended Size</p>
-                            <p style="font-size: 3rem; margin: 0.3rem 0; font-weight: 900;">{top_lens['size']:.1f}</p>
-                            <p style="font-size: 0.9rem; margin: 0; opacity: 0.8;">{top_lens['confidence_pct']:.0f}% confidence</p>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.2rem 2rem; border-radius: 0.6rem; color: white; box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3); margin: 1rem 0;">
+                    <div style="display: flex; justify-content: space-around; align-items: center; gap: 2rem;">
+                        <div style="flex: 1; text-align: center;">
+                            <p style="font-size: 0.85rem; margin: 0; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px;">Recommended Size</p>
+                            <p style="font-size: 3.5rem; margin: 0.2rem 0; font-weight: 900; line-height: 1;">{top_lens['size']:.1f}</p>
+                            <p style="font-size: 0.8rem; margin: 0; opacity: 0.75;">{top_lens['confidence_pct']:.0f}% confidence</p>
                         </div>
-                        <div style="font-size: 2rem; opacity: 0.5; margin: 0.5rem;">→</div>
-                        <div style="margin: 0.5rem;">
-                            <p style="font-size: 1rem; margin: 0; opacity: 0.9;">95% Confidence Vault</p>
-                            <p style="font-size: 2.5rem; margin: 0.3rem 0; font-weight: 900;">{int(vault_lower_rounded)}-{int(vault_upper_rounded)}</p>
-                            <p style="font-size: 0.9rem; margin: 0; opacity: 0.8;">micrometers (µm)</p>
+                        <div style="font-size: 2.5rem; opacity: 0.4;">→</div>
+                        <div style="flex: 1; text-align: center;">
+                            <p style="font-size: 0.85rem; margin: 0; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px;">95% Confidence Vault</p>
+                            <p style="font-size: 2.8rem; margin: 0.2rem 0; font-weight: 900; line-height: 1;">{int(vault_lower_rounded)}-{int(vault_upper_rounded)}</p>
+                            <p style="font-size: 0.8rem; margin: 0; opacity: 0.75;">micrometers (µm)</p>
                         </div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # Vault interpretation
-                st.markdown("---")
                 vault_mid = (vault_lower_rounded + vault_upper_rounded) / 2
                 
                 if vault_upper_rounded < 250:
@@ -208,9 +207,6 @@ def main():
                     st.warning("⚠️ **Upper Optimal Range** - Acceptable but on higher end.")
                 else:
                     st.error("⚠️ **High Vault Predicted** - Consider smaller size if available.")
-                
-                # Add visual charts
-                st.markdown("---")
                 
                 col1, col2 = st.columns(2)
                 
