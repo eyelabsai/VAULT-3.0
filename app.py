@@ -210,7 +210,7 @@ def main():
                 elif vault_mid < 400:
                     st.warning("✓ **Lower Optimal Range** - Acceptable but monitor closely.")
                 elif vault_mid < 750:
-                    st.success("✅ **Optimal Vault Range** - Good clearance expected.")
+                    st.success("✅ **Optimal Vault Range**")
                 elif vault_mid < 1000:
                     st.warning("⚠️ **Upper Optimal Range** - Acceptable but on higher end.")
                 else:
@@ -494,8 +494,6 @@ def main():
         st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
         
         st.markdown("""
-        ### About Vault 3.0
-        
         Machine learning system that predicts **ICL Lens Size** with confidence scores and **Post-operative Vault** with expected range.
         
         ### Required Measurements
