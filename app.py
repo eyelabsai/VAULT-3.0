@@ -36,7 +36,7 @@ st.markdown("""
     }
     
     .main-header {
-        font-size: 6rem;
+        font-size: 8rem;
         font-weight: 900;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
@@ -169,35 +169,42 @@ def main():
             # === SINGLE RECOMMENDATION MODE ===
             if prediction_mode == "Single Recommendation":
                 st.markdown("---")
-                st.subheader("Recommendation")
                 
-                col1, col2 = st.columns(2)
+                # Round vault values to nearest 10
+                vault_lower_rounded = round(prediction['vault_confidence_interval']['lower'] / 10) * 10
+                vault_upper_rounded = round(prediction['vault_confidence_interval']['upper'] / 10) * 10
                 
-                with col1:
-                    st.metric(
-                        label="Recommended Lens Size",
-                        value=f"{top_lens['size']:.1f} mm",
-                        help=f"{top_lens['confidence_pct']:.0f}% confidence"
-                    )
-                
-                with col2:
-                    st.metric(
-                        label="Predicted Vault",
-                        value=f"{prediction['predicted_vault']:.0f} µm",
-                        help=f"Expected range: {prediction['vault_confidence_interval']['lower']:.0f}-{prediction['vault_confidence_interval']['upper']:.0f}µm"
-                    )
+                # Create elegant recommendation display
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 3rem; border-radius: 1rem; color: white; text-align: center; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); margin-bottom: 2rem;">
+                    <h2 style="margin: 0 0 2rem 0; font-size: 2.5rem; font-weight: 700;">Recommendation</h2>
+                    <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
+                        <div style="margin: 1rem;">
+                            <p style="font-size: 1.2rem; margin: 0; opacity: 0.9;">Recommended Size</p>
+                            <p style="font-size: 4rem; margin: 0.5rem 0; font-weight: 900;">{top_lens['size']:.1f}</p>
+                            <p style="font-size: 1rem; margin: 0; opacity: 0.8;">{top_lens['confidence_pct']:.0f}% confidence</p>
+                        </div>
+                        <div style="font-size: 3rem; opacity: 0.5; margin: 1rem;">→</div>
+                        <div style="margin: 1rem;">
+                            <p style="font-size: 1.2rem; margin: 0; opacity: 0.9;">95% Confidence Vault</p>
+                            <p style="font-size: 3.5rem; margin: 0.5rem 0; font-weight: 900;">{int(vault_lower_rounded)}-{int(vault_upper_rounded)}</p>
+                            <p style="font-size: 1rem; margin: 0; opacity: 0.8;">micrometers (µm)</p>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Vault interpretation
                 st.markdown("---")
-                vault_val = prediction['predicted_vault']
+                vault_mid = (vault_lower_rounded + vault_upper_rounded) / 2
                 
-                if vault_val < 250:
+                if vault_upper_rounded < 250:
                     st.error("⚠️ **Low Vault Predicted** - Risk of contact. Consider larger size if available.")
-                elif vault_val < 400:
+                elif vault_mid < 400:
                     st.warning("✓ **Lower Optimal Range** - Acceptable but monitor closely.")
-                elif vault_val < 750:
+                elif vault_mid < 750:
                     st.success("✅ **Optimal Vault Range** - Good clearance expected.")
-                elif vault_val < 1000:
+                elif vault_mid < 1000:
                     st.warning("⚠️ **Upper Optimal Range** - Acceptable but on higher end.")
                 else:
                     st.error("⚠️ **High Vault Predicted** - Consider smaller size if available.")
@@ -236,14 +243,12 @@ def main():
                 with col2:
                     st.subheader("📈 Vault Range")
                     
-                    # Vault range visualization
-                    vault_pred = prediction['predicted_vault']
-                    vault_lower = prediction['vault_confidence_interval']['lower']
-                    vault_upper = prediction['vault_confidence_interval']['upper']
+                    # Vault range visualization with rounded values
+                    vault_mid = (vault_lower_rounded + vault_upper_rounded) / 2
                     
                     # Create vault range visualization
-                    x_vault = np.linspace(vault_lower - 100, vault_upper + 100, 200)
-                    y_vault = np.maximum(0, 1 - np.abs((x_vault - vault_pred) / (vault_upper - vault_pred)))
+                    x_vault = np.linspace(vault_lower_rounded - 100, vault_upper_rounded + 100, 200)
+                    y_vault = np.maximum(0, 1 - np.abs((x_vault - vault_mid) / (vault_upper_rounded - vault_mid)))
                     
                     fig_vault = go.Figure()
                     
@@ -257,12 +262,14 @@ def main():
                         name='Probability'
                     ))
                     
-                    # Add predicted vault line
-                    fig_vault.add_vline(
-                        x=vault_pred,
-                        line_dash="dash",
-                        line_color="red",
-                        annotation_text=f"Predicted: {vault_pred:.0f}µm"
+                    # Add confidence interval shading
+                    fig_vault.add_vrect(
+                        x0=vault_lower_rounded, x1=vault_upper_rounded,
+                        fillcolor="rgba(102, 126, 234, 0.2)",
+                        layer="below",
+                        line_width=0,
+                        annotation_text=f"{int(vault_lower_rounded)}-{int(vault_upper_rounded)}µm",
+                        annotation_position="top"
                     )
                     
                     # Add optimal range
@@ -284,16 +291,13 @@ def main():
                     st.plotly_chart(fig_vault, use_container_width=True)
                 
                 # Show prediction details in expander
-                with st.expander("📊 View Detailed Analysis", expanded=True):
+                with st.expander("📊 View Detailed Analysis"):
                     st.markdown(f"""
                     **Confidence Level:** {top_lens['confidence_pct']:.1f}%
                     
-                    **Vault Range:** {prediction['vault_confidence_interval']['lower']:.0f}-{prediction['vault_confidence_interval']['upper']:.0f}µm (±{prediction['vault_confidence_interval']['mae']:.0f}µm)
+                    **95% Confidence Vault Range:** {int(vault_lower_rounded)}-{int(vault_upper_rounded)}µm
                     
-                    **Model Performance:**
-                    - Lens Size Accuracy: 81.8%
-                    - Vault MAE: 131.7µm
-                    - 75% within ±200µm of actual vault
+                    **Optimal Vault Range:** 250-750µm
                     """)
                     
                     if len(prediction['lens_options']) > 1:
@@ -303,6 +307,11 @@ def main():
             
             # === MULTIPLE OPTIONS MODE ===
             else:
+                # Round vault values to nearest 10
+                vault_lower_rounded = round(prediction['vault_confidence_interval']['lower'] / 10) * 10
+                vault_upper_rounded = round(prediction['vault_confidence_interval']['upper'] / 10) * 10
+                vault_mid = (vault_lower_rounded + vault_upper_rounded) / 2
+                
                 # Top recommendation banner
                 col1, col2, col3 = st.columns(3)
                 
@@ -315,18 +324,16 @@ def main():
                 
                 with col2:
                     st.metric(
-                        label="📊 Predicted Vault",
-                        value=f"{prediction['predicted_vault']:.0f} µm",
-                        delta=f"±{prediction['vault_confidence_interval']['mae']:.0f}µm"
+                        label="📊 95% Confidence Vault",
+                        value=f"{int(vault_lower_rounded)}-{int(vault_upper_rounded)} µm"
                     )
                 
                 with col3:
-                    vault_status = "Optimal" if 250 <= prediction['predicted_vault'] <= 750 else "Review"
+                    vault_status = "Optimal" if 250 <= vault_mid <= 750 else "Review"
                     vault_color = "normal" if vault_status == "Optimal" else "inverse"
                     st.metric(
                         label="✓ Vault Status",
-                        value=vault_status,
-                        delta=f"{prediction['vault_confidence_interval']['lower']:.0f}-{prediction['vault_confidence_interval']['upper']:.0f}µm"
+                        value=vault_status
                     )
                 
                 st.markdown("---")
@@ -386,15 +393,10 @@ def main():
                 with col2:
                     st.subheader("📈 Vault Distribution")
                     
-                    # Create vault range visualization
-                    vault_pred = prediction['predicted_vault']
-                    vault_lower = prediction['vault_confidence_interval']['lower']
-                    vault_upper = prediction['vault_confidence_interval']['upper']
-                    
-                    # Normal distribution approximation
-                    x_vault = np.linspace(vault_lower - 100, vault_upper + 100, 200)
+                    # Create vault range visualization with rounded values
                     # Simple triangular distribution for visualization
-                    y_vault = np.maximum(0, 1 - np.abs((x_vault - vault_pred) / (vault_upper - vault_pred)))
+                    x_vault = np.linspace(vault_lower_rounded - 100, vault_upper_rounded + 100, 200)
+                    y_vault = np.maximum(0, 1 - np.abs((x_vault - vault_mid) / (vault_upper_rounded - vault_mid)))
                     
                     fig_vault = go.Figure()
                     
@@ -408,12 +410,14 @@ def main():
                         name='Probability'
                     ))
                     
-                    # Add predicted vault line
-                    fig_vault.add_vline(
-                        x=vault_pred,
-                        line_dash="dash",
-                        line_color="red",
-                        annotation_text=f"Predicted: {vault_pred:.0f}µm"
+                    # Add confidence interval shading
+                    fig_vault.add_vrect(
+                        x0=vault_lower_rounded, x1=vault_upper_rounded,
+                        fillcolor="rgba(31, 119, 180, 0.2)",
+                        layer="below",
+                        line_width=0,
+                        annotation_text=f"95% CI: {int(vault_lower_rounded)}-{int(vault_upper_rounded)}µm",
+                        annotation_position="top"
                     )
                     
                     # Add optimal range
@@ -461,45 +465,12 @@ def main():
                     """, unsafe_allow_html=True)
                 
                 # Vault guidance
-                if prediction['predicted_vault'] < 250:
+                if vault_mid < 250:
                     st.warning("⚠️ Low vault predicted. Consider larger lens size if available.")
-                elif prediction['predicted_vault'] > 750:
+                elif vault_mid > 750:
                     st.warning("⚠️ High vault predicted. Consider smaller lens size if available.")
                 else:
                     st.info("✓ Predicted vault is within optimal range (250-750µm).")
-                
-                st.markdown("---")
-                
-                # Model performance info
-                with st.expander("📊 Model Performance Information"):
-                    st.markdown("""
-                    **Training Data:** 77 complete cases
-                    
-                    **Lens Size Model Performance:**
-                    - Overall Accuracy: 81.8%
-                    - When incorrect: 86% are only one size off
-                    - Algorithm: Gradient Boosting Classifier
-                    
-                    **Vault Model Performance:**
-                    - Mean Absolute Error (MAE): 131.7µm
-                    - 58% of predictions within ±100µm
-                    - 75% of predictions within ±200µm
-                    - Algorithm: Gradient Boosting Regressor
-                    
-                    **Feature Importance (Lens Size):**
-                    1. Age (33%)
-                    2. WTW (29%)
-                    3. SEQ (20%)
-                    4. CCT (17%)
-                    5. ACD Internal (2%)
-                    
-                    **Feature Importance (Vault):**
-                    1. SEQ (29%)
-                    2. ACD Internal (23%)
-                    3. CCT (18%)
-                    4. WTW (17%)
-                    5. Age (12%)
-                    """)
             
         except Exception as e:
             st.error(f"❌ Error generating prediction: {str(e)}")
@@ -507,28 +478,18 @@ def main():
     
     else:
         # Welcome screen
-        st.info("👈 Select prediction mode and enter patient measurements in the sidebar")
+        st.markdown("""
+        <div style="background-color: #e8f4f8; padding: 2rem; border-radius: 0.5rem; border-left: 5px solid #1f77b4; margin-bottom: 2rem;">
+            <p style="font-size: 3rem; font-weight: 700; margin: 0; color: #1f77b4;">
+                👈 Select prediction mode and enter patient measurements in the sidebar
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("""
         ### About Vault 3.0
         
-        Machine learning system that predicts:
-        - **ICL Lens Size** with confidence scores
-        - **Post-operative Vault** with expected range
-        
-        ### Two Prediction Modes
-        
-        **🎯 Single Recommendation (Default)**
-        - Simple, fast result
-        - One recommended lens size
-        - Predicted vault with interpretation
-        - Best for routine cases
-        
-        **📊 Multiple Options**
-        - All lens size options with probabilities
-        - Confidence scores for each option
-        - Visual charts and comparisons
-        - Best when choosing between close options
+        Machine learning system that predicts **ICL Lens Size** with confidence scores and **Post-operative Vault** with expected range.
         
         ### Required Measurements
         - **Age:** Patient age in years
@@ -536,19 +497,30 @@ def main():
         - **ACD Internal:** Anterior chamber depth from endothelium (Pentacam)
         - **SEQ:** Spherical equivalent refraction (Sphere + Cyl/2)
         - **CCT:** Central corneal thickness (Pentacam)
+        """)
         
-        ### Model Performance
-        - Trained on **77 complete cases**
-        - Lens Size: **81.8% accuracy**
-        - Vault: **131.7µm mean error**
-        - **75%** of predictions within ±200µm of actual vault
+        # Two columns for prediction modes
+        col1, col2 = st.columns(2)
         
-        ### How to Use
-        1. Enter patient measurements in the sidebar
-        2. Click "Generate Prediction"
-        3. Review lens size options and predicted vaults
-        4. Consider clinical factors alongside model recommendations
+        with col1:
+            st.markdown("""
+            #### 🎯 Single Recommendation
+            - Simple, fast result
+            - One recommended lens size
+            - Predicted vault with range
+            - Best for routine cases
+            """)
         
+        with col2:
+            st.markdown("""
+            #### 📊 Multiple Options
+            - All lens size options with probabilities
+            - Confidence scores for each option
+            - Visual charts and comparisons
+            - Best when choosing between close options
+            """)
+        
+        st.markdown("""
         ---
         
         ⚕️ **Note:** This tool is for clinical decision support only. Final lens selection should 
