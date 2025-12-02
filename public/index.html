@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault 3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="glass-card p-8 mb-6 text-center">
+            <h1 class="text-6xl font-bold text-blue-600 mb-4">Vault 3.0</h1>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Input Panel -->
+            <div class="lg:col-span-1">
+                <div class="glass-card p-6">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Prediction Mode</h2>
+                    
+                    <div class="mb-6">
+                        <label class="block mb-2 text-sm font-medium text-gray-700">Choose mode:</label>
+                        <select id="mode" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="single">Single Recommendation</option>
+                            <option value="multiple">Multiple Options</option>
+                        </select>
+                    </div>
+
+                    <hr class="my-6">
+
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Patient Measurements</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-700">Age (years)</label>
+                            <input type="number" id="age" value="32" min="18" max="70" 
+                                   class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-700">WTW (mm)</label>
+                            <input type="number" id="wtw" value="11.8" min="10" max="14" step="0.1"
+                                   class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-700">ACD Internal (mm)</label>
+                            <input type="number" id="acd" value="3.2" min="2" max="5" step="0.1"
+                                   class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-700">SEQ (D)</label>
+                            <input type="number" id="seq" value="-8.5" min="-20" max="5" step="0.25"
+                                   class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium text-gray-700">CCT (µm)</label>
+                            <input type="number" id="cct" value="540" min="400" max="700" step="1"
+                                   class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <button onclick="generatePrediction()" 
+                            class="w-full mt-6 btn-primary text-white font-bold py-3 px-6 rounded-lg">
+                        Generate Prediction
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Panel -->
+            <div class="lg:col-span-2">
+                <div id="results" class="glass-card p-6 hidden">
+                    <div id="resultsContent"></div>
+                </div>
+                
+                <div id="welcome" class="glass-card p-8">
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Welcome to Vault 3.0</h2>
+                    <p class="text-gray-600 mb-4">Enter patient measurements and click 'Generate Prediction' to get started.</p>
+                    
+                    <div class="mt-6">
+                        <h3 class="font-bold mb-2">Two Prediction Modes:</h3>
+                        <ul class="space-y-2 text-gray-600">
+                            <li>• <strong>Single Recommendation:</strong> Simple, fast result with one recommendation</li>
+                            <li>• <strong>Multiple Options:</strong> All lens sizes with confidence scores</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-6 text-sm text-gray-500">
+                        <p>Model Performance: 81.8% lens accuracy • 131.7µm vault MAE • 77 training cases</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function generatePrediction() {
+            // Get input values
+            const patient = {
+                Age: parseFloat(document.getElementById('age').value),
+                WTW: parseFloat(document.getElementById('wtw').value),
+                ACD_internal: parseFloat(document.getElementById('acd').value),
+                SEQ: parseFloat(document.getElementById('seq').value),
+                CCT: parseFloat(document.getElementById('cct').value)
+            };
+
+            const mode = document.getElementById('mode').value;
+
+            // Show loading
+            document.getElementById('welcome').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('resultsContent').innerHTML = '<p class="text-center py-8">Loading prediction...</p>';
+
+            try {
+                // Call API
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(patient)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Prediction failed');
+                }
+
+                const data = await response.json();
+                displayResults(data, mode);
+            } catch (error) {
+                document.getElementById('resultsContent').innerHTML = 
+                    '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">' +
+                    'Error: ' + error.message +
+                    '</div>';
+            }
+        }
+
+        function displayResults(data, mode) {
+            const topLens = data.lens_options[0];
+            const vault = data.predicted_vault;
+            const vaultLower = data.vault_confidence_interval.lower;
+            const vaultUpper = data.vault_confidence_interval.upper;
+
+            let html = '<div class="space-y-6">';
+
+            // Success message
+            html += '<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">';
+            html += '✅ Prediction Complete!';
+            html += '</div>';
+
+            if (mode === 'single') {
+                // Single Recommendation Mode
+                html += '<h2 class="text-2xl font-bold text-gray-800">Recommendation</h2>';
+                
+                html += '<div class="grid grid-cols-2 gap-4">';
+                html += '<div class="bg-blue-50 p-4 rounded-lg">';
+                html += '<p class="text-sm text-gray-600">Recommended Lens Size</p>';
+                html += '<p class="text-3xl font-bold text-blue-600">' + topLens.size.toFixed(1) + ' mm</p>';
+                html += '<p class="text-sm text-gray-500">' + topLens.confidence_pct.toFixed(0) + '% confidence</p>';
+                html += '</div>';
+                
+                html += '<div class="bg-purple-50 p-4 rounded-lg">';
+                html += '<p class="text-sm text-gray-600">Predicted Vault</p>';
+                html += '<p class="text-3xl font-bold text-purple-600">' + vault.toFixed(0) + ' µm</p>';
+                html += '<p class="text-sm text-gray-500">' + vaultLower.toFixed(0) + '-' + vaultUpper.toFixed(0) + 'µm</p>';
+                html += '</div>';
+                html += '</div>';
+
+                // Vault interpretation
+                html += '<div class="mt-4">';
+                if (vault < 250) {
+                    html += '<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">';
+                    html += '⚠️ Low Vault Predicted - Consider larger size';
+                } else if (vault <= 750) {
+                    html += '<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">';
+                    html += '✅ Optimal Vault Range - Good clearance expected';
+                } else {
+                    html += '<div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">';
+                    html += '⚠️ High Vault Predicted - Consider smaller size';
+                }
+                html += '</div></div>';
+
+                // Detailed analysis (collapsible)
+                html += '<details open class="mt-4">';
+                html += '<summary class="cursor-pointer font-bold text-gray-700">📊 View Detailed Analysis</summary>';
+                html += '<div class="mt-2 text-sm text-gray-600 space-y-1">';
+                html += '<p><strong>Confidence Level:</strong> ' + topLens.confidence_pct.toFixed(1) + '%</p>';
+                html += '<p><strong>Vault Range:</strong> ' + vaultLower.toFixed(0) + '-' + vaultUpper.toFixed(0) + 'µm (±' + data.vault_confidence_interval.mae.toFixed(0) + 'µm)</p>';
+                if (data.lens_options.length > 1 && data.lens_options[1].confidence_pct > 25) {
+                    html += '<p class="mt-2"><strong>Alternative:</strong> ' + data.lens_options[1].size.toFixed(1) + 'mm (' + data.lens_options[1].confidence_pct.toFixed(0) + '% confidence)</p>';
+                }
+                html += '</div></details>';
+
+            } else {
+                // Multiple Options Mode
+                html += '<h2 class="text-2xl font-bold text-gray-800">All Lens Size Options</h2>';
+                
+                html += '<div class="overflow-x-auto">';
+                html += '<table class="min-w-full divide-y divide-gray-200">';
+                html += '<thead class="bg-gray-50">';
+                html += '<tr>';
+                html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size (mm)</th>';
+                html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Confidence</th>';
+                html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Predicted Vault (µm)</th>';
+                html += '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vault Range (µm)</th>';
+                html += '</tr>';
+                html += '</thead>';
+                html += '<tbody class="bg-white divide-y divide-gray-200">';
+                
+                data.lens_options.forEach((opt, idx) => {
+                    const bgClass = idx === 0 ? 'bg-blue-50 font-bold' : '';
+                    html += '<tr class="' + bgClass + '">';
+                    html += '<td class="px-6 py-4 whitespace-nowrap">' + opt.size.toFixed(1) + '</td>';
+                    html += '<td class="px-6 py-4 whitespace-nowrap">' + opt.confidence_pct.toFixed(1) + '%' + (idx === 0 ? ' ★' : '') + '</td>';
+                    html += '<td class="px-6 py-4 whitespace-nowrap">' + opt.predicted_vault.toFixed(0) + '</td>';
+                    html += '<td class="px-6 py-4 whitespace-nowrap">' + opt.vault_range + '</td>';
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table></div>';
+
+                // Clinical guidance
+                html += '<div class="mt-6">';
+                if (data.lens_options.length > 1 && data.lens_options[1].confidence_pct > 25) {
+                    html += '<div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">';
+                    html += '<strong>⚠️ Multiple Viable Options</strong><br>';
+                    html += 'Two lens sizes show significant probability. Consider patient-specific factors.';
+                } else {
+                    html += '<div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">';
+                    html += '<strong>✅ Clear Recommendation</strong><br>';
+                    html += 'Model strongly suggests <strong>' + topLens.size.toFixed(1) + 'mm</strong> with ' + topLens.confidence_pct.toFixed(0) + '% confidence.';
+                }
+                html += '</div></div>';
+            }
+
+            // Model info
+            html += '<div class="mt-6 text-sm text-gray-500">';
+            html += '<p><strong>Model Performance:</strong> 81.8% lens accuracy • 131.7µm vault MAE • 77 training cases</p>';
+            html += '</div>';
+
+            html += '</div>';
+
+            document.getElementById('resultsContent').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
+
