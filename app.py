@@ -37,7 +37,7 @@ st.markdown("""
     }
     
     .main-header {
-        font-size: 15rem;
+        font-size: 3rem;
         font-weight: 900;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
