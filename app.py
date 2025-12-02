@@ -47,8 +47,8 @@ def parse_ini_file(ini_content: str) -> dict:
                 except ValueError:
                     pass
             
-            # Extract WTW (Cornea Dia Horizontal)
-            if key == 'Cornea Dia Horizontal' and value:
+            # Extract WTW (Cornea Dia Horizontal) - check multiple possible keys
+            if key in ['Cornea Dia Horizontal', 'WTW', 'White to White', 'W-T-W'] and value and 'WTW' not in extracted:
                 try:
                     extracted['WTW'] = float(value)
                 except ValueError:
@@ -58,6 +58,13 @@ def parse_ini_file(ini_content: str) -> dict:
             if key == 'ACD (Int.) [mm]' and value:
                 try:
                     extracted['ACD_internal'] = float(value)
+                except ValueError:
+                    pass
+            
+            # Extract Pupil Diameter
+            if key == 'Pupil diameter mm' and value and 'Pupil_diameter' not in extracted:
+                try:
+                    extracted['Pupil_diameter'] = float(value)
                 except ValueError:
                     pass
             
@@ -71,12 +78,6 @@ def parse_ini_file(ini_content: str) -> dict:
                 except ValueError:
                     pass
             
-            # Extract Test Date for age calculation if DOB was found
-            if key == 'Test Date' and value and 'DOB_date' not in extracted:
-                try:
-                    extracted['Test_Date'] = value
-                except ValueError:
-                    pass
     
     return extracted
 
@@ -195,17 +196,26 @@ def main():
                 
                 if extracted:
                     st.session_state.ini_values = extracted
-                    st.success(f"✅ Loaded {len(extracted)} values from INI")
+                    
+                    # Count only the relevant values
+                    relevant_keys = ['Age', 'WTW', 'ACD_internal', 'CCT', 'Pupil_diameter']
+                    relevant_count = sum(1 for k in extracted if k in relevant_keys)
+                    st.success(f"✅ Loaded {relevant_count} values from INI")
                     
                     # Show what was extracted
                     with st.expander("📋 Extracted Values", expanded=True):
-                        for key, val in extracted.items():
-                            if key == 'Age':
-                                st.write(f"**{key}:** {val} years")
-                            elif key == 'CCT':
-                                st.write(f"**{key}:** {val} µm")
-                            elif key in ['WTW', 'ACD_internal']:
-                                st.write(f"**{key.replace('_', ' ')}:** {val} mm")
+                        if 'Age' in extracted:
+                            st.write(f"**Age:** {extracted['Age']} years")
+                        if 'WTW' in extracted:
+                            st.write(f"**WTW:** {extracted['WTW']} mm")
+                        else:
+                            st.write("**WTW:** ⚠️ Not found in INI")
+                        if 'ACD_internal' in extracted:
+                            st.write(f"**ACD internal:** {extracted['ACD_internal']} mm")
+                        if 'CCT' in extracted:
+                            st.write(f"**CCT:** {extracted['CCT']} µm")
+                        if 'Pupil_diameter' in extracted:
+                            st.write(f"**Pupil Diameter:** {extracted['Pupil_diameter']} mm")
                 else:
                     st.warning("⚠️ No valid measurements found in file")
             except Exception as e:
@@ -267,6 +277,16 @@ def main():
             help="Central Corneal Thickness" + (" *(from INI)*" if 'CCT' in ini_vals else "")
         )
         
+        pupil = st.number_input(
+            "Pupil Diameter (mm)",
+            min_value=1.0,
+            max_value=10.0,
+            value=float(ini_vals.get('Pupil_diameter', 3.5)),
+            step=0.1,
+            format="%.2f",
+            help="Pupil diameter in mm" + (" *(from INI)*" if 'Pupil_diameter' in ini_vals else "")
+        )
+        
         # Show reminder for SEQ if INI was loaded
         if ini_vals:
             st.info("ℹ️ **SEQ** must be entered manually (not in INI file)")
@@ -283,7 +303,8 @@ def main():
                 'WTW': wtw,
                 'ACD_internal': acd,
                 'SEQ': seq,
-                'CCT': cct
+                'CCT': cct,
+                'Pupil_diameter': pupil
             }
             
             # Show loading spinner
@@ -617,7 +638,7 @@ def main():
         Machine learning system that predicts **ICL Lens Size** with confidence scores and **Post-operative Vault** with expected range.
         
         ### 📁 Quick Import
-        Upload a **Pentacam INI file** in the sidebar to auto-fill WTW, ACD, CCT, and Age.
+        Upload a **Pentacam INI file** in the sidebar to auto-fill measurements.
         
         ### Required Measurements
         | Measurement | Source | Auto-Import |
@@ -626,6 +647,7 @@ def main():
         | **WTW** | Cornea Dia Horizontal | ✅ From INI |
         | **ACD Internal** | ACD (Int.) | ✅ From INI |
         | **CCT** | Central Corneal Thickness | ✅ From INI |
+        | **Pupil Diameter** | Pupil diameter mm | ✅ From INI |
         | **SEQ** | Refraction (Sphere + Cyl/2) | ⚠️ Manual |
         """)
         

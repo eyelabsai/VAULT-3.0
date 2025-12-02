@@ -33,7 +33,7 @@ def predict_patient(patient_data, return_probabilities=True):
     Predict lens size and vault for a patient.
     
     Args:
-        patient_data: dict with keys ['Age', 'WTW', 'ACD_internal', 'SEQ', 'CCT']
+        patient_data: dict with keys ['Age', 'WTW', 'ACD_internal', 'SEQ', 'CCT', 'Pupil_diameter']
         return_probabilities: if True, return full probability distribution
     
     Returns:
@@ -198,7 +198,8 @@ def main():
         'WTW': 11.8,
         'ACD_internal': 3.2,
         'SEQ': -8.5,
-        'CCT': 540
+        'CCT': 540,
+        'Pupil_diameter': 3.5
     }
     
     print("Example Patient:")

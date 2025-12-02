@@ -36,14 +36,14 @@ def load_and_prepare_data():
     
     df = pd.read_csv('training_data.csv')
     
-    # OPTIMAL FEATURE SET (as of 68 training cases)
+    # OPTIMAL FEATURE SET (as of 75 training cases)
     # Found by feature_selection_analysis.py progressive addition method
-    # 5 features → 86.8% lens accuracy, 141.9µm vault MAE
-    # vs 13 features → 69.0% lens accuracy, 142.2µm vault MAE
+    # 6 features → 81.3% lens accuracy, 125.6µm vault MAE
+    # Adding Pupil_diameter improves vault prediction by ~5µm
     #
     # NOTE: All 13 features are still extracted by extract_features.py
     # Re-run feature_selection_analysis.py every ~20-30 new cases to reassess
-    feature_cols = ['Age', 'WTW', 'ACD_internal', 'SEQ', 'CCT']
+    feature_cols = ['Age', 'WTW', 'ACD_internal', 'SEQ', 'CCT', 'Pupil_diameter']
     
     # ALL AVAILABLE FEATURES (still extracted, can test anytime):
     # ['Age', 'WTW', 'ACD_internal', 'ACV', 'ACA_global', 
