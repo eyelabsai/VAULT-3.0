@@ -22,11 +22,20 @@ st.set_page_config(
 # Custom CSS for better styling
 st.markdown("""
 <style>
+    /* Remove Streamlit's global top padding */
+    .st-emotion-cache-18ni7ap, .st-emotion-cache-q8sbsg, .st-emotion-cache-ztfqz8 {
+        padding-top: 0 !important;
+        margin-top: -40px !important;
+    }
+    /* Remove padding around main block */
+    .block-container {
+        padding-top: 0 !important;
+        margin-top: -20px !important;
+    }
     /* Light elegant background */
     .stApp {
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
-    
     /* Content area background */
     .main .block-container {
         background-color: rgba(255, 255, 255, 0.95);
@@ -34,20 +43,22 @@ st.markdown("""
         border-radius: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    
+    /* Make VAULT 3.0 hero text MUCH bigger */
     .main-header {
-        font-size: 4.5rem;
-        font-weight: 900;
+        font-size: 5rem !important;
+        font-weight: 900 !important;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        background-clip: text;
         text-align: center;
-        margin: 0;
-        margin-bottom: 0.5rem;
-        padding: 0;
-        line-height: 0.9;
-        letter-spacing: 0.05em;
+        margin-top: 0rem !important;
+        margin-bottom: 1rem !important;
+        line-height: 0.9 !important;
+    }
+    /* Shrink Sidebar Instruction Banner Text */
+    .instruction-text {
+        font-size: 1.1rem !important;
+        font-weight: 500 !important;
     }
     .metric-card {
         background-color: #f0f2f6;
@@ -474,8 +485,9 @@ def main():
     else:
         # Welcome screen
         st.markdown("""
-        <div style="background-color: #e8f4f8; padding: 2rem; border-radius: 0.5rem; border-left: 5px solid #1f77b4; margin-bottom: 2rem;">
-            <p style="font-size: 1.2rem; font-weight: 600; margin: 0; color: #1f77b4;">
+        <div style="background-color: #e8f4f8; padding: 1.5rem; border-radius: 0.5rem;
+                    border-left: 5px solid #1f77b4; margin-bottom: 2rem;">
+            <p class="instruction-text" style="margin: 0; color: #1f77b4;">
                 👈 Select prediction mode and enter patient measurements in the sidebar
             </p>
         </div>
