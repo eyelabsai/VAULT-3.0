@@ -36,7 +36,7 @@ st.markdown("""
     }
     
     .main-header {
-        font-size: 8rem;
+        font-size: 12rem;
         font-weight: 900;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
@@ -480,7 +480,7 @@ def main():
         # Welcome screen
         st.markdown("""
         <div style="background-color: #e8f4f8; padding: 2rem; border-radius: 0.5rem; border-left: 5px solid #1f77b4; margin-bottom: 2rem;">
-            <p style="font-size: 3rem; font-weight: 700; margin: 0; color: #1f77b4;">
+            <p style="font-size: 1.5rem; font-weight: 600; margin: 0; color: #1f77b4;">
                 👈 Select prediction mode and enter patient measurements in the sidebar
             </p>
         </div>
