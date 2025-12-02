@@ -43,17 +43,18 @@ st.markdown("""
         border-radius: 1rem;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    /* Make VAULT 3.0 hero text MUCH bigger */
+    /* Large Hero Title */
     .main-header {
-        font-size: 5rem !important;
+        font-size: 4rem !important;
         font-weight: 900 !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5a67d8 0%, #7f3ab8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         text-align: center;
-        margin-top: 0rem !important;
+        margin-top: 1rem !important;
         margin-bottom: 1rem !important;
-        line-height: 0.9 !important;
+        line-height: 1.0 !important;
+        letter-spacing: 0.03em !important;
     }
     /* Shrink Sidebar Instruction Banner Text */
     .instruction-text {
@@ -85,9 +86,6 @@ st.markdown("""
 
 
 def main():
-    # Header
-    st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
-    
     # Sidebar - Patient Input
     with st.sidebar:
         st.header("⚙️ Prediction Mode")
@@ -492,6 +490,8 @@ def main():
             </p>
         </div>
         """, unsafe_allow_html=True)
+        
+        st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
         
         st.markdown("""
         ### About Vault 3.0
