@@ -36,11 +36,16 @@ st.markdown("""
     }
     
     .main-header {
-        font-size: 4.5rem;
-        font-weight: bold;
-        color: #1f77b4;
+        font-size: 6rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
         text-align: center;
         margin-bottom: 2rem;
+        letter-spacing: 0.05em;
+        text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .metric-card {
         background-color: #f0f2f6;
@@ -196,6 +201,87 @@ def main():
                     st.warning("⚠️ **Upper Optimal Range** - Acceptable but on higher end.")
                 else:
                     st.error("⚠️ **High Vault Predicted** - Consider smaller size if available.")
+                
+                # Add visual charts
+                st.markdown("---")
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.subheader("📊 Confidence")
+                    
+                    # Confidence gauge chart
+                    fig_gauge = go.Figure(go.Indicator(
+                        mode = "gauge+number",
+                        value = top_lens['confidence_pct'],
+                        title = {'text': f"Lens Size: {top_lens['size']:.1f}mm"},
+                        gauge = {
+                            'axis': {'range': [None, 100]},
+                            'bar': {'color': "#667eea"},
+                            'steps': [
+                                {'range': [0, 50], 'color': "lightgray"},
+                                {'range': [50, 75], 'color': "#d1d5db"},
+                                {'range': [75, 100], 'color': "#e5e7eb"}
+                            ],
+                            'threshold': {
+                                'line': {'color': "red", 'width': 4},
+                                'thickness': 0.75,
+                                'value': 90
+                            }
+                        }
+                    ))
+                    fig_gauge.update_layout(height=300)
+                    st.plotly_chart(fig_gauge, use_container_width=True)
+                
+                with col2:
+                    st.subheader("📈 Vault Range")
+                    
+                    # Vault range visualization
+                    vault_pred = prediction['predicted_vault']
+                    vault_lower = prediction['vault_confidence_interval']['lower']
+                    vault_upper = prediction['vault_confidence_interval']['upper']
+                    
+                    # Create vault range visualization
+                    x_vault = np.linspace(vault_lower - 100, vault_upper + 100, 200)
+                    y_vault = np.maximum(0, 1 - np.abs((x_vault - vault_pred) / (vault_upper - vault_pred)))
+                    
+                    fig_vault = go.Figure()
+                    
+                    # Add distribution curve
+                    fig_vault.add_trace(go.Scatter(
+                        x=x_vault,
+                        y=y_vault,
+                        fill='tozeroy',
+                        fillcolor='rgba(102, 126, 234, 0.3)',
+                        line=dict(color='#667eea', width=2),
+                        name='Probability'
+                    ))
+                    
+                    # Add predicted vault line
+                    fig_vault.add_vline(
+                        x=vault_pred,
+                        line_dash="dash",
+                        line_color="red",
+                        annotation_text=f"Predicted: {vault_pred:.0f}µm"
+                    )
+                    
+                    # Add optimal range
+                    fig_vault.add_vrect(
+                        x0=250, x1=750,
+                        fillcolor="green",
+                        opacity=0.1,
+                        annotation_text="Optimal",
+                        annotation_position="top left"
+                    )
+                    
+                    fig_vault.update_layout(
+                        xaxis_title="Vault (µm)",
+                        yaxis_title="Likelihood",
+                        showlegend=False,
+                        height=300
+                    )
+                    
+                    st.plotly_chart(fig_vault, use_container_width=True)
                 
                 # Show prediction details in expander
                 with st.expander("📊 View Detailed Analysis", expanded=True):
