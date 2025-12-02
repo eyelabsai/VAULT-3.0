@@ -10,6 +10,75 @@ import plotly.graph_objects as go
 import plotly.express as px
 from predict_icl import predict_patient, load_models
 import numpy as np
+import configparser
+import io
+from datetime import datetime, date
+
+
+def parse_ini_file(ini_content: str) -> dict:
+    """
+    Parse Pentacam INI file and extract relevant values for prediction.
+    
+    Returns dict with: WTW, ACD_internal, CCT, Age (if DOB available)
+    """
+    extracted = {}
+    
+    # Parse INI file
+    config = configparser.ConfigParser()
+    # Handle the INI file which may have duplicate keys by reading line by line
+    lines = ini_content.split('\n')
+    current_section = None
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith('[') and line.endswith(']'):
+            current_section = line[1:-1]
+            continue
+        
+        if '=' in line and current_section:
+            key, value = line.split('=', 1)
+            key = key.strip()
+            value = value.strip()
+            
+            # Extract CCT (Central Corneal Thickness)
+            if key == 'Central Corneal Thickness' and value:
+                try:
+                    extracted['CCT'] = int(float(value))
+                except ValueError:
+                    pass
+            
+            # Extract WTW (Cornea Dia Horizontal)
+            if key == 'Cornea Dia Horizontal' and value:
+                try:
+                    extracted['WTW'] = float(value)
+                except ValueError:
+                    pass
+            
+            # Extract ACD Internal
+            if key == 'ACD (Int.) [mm]' and value:
+                try:
+                    extracted['ACD_internal'] = float(value)
+                except ValueError:
+                    pass
+            
+            # Extract DOB for age calculation
+            if key == 'DOB' and value and current_section == 'Patient Data':
+                try:
+                    dob = datetime.strptime(value, '%Y-%m-%d')
+                    today = date.today()
+                    age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                    extracted['Age'] = age
+                except ValueError:
+                    pass
+            
+            # Extract Test Date for age calculation if DOB was found
+            if key == 'Test Date' and value and 'DOB_date' not in extracted:
+                try:
+                    extracted['Test_Date'] = value
+                except ValueError:
+                    pass
+    
+    return extracted
 
 # Page configuration
 st.set_page_config(
@@ -86,6 +155,10 @@ st.markdown("""
 
 
 def main():
+    # Initialize session state for INI-extracted values
+    if 'ini_values' not in st.session_state:
+        st.session_state.ini_values = {}
+    
     # Sidebar - Patient Input
     with st.sidebar:
         st.header("⚙️ Prediction Mode")
@@ -100,56 +173,103 @@ def main():
         
         st.markdown("---")
         
+        # INI File Upload Section
+        st.header("📁 Import Pentacam INI")
+        uploaded_file = st.file_uploader(
+            "Upload INI file",
+            type=None,  # Accept any file type
+            help="Upload Pentacam INI file to auto-fill measurements",
+            key="ini_uploader"
+        )
+        
+        if uploaded_file is not None:
+            # Check file extension
+            file_name = uploaded_file.name.lower()
+            if not file_name.endswith('.ini'):
+                st.warning(f"⚠️ Expected .INI file, got: {uploaded_file.name}")
+            
+            # Read and parse INI file
+            try:
+                ini_content = uploaded_file.read().decode('utf-8', errors='ignore')
+                extracted = parse_ini_file(ini_content)
+                
+                if extracted:
+                    st.session_state.ini_values = extracted
+                    st.success(f"✅ Loaded {len(extracted)} values from INI")
+                    
+                    # Show what was extracted
+                    with st.expander("📋 Extracted Values", expanded=True):
+                        for key, val in extracted.items():
+                            if key == 'Age':
+                                st.write(f"**{key}:** {val} years")
+                            elif key == 'CCT':
+                                st.write(f"**{key}:** {val} µm")
+                            elif key in ['WTW', 'ACD_internal']:
+                                st.write(f"**{key.replace('_', ' ')}:** {val} mm")
+                else:
+                    st.warning("⚠️ No valid measurements found in file")
+            except Exception as e:
+                st.error(f"❌ Error reading file: {str(e)}")
+        
+        st.markdown("---")
+        
         st.header("📋 Patient Information")
         st.markdown("Enter patient measurements:")
         
-        # Input fields
+        # Get default values from INI or use standard defaults
+        ini_vals = st.session_state.ini_values
+        
+        # Input fields with INI values as defaults
         age = st.number_input(
             "Age (years)",
             min_value=18,
             max_value=70,
-            value=32,
-            help="Patient age in years"
+            value=ini_vals.get('Age', 32),
+            help="Patient age in years" + (" *(from INI)*" if 'Age' in ini_vals else "")
         )
         
         wtw = st.number_input(
             "WTW (mm)",
             min_value=10.0,
             max_value=14.0,
-            value=11.8,
+            value=float(ini_vals.get('WTW', 11.8)),
             step=0.1,
             format="%.1f",
-            help="White-to-White diameter in millimeters"
+            help="White-to-White diameter" + (" *(from INI)*" if 'WTW' in ini_vals else "")
         )
         
         acd = st.number_input(
             "ACD Internal (mm)",
             min_value=2.0,
             max_value=5.0,
-            value=3.2,
-            step=0.1,
-            format="%.1f",
-            help="Anterior Chamber Depth (internal)"
+            value=float(ini_vals.get('ACD_internal', 3.2)),
+            step=0.01,
+            format="%.2f",
+            help="Anterior Chamber Depth (internal)" + (" *(from INI)*" if 'ACD_internal' in ini_vals else "")
         )
         
         seq = st.number_input(
-            "SEQ (D)",
+            "SEQ (D) ⚠️",
             min_value=-20.0,
             max_value=5.0,
             value=-8.5,
             step=0.25,
             format="%.2f",
-            help="Spherical Equivalent (Sphere + Cyl/2)"
+            help="Spherical Equivalent (Sphere + Cyl/2) - *Manual entry required*"
         )
         
         cct = st.number_input(
             "CCT (µm)",
             min_value=400,
             max_value=700,
-            value=540,
+            value=ini_vals.get('CCT', 540),
             step=1,
-            help="Central Corneal Thickness in micrometers"
+            help="Central Corneal Thickness" + (" *(from INI)*" if 'CCT' in ini_vals else "")
         )
+        
+        # Show reminder for SEQ if INI was loaded
+        if ini_vals:
+            st.info("ℹ️ **SEQ** must be entered manually (not in INI file)")
         
         st.markdown("---")
         predict_button = st.button("🔮 Generate Prediction", type="primary", use_container_width=True)
@@ -496,12 +616,17 @@ def main():
         st.markdown("""
         Machine learning system that predicts **ICL Lens Size** with confidence scores and **Post-operative Vault** with expected range.
         
+        ### 📁 Quick Import
+        Upload a **Pentacam INI file** in the sidebar to auto-fill WTW, ACD, CCT, and Age.
+        
         ### Required Measurements
-        - **Age:** Patient age in years
-        - **WTW:** White-to-White diameter (Pentacam)
-        - **ACD Internal:** Anterior chamber depth from endothelium (Pentacam)
-        - **SEQ:** Spherical equivalent refraction (Sphere + Cyl/2)
-        - **CCT:** Central corneal thickness (Pentacam)
+        | Measurement | Source | Auto-Import |
+        |-------------|--------|-------------|
+        | **Age** | Patient DOB | ✅ From INI |
+        | **WTW** | Cornea Dia Horizontal | ✅ From INI |
+        | **ACD Internal** | ACD (Int.) | ✅ From INI |
+        | **CCT** | Central Corneal Thickness | ✅ From INI |
+        | **SEQ** | Refraction (Sphere + Cyl/2) | ⚠️ Manual |
         """)
         
         # Two columns for prediction modes
