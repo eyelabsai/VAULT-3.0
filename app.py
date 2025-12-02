@@ -37,7 +37,7 @@ st.markdown("""
     }
     
     .main-header {
-        font-size: 10rem;
+        font-size: 15rem;
         font-weight: 900;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
@@ -47,7 +47,7 @@ st.markdown("""
         margin: 0;
         margin-bottom: 0.5rem;
         padding: 0;
-        line-height: 1;
+        line-height: 0.9;
         letter-spacing: 0.05em;
     }
     .metric-card {
