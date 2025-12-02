@@ -176,19 +176,19 @@ def main():
                 
                 # Create elegant recommendation display
                 st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 3rem; border-radius: 1rem; color: white; text-align: center; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); margin-bottom: 2rem;">
-                    <h2 style="margin: 0 0 2rem 0; font-size: 2.5rem; font-weight: 700;">Recommendation</h2>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 1.5rem; border-radius: 0.8rem; color: white; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); margin-bottom: 1rem;">
+                    <h2 style="margin: 0 0 1rem 0; font-size: 1.8rem; font-weight: 700;">Recommendation</h2>
                     <div style="display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap;">
-                        <div style="margin: 1rem;">
-                            <p style="font-size: 1.2rem; margin: 0; opacity: 0.9;">Recommended Size</p>
-                            <p style="font-size: 4rem; margin: 0.5rem 0; font-weight: 900;">{top_lens['size']:.1f}</p>
-                            <p style="font-size: 1rem; margin: 0; opacity: 0.8;">{top_lens['confidence_pct']:.0f}% confidence</p>
+                        <div style="margin: 0.5rem;">
+                            <p style="font-size: 1rem; margin: 0; opacity: 0.9;">Recommended Size</p>
+                            <p style="font-size: 3rem; margin: 0.3rem 0; font-weight: 900;">{top_lens['size']:.1f}</p>
+                            <p style="font-size: 0.9rem; margin: 0; opacity: 0.8;">{top_lens['confidence_pct']:.0f}% confidence</p>
                         </div>
-                        <div style="font-size: 3rem; opacity: 0.5; margin: 1rem;">→</div>
-                        <div style="margin: 1rem;">
-                            <p style="font-size: 1.2rem; margin: 0; opacity: 0.9;">95% Confidence Vault</p>
-                            <p style="font-size: 3.5rem; margin: 0.5rem 0; font-weight: 900;">{int(vault_lower_rounded)}-{int(vault_upper_rounded)}</p>
-                            <p style="font-size: 1rem; margin: 0; opacity: 0.8;">micrometers (µm)</p>
+                        <div style="font-size: 2rem; opacity: 0.5; margin: 0.5rem;">→</div>
+                        <div style="margin: 0.5rem;">
+                            <p style="font-size: 1rem; margin: 0; opacity: 0.9;">95% Confidence Vault</p>
+                            <p style="font-size: 2.5rem; margin: 0.3rem 0; font-weight: 900;">{int(vault_lower_rounded)}-{int(vault_upper_rounded)}</p>
+                            <p style="font-size: 0.9rem; margin: 0; opacity: 0.8;">micrometers (µm)</p>
                         </div>
                     </div>
                 </div>
