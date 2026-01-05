@@ -1,0 +1,10 @@
+Hey [Engineer Name],
+
+I've added you to this repo. Take a look at how I'm building this - the methodology might be useful for what you're working on.
+
+Check out these two files in the `docs/` folder:
+- `ENGINEER_OVERVIEW.md` - High-level explanation of the approach
+- `MESSAGE_TO_ENGINEER.txt` - Same content in plain text
+
+Feel free to make a branch and explore the codebase. The pipeline scripts in `scripts/pipeline/` show the data flow, and `scripts/training/` has the ML training logic. Curious to see what you come up with!
+
