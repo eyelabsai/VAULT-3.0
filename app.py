@@ -114,6 +114,8 @@ def parse_ini_file(ini_content: str) -> dict:
             elif key == 'Central Corneal Thickness': extracted['CCT'] = float(value)
             elif key == 'Anterior Chamber Volume': extracted['ACV'] = float(value)
             elif key == 'Km (Front)': extracted['SimK_steep'] = float(value)
+            elif key == 'TCRP Km': extracted['TCRP_Km'] = float(value)
+            elif key == 'TCRP Astig': extracted['TCRP_Astigmatism'] = float(value)
             elif key == 'DOB' and current_section == 'Patient Data':
                 try:
                     dob = datetime.strptime(value, '%Y-%m-%d')
@@ -148,34 +150,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
-    st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
-    
     lens_model, lens_scaler, vault_model, vault_scaler, feature_names = load_models()
     if not lens_model: return
 
     # Sidebar Inputs
     with st.sidebar:
-        st.header("📂 Data Import")
+        st.header("Data Import")
         uploaded_file = st.file_uploader("Import Pentacam INI", type=['ini'])
         ini_vals = {}
         if uploaded_file:
             ini_vals = parse_ini_file(uploaded_file.read().decode('utf-8', errors='ignore'))
-            st.success("✅ Imported measurements")
+            st.success("Imported measurements")
 
-        st.header("📋 Patient Biometrics")
+        st.header("Patient Biometrics")
         age = st.number_input("Age", 18, 90, ini_vals.get('Age', 35))
         wtw = st.number_input("WTW (mm)", 10.0, 15.0, ini_vals.get('WTW', 11.8), step=0.1)
         acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, ini_vals.get('ACD_internal', 3.20), step=0.01)
         pwr = st.number_input("ICL Power (D)", -20.0, 10.0, -10.0, step=0.5)
         shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, 60.0, step=0.1)
-        simk = st.number_input("SimK Steep (D)", 35.0, 60.0, 44.0, step=0.1)
+        simk = st.number_input("SimK Steep (D)", 35.0, 60.0, ini_vals.get('SimK_steep', 44.0), step=0.1)
         acv = st.number_input("ACV (mm³)", 50.0, 400.0, ini_vals.get('ACV', 180.0), step=1.0)
-        tcrp_km = st.number_input("TCRP Km (D)", 35.0, 60.0, 44.0, step=0.1)
-        tcrp_astig = st.number_input("TCRP Astigmatism (D)", 0.0, 10.0, 1.0, step=0.25)
+        tcrp_km = st.number_input("TCRP Km (D)", 35.0, 60.0, ini_vals.get('TCRP_Km', 44.0), step=0.1)
+        tcrp_astig = st.number_input("TCRP Astigmatism (D)", 0.0, 10.0, ini_vals.get('TCRP_Astigmatism', 1.0), step=0.25)
         
-        predict_btn = st.button("🔮 Generate Recommendation", type="primary", use_container_width=True)
+        predict_btn = st.button("Calculate", type="primary", use_container_width=True)
 
     if predict_btn:
+        st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
         input_data = {
             'Age': age, 'WTW': wtw, 'ACD_internal': acd, 'ICL_Power': pwr,
             'AC_shape_ratio': shape, 'SimK_steep': simk, 'ACV': acv,
@@ -200,31 +201,55 @@ def main():
         vault_scaled = vault_scaler.transform(X)
         pred_vault = vault_model.predict(vault_scaled)[0]
         
-        # Display - Clean Native Version
+        # Display - Clinical Version
         st.divider()
         col_res1, col_res2 = st.columns([1, 1])
         
         with col_res1:
-            st.markdown(f"### 🎯 Recommended Size: **{best_size}mm**")
-            st.progress(float(best_prob))
-            st.write(f"**Confidence:** {best_prob:.1%}")
+            st.markdown(f"### Lens Size: **{best_size}mm**")
+            st.write(f"**Probability:** {best_prob:.1%}")
             
         with col_res2:
-            st.markdown(f"### 📈 Predicted Vault: **{int(pred_vault)}µm**")
+            st.markdown(f"### Predicted Vault: **{int(pred_vault)}µm**")
             st.info(f"**Expected Range:** {int(pred_vault-125)}-{int(pred_vault+125)}µm")
         
         st.divider()
         
         # Logic Check
-        if pred_vault < 250: st.error("⚠️ WARNING: Potential Low Vault (Below 250µm)")
-        elif pred_vault > 800: st.warning("⚠️ NOTICE: High Vault Predicted (Above 800µm)")
-        else: st.success("✅ Optimal Vault Range Predicted")
+        if pred_vault < 250: st.error("Low Vault Predicted (Below 250µm)")
+        elif pred_vault > 800: st.warning("High Vault Predicted (Above 800µm)")
+        else: st.success("Optimal Vault Range Predicted")
 
         # Probability Breakdown
-        st.markdown("### 📊 Probability Breakdown")
+        st.markdown("### Size Probability Distribution")
         cols = st.columns(len(lens_classes))
         for i, (size, prob) in enumerate(zip(lens_classes, lens_probs)):
             cols[i].metric(f"{size}mm", f"{prob:.1%}")
+    
+    else:
+        # Welcome screen
+        st.info("Enter patient measurements in the sidebar and click Calculate")
+        st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
+        
+        st.markdown("""
+        Clinical decision support system for **ICL Lens Size** and **Post-operative Vault** prediction.
+        
+        ### Parameters
+        | Measurement | Source |
+        |-------------|--------|
+        | **Age** | Patient DOB |
+        | **WTW** | Cornea Dia Horizontal |
+        | **ACD Internal** | ACD (Int.) |
+        | **ACV** | Chamber Volume |
+        | **SimK** | Km (Front) |
+        | **ICL Power** | Refraction |
+        """)
+        
+        st.markdown("""
+        ---
+        **Note:** This tool is for clinical decision support only. Final lens selection should 
+        incorporate clinical judgment and patient-specific factors.
+        """)
 
 if __name__ == '__main__':
     main()

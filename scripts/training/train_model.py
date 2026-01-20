@@ -28,6 +28,31 @@ warnings.filterwarnings('ignore')
 from track_performance import save_run
 
 
+def get_nomogram_size(wtw, acd):
+    """Implementation of the sizing nomogram from the provided table."""
+    if wtw < 10.5 or wtw >= 13.0:
+        return 0.0
+    
+    if 10.5 <= wtw < 10.7:
+        return 12.1 if acd > 3.5 else 0.0
+    elif 10.7 <= wtw < 11.1:
+        return 12.1
+    elif 11.1 <= wtw < 11.2:
+        return 12.6 if acd > 3.5 else 12.1
+    elif 11.2 <= wtw < 11.5:
+        return 12.6
+    elif 11.5 <= wtw < 11.7:
+        return 13.2 if acd > 3.5 else 12.6
+    elif 11.7 <= wtw < 12.2:
+        return 13.2
+    elif 12.2 <= wtw < 12.3:
+        return 13.7 if acd > 3.5 else 13.2
+    elif 12.3 <= wtw < 13.0:
+        return 13.7
+    
+    return 0.0
+
+
 def load_and_prepare_data():
     """Load training data and prepare features/targets."""
     print("="*70)
@@ -36,23 +61,86 @@ def load_and_prepare_data():
     
     df = pd.read_csv('data/processed/training_data.csv')
     
-    # TOP 6 FEATURE SET (Optimized Jan 19, 2026)
-    # Uses ICL_Power instead of SEQ - more consistently recorded in Excel
-    feature_cols = ['Age', 'WTW', 'ACD_internal', 'ICL_Power', 'AC_shape_ratio', 'SimK_steep']
-    
-    # ALL AVAILABLE FEATURES (still extracted, can test anytime):
-    # ['Age', 'WTW', 'ACD_internal', 'ACV', 'ACA_global', 
-    #  'Pupil_diameter', 'AC_shape_ratio', 'TCRP_Km', 'TCRP_Astigmatism', 
-    #  'SEQ', 'SimK_steep', 'CCT', 'BAD_D']
+    # CORE FEATURES
+    feature_cols = ['Age', 'WTW', 'ACD_internal', 'ICL_Power', 'AC_shape_ratio', 
+                    'SimK_steep', 'ACV', 'TCRP_Km', 'TCRP_Astigmatism']
     target_cols = ['Lens_Size', 'Vault']
     
     # Filter complete cases
     complete = df[feature_cols + target_cols].notna().all(axis=1)
     df_complete = df[complete].copy()
     
-    # Remove outliers in Lens_Size (e.g., negative values)
+    # Standardize Lens_Size (fix negative values like -12.6 -> 12.6)
+    df_complete['Lens_Size'] = df_complete['Lens_Size'].abs()
+    
+    # Remove outliers in Lens_Size
     valid_lens = (df_complete['Lens_Size'] > 0) & (df_complete['Lens_Size'] < 20)
     df_complete = df_complete[valid_lens].copy()
+    
+    # --- ADD ADVANCED GESTALT CLINICAL FEATURES ---
+    # 1. WTW Buckets (based on real patient distribution)
+    df_complete['WTW_Bucket'] = pd.cut(df_complete['WTW'], 
+                                     bins=[0, 11.6, 11.9, 12.4, 20], 
+                                     labels=[0, 1, 2, 3]).astype(int)
+    
+    # 2. ACD Buckets
+    df_complete['ACD_Bucket'] = pd.cut(df_complete['ACD_internal'], 
+                                     bins=[0, 3.1, 3.3, 10], 
+                                     labels=[0, 1, 2]).astype(int)
+    
+    # 3. Shape Ratio Buckets (Major decision point at 62.5)
+    df_complete['Shape_Bucket'] = pd.cut(df_complete['AC_shape_ratio'],
+                                       bins=[0, 58, 62.5, 68, 300],
+                                       labels=[0, 1, 2, 3]).astype(int)
+    
+    # 4. Interaction Features
+    df_complete['Space_Volume'] = df_complete['WTW'] * df_complete['ACD_internal']
+    df_complete['Aspect_Ratio'] = df_complete['WTW'] / df_complete['ACD_internal']
+    df_complete['Power_Density'] = abs(df_complete['ICL_Power']) / df_complete['ACV']
+    
+    # 5. NEW ADVANCED GESTALT FEATURES
+    # User Nuance: High Power + Deep ACD often means 13.7
+    df_complete['High_Power_Deep_ACD'] = ((abs(df_complete['ICL_Power']) > 14) & 
+                                         (df_complete['ACD_internal'] > 3.3)).astype(int)
+    
+    # Chamber Tightness: Volume per mm of diameter (Excellent linear progression with size)
+    df_complete['Chamber_Tightness'] = df_complete['ACV'] / df_complete['WTW']
+    
+    # Curvature-Depth Ratio: How steep is the cornea relative to the chamber depth
+    df_complete['Curvature_Depth_Ratio'] = df_complete['SimK_steep'] / df_complete['ACD_internal']
+    
+    # 6. ROTATIONAL & AGE GESTALT
+    # Stability Risk: High astigmatism in a larger eye often gets a larger lens to prevent rotation
+    df_complete['Stability_Risk'] = ((df_complete['TCRP_Astigmatism'] > 1.5) & 
+                                    (df_complete['WTW'] > 12.0)).astype(int)
+    
+    # Age-Space Constraint: Relative space loss due to crystalline lens thickening
+    df_complete['Age_Space_Ratio'] = df_complete['Age'] / df_complete['ACD_internal']
+    
+    # 7. NOMOGRAM FEATURE (from user sizing table)
+    df_complete['Nomogram_Size'] = df_complete.apply(
+        lambda row: get_nomogram_size(row['WTW'], row['ACD_internal']), axis=1
+    )
+    
+    # 8. NOMOGRAM DEVIATION GESTALT (Learning "Conservative Sizing")
+    # Rule 1: Volume Constraint - Lower size if chamber volume is tight (<170)
+    df_complete['Volume_Constraint'] = ((df_complete['Nomogram_Size'] > 12.1) & 
+                                       (df_complete['ACV'] < 170)).astype(int)
+    
+    # Rule 2: Steep Eye Adjustment - Lower size if cornea is very steep (>46D)
+    df_complete['Steep_Eye_Adjustment'] = ((df_complete['Nomogram_Size'] > 12.1) & 
+                                          (df_complete['SimK_steep'] > 46.0)).astype(int)
+    
+    # Rule 3: Safety Downsize - Tendency to drop from 13.2 to 12.6 when power is moderate
+    df_complete['Safety_Downsize_Flag'] = ((df_complete['Nomogram_Size'] == 13.2) & 
+                                          (abs(df_complete['ICL_Power']) < 10.0)).astype(int)
+    
+    # Update feature list
+    feature_cols += ['WTW_Bucket', 'ACD_Bucket', 'Shape_Bucket', 
+                    'Space_Volume', 'Aspect_Ratio', 'Power_Density',
+                    'High_Power_Deep_ACD', 'Chamber_Tightness', 'Curvature_Depth_Ratio',
+                    'Stability_Risk', 'Age_Space_Ratio', 'Nomogram_Size',
+                    'Volume_Constraint', 'Steep_Eye_Adjustment', 'Safety_Downsize_Flag']
     
     # Convert Lens_Size to string for classification
     df_complete['Lens_Size'] = df_complete['Lens_Size'].astype(str)
@@ -63,9 +151,8 @@ def load_and_prepare_data():
     
     if len(df_complete) < 20:
         print("\n⚠️  WARNING: Very small dataset. Results may not be reliable.")
-        print("   Consider collecting more data or using simpler models.")
     
-    # Prepare features (Eye laterality removed - contributed only 0.01% importance)
+    # Prepare features
     X = df_complete[feature_cols].copy()
     
     # Targets
@@ -93,15 +180,17 @@ def train_lens_size_model(X, y):
     # Try multiple models
     models = {
         'Random Forest': RandomForestClassifier(
-            n_estimators=100, 
-            max_depth=3,  # Limit depth to avoid overfitting
+            n_estimators=150, 
+            max_depth=5,
             min_samples_split=5,
+            class_weight='balanced',
             random_state=42
         ),
         'Gradient Boosting': GradientBoostingClassifier(
-            n_estimators=50,
-            max_depth=2,
-            learning_rate=0.1,
+            n_estimators=150,
+            max_depth=4,
+            learning_rate=0.05,
+            subsample=0.8,
             random_state=42
         )
     }
