@@ -98,12 +98,13 @@ def load_models():
 
 # --- UI HELPERS ---
 def parse_ini_file(ini_content: str) -> dict:
+    """
+    Parse INI file content and extract clinical features.
+    Uses the same key names as extract_features.py for consistency.
+    """
     extracted = {}
     lines = ini_content.split('\n')
     current_section = None
-    
-    # Storage for TCRP K1/K2 to calculate astigmatism
-    tcrp_k1, tcrp_k2 = None, None
     
     for line in lines:
         line = line.strip()
@@ -116,44 +117,37 @@ def parse_ini_file(ini_content: str) -> dict:
             if not value: continue
             
             try:
-                # 1. ACD Internal (Priority on Internal, then calculation from external)
-                if key in ['ACD (Int.) [mm]', 'ACD (internal)', 'ACD Int']: 
+                # 1. ACD Internal - exact match from XML extraction
+                if key == 'ACD (Int.) [mm]': 
                     extracted['ACD_internal'] = float(value)
                 elif key == 'ACD external' and 'ACD_internal' not in extracted:
-                    # Fallback: estimate internal if we have CCT later
                     extracted['ACD_ext_temp'] = float(value)
                 
-                # 2. WTW
-                elif key in ['Cornea Dia Horizontal', 'WTW', 'White-to-White', 'White to White', 'W-T-W']: 
+                # 2. WTW - exact match from XML extraction
+                elif key == 'Cornea Dia Horizontal': 
                     extracted['WTW'] = float(value)
                 
                 # 3. CCT
-                elif key in ['Central Corneal Thickness', 'CCT', 'Pachymetry', 'Pachy']: 
+                elif key == 'Central Corneal Thickness': 
                     extracted['CCT'] = float(value)
                 
-                # 4. ACV (Chamber Volume)
-                elif 'Anterior Chamber Volume' in key or key == 'ACV' or 'Volume' in key: 
+                # 4. ACV - exact key match (just "ACV")
+                elif key == 'ACV': 
                     extracted['ACV'] = float(value)
                 
-                # 5. SimK (Look for Mean or Steep)
-                elif any(x in key for x in ['Km (Front)', 'SimK', 'K mean', 'Km', 'SimK steep']): 
+                # 5. SimK Steep - exact match from XML extraction
+                elif key == 'SimK steep D': 
                     extracted['SimK_steep'] = float(value)
                 
-                # 6. TCRP - Flexible Search
-                elif any(x in key for x in ['TCRP Km', 'TCRP Mean', 'TCRP_Km']):
+                # 6. TCRP Km - exact match from XML extraction
+                elif key == 'TCRP 3mm zone pupil Km [D]':
                     extracted['TCRP_Km'] = float(value)
                 
-                # 7. AC Shape Ratio / Jump (Try to find it in INI)
-                elif any(x in key for x in ['Jump', 'AC Shape', 'Shape Ratio', 'AC_shape']):
-                    extracted['ac_shape'] = float(value)
+                # 7. TCRP Astigmatism - exact match from XML extraction
+                elif key == 'TCRP 3mm zone pupil Asti [D]':
+                    extracted['TCRP_Astigmatism'] = float(value)
                 
-                # TCRP Astigmatism Calculation (K2 - K1)
-                elif 'TCRP K1' in key and ('3.0mm' in key or 'Apex' in key):
-                    tcrp_k1 = float(value)
-                elif 'TCRP K2' in key and ('3.0mm' in key or 'Apex' in key):
-                    tcrp_k2 = float(value)
-                
-                # 7. Age extraction
+                # 8. Age extraction from DOB
                 elif key == 'DOB' and current_section == 'Patient Data':
                     try:
                         dob = datetime.strptime(value, '%Y-%m-%d')
@@ -167,9 +161,9 @@ def parse_ini_file(ini_content: str) -> dict:
     if 'ACD_ext_temp' in extracted and 'ACD_internal' not in extracted and 'CCT' in extracted:
         extracted['ACD_internal'] = round(extracted['ACD_ext_temp'] - (extracted['CCT'] / 1000.0), 2)
     
-    # Calculate TCRP Astigmatism if we have K1 and K2
-    if tcrp_k1 and tcrp_k2:
-        extracted['TCRP_Astigmatism'] = round(abs(tcrp_k2 - tcrp_k1), 2)
+    # Calculate AC Shape Ratio = ACV / ACD_internal (same as extract_features.py)
+    if 'ACV' in extracted and 'ACD_internal' in extracted and extracted['ACD_internal'] > 0:
+        extracted['ac_shape'] = round(extracted['ACV'] / extracted['ACD_internal'], 2)
         
     return extracted
 
