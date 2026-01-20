@@ -200,25 +200,20 @@ def main():
         vault_scaled = vault_scaler.transform(X)
         pred_vault = vault_model.predict(vault_scaled)[0]
         
-        # Display
-        st.markdown(f"""
-        <div class="recommendation-card">
-            <h2 style="color: #5a67d8; margin-bottom: 0;">Recommended ICL Size</h2>
-            <div style="font-size: 5rem; font-weight: 900; color: #2d3748; line-height: 1.2;">{best_size}mm</div>
-            <div style="font-size: 1.2rem; color: #718096; margin-bottom: 2rem;">{best_prob:.1%} Confidence Score</div>
+        # Display - Clean Native Version
+        st.divider()
+        col_res1, col_res2 = st.columns([1, 1])
+        
+        with col_res1:
+            st.markdown(f"### 🎯 Recommended Size: **{best_size}mm**")
+            st.progress(float(best_prob))
+            st.write(f"**Confidence:** {best_prob:.1%}")
             
-            <div style="display: flex; justify-content: center; gap: 4rem; border-top: 1px solid #e2e8f0; padding-top: 2rem;">
-                <div>
-                    <div style="font-size: 0.9rem; text-transform: uppercase; color: #a0aec0;">Predicted Vault</div>
-                    <div style="font-size: 2.5rem; font-weight: 700; color: #4a5568;">{int(pred_vault)}µm</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.9rem; text-transform: uppercase; color: #a0aec0;">Expected Range</div>
-                    <div style="font-size: 2.5rem; font-weight: 700; color: #4a5568;">{int(pred_vault-125)}-{int(pred_vault+125)}µm</div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        with col_res2:
+            st.markdown(f"### 📈 Predicted Vault: **{int(pred_vault)}µm**")
+            st.info(f"**Expected Range:** {int(pred_vault-125)}-{int(pred_vault+125)}µm")
+        
+        st.divider()
         
         # Logic Check
         if pred_vault < 250: st.error("⚠️ WARNING: Potential Low Vault (Below 250µm)")
