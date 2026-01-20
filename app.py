@@ -101,6 +101,10 @@ def parse_ini_file(ini_content: str) -> dict:
     extracted = {}
     lines = ini_content.split('\n')
     current_section = None
+    
+    # Storage for TCRP K1/K2 to calculate astigmatism
+    tcrp_k1, tcrp_k2 = None, None
+    
     for line in lines:
         line = line.strip()
         if line.startswith('[') and line.endswith(']'):
@@ -109,40 +113,64 @@ def parse_ini_file(ini_content: str) -> dict:
         if '=' in line and current_section:
             key, value = line.split('=', 1)
             key, value = key.strip(), value.strip()
+            if not value: continue
             
-            # Robust matching for ACD
-            if key in ['ACD (Int.) [mm]', 'ACD (internal)', 'ACD Int']: 
-                extracted['ACD_internal'] = float(value)
-            
-            # Robust matching for WTW
-            elif key in ['Cornea Dia Horizontal', 'WTW', 'White-to-White', 'White to White']: 
-                extracted['WTW'] = float(value)
-            
-            # Robust matching for CCT
-            elif key in ['Central Corneal Thickness', 'CCT', 'Pachymetry']: 
-                extracted['CCT'] = float(value)
-            
-            # Robust matching for ACV
-            elif key in ['Anterior Chamber Volume', 'ACV', 'Chamber Volume']: 
-                extracted['ACV'] = float(value)
-            
-            # Robust matching for SimK
-            elif key in ['Km (Front)', 'SimK', 'K mean', 'Km']: 
-                extracted['SimK_steep'] = float(value)
-            
-            # Robust matching for TCRP
-            elif key in ['TCRP Km', 'TCRP Mean', 'TCRP_Km']: 
-                extracted['TCRP_Km'] = float(value)
-            elif key in ['TCRP Astig', 'TCRP Astigmatism', 'TCRP_Astig']: 
-                extracted['TCRP_Astigmatism'] = float(value)
-            
-            # Age extraction
-            elif key == 'DOB' and current_section == 'Patient Data':
-                try:
-                    dob = datetime.strptime(value, '%Y-%m-%d')
-                    today = date.today()
-                    extracted['Age'] = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-                except: pass
+            try:
+                # 1. ACD Internal (Priority on Internal, then calculation from external)
+                if key in ['ACD (Int.) [mm]', 'ACD (internal)', 'ACD Int']: 
+                    extracted['ACD_internal'] = float(value)
+                elif key == 'ACD external' and 'ACD_internal' not in extracted:
+                    # Fallback: estimate internal if we have CCT later
+                    extracted['ACD_ext_temp'] = float(value)
+                
+                # 2. WTW
+                elif key in ['Cornea Dia Horizontal', 'WTW', 'White-to-White', 'White to White', 'W-T-W']: 
+                    extracted['WTW'] = float(value)
+                
+                # 3. CCT
+                elif key in ['Central Corneal Thickness', 'CCT', 'Pachymetry', 'Pachy']: 
+                    extracted['CCT'] = float(value)
+                
+                # 4. ACV (Chamber Volume)
+                elif 'Anterior Chamber Volume' in key or key == 'ACV' or 'Volume' in key: 
+                    extracted['ACV'] = float(value)
+                
+                # 5. SimK (Look for Mean or Steep)
+                elif 'Km (Front)' in key or key == 'SimK' or key == 'K mean' or key == 'Km': 
+                    extracted['SimK_steep'] = float(value)
+                elif key == 'SimK steep D':
+                    extracted['SimK_steep'] = float(value)
+                
+                # 6. TCRP - Flexible Search
+                elif 'TCRP Km' in key and '3.0mm' in key: # Prefer 3mm zone
+                    extracted['TCRP_Km'] = float(value)
+                elif 'TCRP Km' in key and 'Apex' in key and 'TCRP_Km' not in extracted:
+                    extracted['TCRP_Km'] = float(value)
+                
+                # TCRP Astigmatism Calculation (K2 - K1)
+                elif 'TCRP K1' in key and ('3.0mm' in key or 'Apex' in key):
+                    tcrp_k1 = float(value)
+                elif 'TCRP K2' in key and ('3.0mm' in key or 'Apex' in key):
+                    tcrp_k2 = float(value)
+                
+                # 7. Age extraction
+                elif key == 'DOB' and current_section == 'Patient Data':
+                    try:
+                        dob = datetime.strptime(value, '%Y-%m-%d')
+                        today = date.today()
+                        extracted['Age'] = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+                    except: pass
+            except: pass
+
+    # Post-processing calculations
+    # Estimate ACD internal if only external was found (ACD int = ACD ext - CCT/1000)
+    if 'ACD_ext_temp' in extracted and 'ACD_internal' not in extracted and 'CCT' in extracted:
+        extracted['ACD_internal'] = round(extracted['ACD_ext_temp'] - (extracted['CCT'] / 1000.0), 2)
+    
+    # Calculate TCRP Astigmatism if we have K1 and K2
+    if tcrp_k1 and tcrp_k2:
+        extracted['TCRP_Astigmatism'] = round(abs(tcrp_k2 - tcrp_k1), 2)
+        
     return extracted
 
 # --- PAGE SETUP ---
