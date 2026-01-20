@@ -263,11 +263,10 @@ def extract_zip_and_process(zip_file_path):
         print(f"\n{'='*50}")
         print(f"Processing complete: {processed}/{len(ini_files)} files processed successfully")
         
-        # Optionally clean up the extraction directory after processing
-        # Uncomment the next line if you want to delete extracted files after processing
-        # shutil.rmtree(extract_dir, ignore_errors=True)
-        print(f"\nExtracted files are in: {extract_dir}")
-        print("(You can delete this folder manually if needed)")
+        # Clean up the extraction directory after processing to avoid duplicates
+        print(f"\nCleaning up extraction directory: {extract_dir}")
+        shutil.rmtree(extract_dir, ignore_errors=True)
+        print("Extraction directory cleaned up successfully.")
         
     except zipfile.BadZipFile:
         print(f"Error: '{zip_file_path}' is not a valid zip file.")
@@ -373,6 +372,7 @@ def process_all_zip_files():
 def auto_process():
     """
     Automatically detect and process zip files and INI files in the images directory.
+    Cleans up old extracted INI files before processing new ZIP files to avoid duplicates.
     """
     if not os.path.exists(IMAGES_DIR):
         print(f"Error: {IMAGES_DIR} directory not found.")
@@ -383,19 +383,39 @@ def auto_process():
                  if f.lower().endswith(('.zip', '.ZIP'))]
     
     if zip_files:
-        print(f"Found {len(zip_files)} zip file(s). Processing...\n")
+        # Clean up old extracted directories and loose INI files before processing new ZIP
+        print("Cleaning up old extracted INI files...")
+        
+        # Remove old extracted directories
+        for item in os.listdir(IMAGES_DIR):
+            item_path = os.path.join(IMAGES_DIR, item)
+            if os.path.isdir(item_path) and item.startswith('_extracted_'):
+                print(f"  Removing old extraction directory: {item}")
+                shutil.rmtree(item_path, ignore_errors=True)
+        
+        # Remove loose INI files (these would be duplicates from previous extractions)
+        ini_files = [f for f in os.listdir(IMAGES_DIR) 
+                     if f.upper().endswith('.INI') and os.path.isfile(os.path.join(IMAGES_DIR, f))]
+        if ini_files:
+            print(f"  Removing {len(ini_files)} old loose INI file(s)...")
+            for ini_file in ini_files:
+                ini_path = os.path.join(IMAGES_DIR, ini_file)
+                os.remove(ini_path)
+                print(f"    Removed: {ini_file}")
+        
+        print(f"\nFound {len(zip_files)} zip file(s). Processing...\n")
         process_all_zip_files()
     
-    # Then check for INI files
-    ini_files = [f for f in os.listdir(IMAGES_DIR) 
-                 if f.upper().endswith('.INI')]
-    
-    if ini_files:
-        print(f"\nFound {len(ini_files)} INI file(s). Processing...\n")
-        process_all_ini_files()
-    
-    if not zip_files and not ini_files:
-        print(f"No zip files or INI files found in {IMAGES_DIR} directory.")
+    # Then check for any remaining INI files (if no ZIP files were found)
+    elif not zip_files:
+        ini_files = [f for f in os.listdir(IMAGES_DIR) 
+                     if f.upper().endswith('.INI') and os.path.isfile(os.path.join(IMAGES_DIR, f))]
+        
+        if ini_files:
+            print(f"\nFound {len(ini_files)} INI file(s). Processing...\n")
+            process_all_ini_files()
+        else:
+            print(f"No zip files or INI files found in {IMAGES_DIR} directory.")
 
 
 def main():
