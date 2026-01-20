@@ -222,9 +222,9 @@ def main():
         wtw = st.number_input("WTW (mm)", 10.0, 15.0, ini_vals.get('WTW', 11.8), step=0.1)
         acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, ini_vals.get('ACD_internal', 3.20), step=0.01)
         
-        # Use session state to keep power and shape ratio consistent across uploads
-        pwr = st.number_input("ICL Power (D)", -20.0, 10.0, st.session_state.icl_power, step=0.5, key="pwr_input")
-        st.session_state.icl_power = pwr
+        # ICL Power removed from UI as per user request
+        # Setting a standard median value in background for model stability
+        pwr = -9.0 
         
         shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, st.session_state.ac_shape, step=0.1, key="shape_input")
         st.session_state.ac_shape = shape
@@ -303,7 +303,6 @@ def main():
         | **ACD Internal** | ACD (Int.) |
         | **ACV** | Chamber Volume |
         | **SimK** | Km (Front) |
-        | **ICL Power** | Refraction |
         """)
         
         st.markdown("""
