@@ -109,13 +109,34 @@ def parse_ini_file(ini_content: str) -> dict:
         if '=' in line and current_section:
             key, value = line.split('=', 1)
             key, value = key.strip(), value.strip()
-            if key == 'ACD (Int.) [mm]': extracted['ACD_internal'] = float(value)
-            elif key == 'Cornea Dia Horizontal': extracted['WTW'] = float(value)
-            elif key == 'Central Corneal Thickness': extracted['CCT'] = float(value)
-            elif key == 'Anterior Chamber Volume': extracted['ACV'] = float(value)
-            elif key == 'Km (Front)': extracted['SimK_steep'] = float(value)
-            elif key == 'TCRP Km': extracted['TCRP_Km'] = float(value)
-            elif key == 'TCRP Astig': extracted['TCRP_Astigmatism'] = float(value)
+            
+            # Robust matching for ACD
+            if key in ['ACD (Int.) [mm]', 'ACD (internal)', 'ACD Int']: 
+                extracted['ACD_internal'] = float(value)
+            
+            # Robust matching for WTW
+            elif key in ['Cornea Dia Horizontal', 'WTW', 'White-to-White', 'White to White']: 
+                extracted['WTW'] = float(value)
+            
+            # Robust matching for CCT
+            elif key in ['Central Corneal Thickness', 'CCT', 'Pachymetry']: 
+                extracted['CCT'] = float(value)
+            
+            # Robust matching for ACV
+            elif key in ['Anterior Chamber Volume', 'ACV', 'Chamber Volume']: 
+                extracted['ACV'] = float(value)
+            
+            # Robust matching for SimK
+            elif key in ['Km (Front)', 'SimK', 'K mean', 'Km']: 
+                extracted['SimK_steep'] = float(value)
+            
+            # Robust matching for TCRP
+            elif key in ['TCRP Km', 'TCRP Mean', 'TCRP_Km']: 
+                extracted['TCRP_Km'] = float(value)
+            elif key in ['TCRP Astig', 'TCRP Astigmatism', 'TCRP_Astig']: 
+                extracted['TCRP_Astigmatism'] = float(value)
+            
+            # Age extraction
             elif key == 'DOB' and current_section == 'Patient Data':
                 try:
                     dob = datetime.strptime(value, '%Y-%m-%d')
@@ -150,6 +171,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
+    # Initialize session state for manual values we want to keep
+    if 'icl_power' not in st.session_state:
+        st.session_state.icl_power = -10.0
+    if 'ac_shape' not in st.session_state:
+        st.session_state.ac_shape = 60.0
+
     lens_model, lens_scaler, vault_model, vault_scaler, feature_names = load_models()
     if not lens_model: return
 
@@ -166,8 +193,14 @@ def main():
         age = st.number_input("Age", 18, 90, ini_vals.get('Age', 35))
         wtw = st.number_input("WTW (mm)", 10.0, 15.0, ini_vals.get('WTW', 11.8), step=0.1)
         acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, ini_vals.get('ACD_internal', 3.20), step=0.01)
-        pwr = st.number_input("ICL Power (D)", -20.0, 10.0, -10.0, step=0.5)
-        shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, 60.0, step=0.1)
+        
+        # Use session state to keep power and shape ratio consistent across uploads
+        pwr = st.number_input("ICL Power (D)", -20.0, 10.0, st.session_state.icl_power, step=0.5, key="pwr_input")
+        st.session_state.icl_power = pwr
+        
+        shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, st.session_state.ac_shape, step=0.1, key="shape_input")
+        st.session_state.ac_shape = shape
+        
         simk = st.number_input("SimK Steep (D)", 35.0, 60.0, ini_vals.get('SimK_steep', 44.0), step=0.1)
         acv = st.number_input("ACV (mm³)", 50.0, 400.0, ini_vals.get('ACV', 180.0), step=1.0)
         tcrp_km = st.number_input("TCRP Km (D)", 35.0, 60.0, ini_vals.get('TCRP_Km', 44.0), step=0.1)
