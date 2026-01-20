@@ -136,16 +136,16 @@ def parse_ini_file(ini_content: str) -> dict:
                     extracted['ACV'] = float(value)
                 
                 # 5. SimK (Look for Mean or Steep)
-                elif 'Km (Front)' in key or key == 'SimK' or key == 'K mean' or key == 'Km': 
-                    extracted['SimK_steep'] = float(value)
-                elif key == 'SimK steep D':
+                elif any(x in key for x in ['Km (Front)', 'SimK', 'K mean', 'Km', 'SimK steep']): 
                     extracted['SimK_steep'] = float(value)
                 
                 # 6. TCRP - Flexible Search
-                elif 'TCRP Km' in key and '3.0mm' in key: # Prefer 3mm zone
+                elif any(x in key for x in ['TCRP Km', 'TCRP Mean', 'TCRP_Km']):
                     extracted['TCRP_Km'] = float(value)
-                elif 'TCRP Km' in key and 'Apex' in key and 'TCRP_Km' not in extracted:
-                    extracted['TCRP_Km'] = float(value)
+                
+                # 7. AC Shape Ratio / Jump (Try to find it in INI)
+                elif any(x in key for x in ['Jump', 'AC Shape', 'Shape Ratio', 'AC_shape']):
+                    extracted['ac_shape'] = float(value)
                 
                 # TCRP Astigmatism Calculation (K2 - K1)
                 elif 'TCRP K1' in key and ('3.0mm' in key or 'Apex' in key):
@@ -174,7 +174,7 @@ def parse_ini_file(ini_content: str) -> dict:
     return extracted
 
 # --- PAGE SETUP ---
-st.set_page_config(page_title="Vault 3.0", page_icon="👁️", layout="wide")
+st.set_page_config(page_title="Vault 3.0", page_icon=None, layout="wide")
 
 st.markdown("""
 <style>
@@ -182,9 +182,7 @@ st.markdown("""
     .main-header {
         font-size: 3.5rem !important;
         font-weight: 900 !important;
-        background: linear-gradient(135deg, #5a67d8 0%, #7f3ab8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #2d3748;
         text-align: center;
         margin-bottom: 2rem !important;
     }
@@ -215,24 +213,28 @@ def main():
         ini_vals = {}
         if uploaded_file:
             ini_vals = parse_ini_file(uploaded_file.read().decode('utf-8', errors='ignore'))
-            st.success("Imported measurements")
+            st.success("Measurements loaded")
 
         st.header("Patient Biometrics")
-        age = st.number_input("Age", 18, 90, ini_vals.get('Age', 35))
-        wtw = st.number_input("WTW (mm)", 10.0, 15.0, ini_vals.get('WTW', 11.8), step=0.1)
-        acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, ini_vals.get('ACD_internal', 3.20), step=0.01)
+        
+        def clamp(val, min_v, max_v):
+            return max(min_v, min(val, max_v))
+
+        age = st.number_input("Age", 18, 90, clamp(ini_vals.get('Age', 35), 18, 90))
+        wtw = st.number_input("WTW (mm)", 10.0, 15.0, clamp(ini_vals.get('WTW', 11.8), 10.0, 15.0), step=0.1)
+        acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, clamp(ini_vals.get('ACD_internal', 3.20), 2.0, 5.0), step=0.01)
         
         # ICL Power removed from UI as per user request
         # Setting a standard median value in background for model stability
         pwr = -9.0 
         
-        shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, st.session_state.ac_shape, step=0.1, key="shape_input")
+        shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, clamp(ini_vals.get('ac_shape', st.session_state.ac_shape), 0.0, 100.0), step=0.1, key="shape_input")
         st.session_state.ac_shape = shape
         
-        simk = st.number_input("SimK Steep (D)", 35.0, 60.0, ini_vals.get('SimK_steep', 44.0), step=0.1)
-        acv = st.number_input("ACV (mm³)", 50.0, 400.0, ini_vals.get('ACV', 180.0), step=1.0)
-        tcrp_km = st.number_input("TCRP Km (D)", 35.0, 60.0, ini_vals.get('TCRP_Km', 44.0), step=0.1)
-        tcrp_astig = st.number_input("TCRP Astigmatism (D)", 0.0, 10.0, ini_vals.get('TCRP_Astigmatism', 1.0), step=0.25)
+        simk = st.number_input("SimK Steep (D)", 35.0, 60.0, clamp(ini_vals.get('SimK_steep', 44.0), 35.0, 60.0), step=0.1)
+        acv = st.number_input("ACV (mm³)", 50.0, 400.0, clamp(ini_vals.get('ACV', 180.0), 50.0, 400.0), step=1.0)
+        tcrp_km = st.number_input("TCRP Km (D)", 35.0, 60.0, clamp(ini_vals.get('TCRP_Km', 44.0), 35.0, 60.0), step=0.1)
+        tcrp_astig = st.number_input("TCRP Astigmatism (D)", 0.0, 10.0, clamp(ini_vals.get('TCRP_Astigmatism', 1.0), 0.0, 10.0), step=0.25)
         
         predict_btn = st.button("Calculate", type="primary", use_container_width=True)
 
