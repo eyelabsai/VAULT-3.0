@@ -191,12 +191,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
-    # Initialize session state for manual values we want to keep
-    if 'icl_power' not in st.session_state:
-        st.session_state.icl_power = -10.0
-    if 'ac_shape' not in st.session_state:
-        st.session_state.ac_shape = 60.0
-
     lens_model, lens_scaler, vault_model, vault_scaler, feature_names = load_models()
     if not lens_model: return
 
@@ -222,8 +216,8 @@ def main():
         # Setting a standard median value in background for model stability
         pwr = -9.0 
         
-        shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, clamp(ini_vals.get('ac_shape', st.session_state.ac_shape), 0.0, 100.0), step=0.1, key="shape_input")
-        st.session_state.ac_shape = shape
+        # AC Shape Ratio calculated from ACV/ACD (default 60.0 if not from INI)
+        shape = st.number_input("AC Shape Ratio (Jump)", 0.0, 100.0, clamp(ini_vals.get('ac_shape', 60.0), 0.0, 100.0), step=0.1)
         
         simk = st.number_input("SimK Steep (D)", 35.0, 60.0, clamp(ini_vals.get('SimK_steep', 44.0), 35.0, 60.0), step=0.1)
         acv = st.number_input("ACV (mm³)", 50.0, 400.0, clamp(ini_vals.get('ACV', 180.0), 50.0, 400.0), step=1.0)
