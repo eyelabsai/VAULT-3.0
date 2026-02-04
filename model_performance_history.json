@@ -201,5 +201,12 @@
     "lens_size_accuracy": 0.6508888114325548,
     "vault_mae": 134.3987740011236,
     "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
+  },
+  {
+    "timestamp": "2026-02-04 17:06:46",
+    "training_cases": 759,
+    "lens_size_accuracy": 0.6508888114325548,
+    "vault_mae": 134.3987740011236,
+    "notes": "Lens: Gradient Boosting, Vault: Gradient Boosting"
   }
 ]
