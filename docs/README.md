@@ -89,6 +89,7 @@ rm data/images/*.ini data/images/*.zip
 | `data/processed/roster.md` | Quick patient list |
 | `lens_size_model.pkl` | Trained classifier |
 | `vault_model.pkl` | Trained regressor |
+| `scripts/prediction/gestalt_postprocess.py` | Optional post-processing advisory rules |
 
 ## 🚨 Check After Each Run
 
@@ -136,6 +137,7 @@ python scripts/pipeline/excel_to_csv.py data/excel/VAULT\ 3.0.xlsx
 - **Update Excel first:** Ensure roster has all patient outcomes
 - **Retrain often:** Every 20-30 new cases, rerun training
 - **Track performance:** Keep notes on model accuracy over time
+- **Gestalt advisory:** Optional post-processing suggestions (no impact on model output)
 
 ## 🎓 Model Performance Expectations
 

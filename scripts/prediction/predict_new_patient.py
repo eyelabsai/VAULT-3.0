@@ -9,6 +9,7 @@ import argparse
 import joblib
 import pandas as pd
 import numpy as np
+from scripts.prediction.gestalt_postprocess import apply_gestalt_advice
 from icl_ml_model import XMLParser
 
 
@@ -128,13 +129,43 @@ def predict(xml_path: str, eye: str, manual_features: dict = None):
     predicted_lens_size_rounded = min(available_lens_sizes,
                                       key=lambda x: abs(x - predicted_lens_size))
 
+    # Soft WTW+1 cap (non-absolute): report a conservative alternative
+    soft_cap_size = None
+    wtw_val = X.iloc[0].get('WTW') if 'WTW' in X.columns else None
+    if wtw_val is not None and pd.notna(wtw_val) and not manual_features.get('toric', False):
+        wtw_cap = float(wtw_val) + 1.0
+        if predicted_lens_size_rounded > wtw_cap:
+            eligible = [s for s in available_lens_sizes if s <= wtw_cap]
+            if eligible:
+                soft_cap_size = max(eligible)
+
     # Display results
     print("\n" + "="*60)
     print("PREDICTIONS")
     print("="*60)
     print(f"\nPredicted Vault: {predicted_vault:.0f} µm")
     print(f"Predicted Lens Size: {predicted_lens_size:.2f} mm")
-    print(f"Recommended Lens Size: {predicted_lens_size_rounded} mm")
+    print(f"Recommended Lens Size (Model): {predicted_lens_size_rounded} mm")
+    if soft_cap_size is not None:
+        print(f"Recommended Lens Size (WTW+1 soft cap): {soft_cap_size} mm")
+
+    # Gestalt advisory (post-processing)
+    input_data = {
+        'Age': X.iloc[0].get('Age'),
+        'WTW': X.iloc[0].get('WTW'),
+        'ACD_internal': X.iloc[0].get('ACD_internal'),
+    }
+    advice = apply_gestalt_advice(
+        input_data=input_data,
+        model_size=predicted_lens_size_rounded,
+        model_prob=None,
+        enabled=manual_features.get('gestalt', False),
+        toric=manual_features.get('toric', False),
+    )
+    if advice:
+        print("\nGestalt Advisory:")
+        for item in advice:
+            print(f"  - {item['recommendation']} — {item['reason']}")
 
     # Vault interpretation
     print("\nVault Interpretation:")
@@ -155,7 +186,9 @@ def predict(xml_path: str, eye: str, manual_features: dict = None):
     return {
         'predicted_vault': predicted_vault,
         'predicted_lens_size': predicted_lens_size,
-        'recommended_lens_size': predicted_lens_size_rounded
+        'recommended_lens_size': predicted_lens_size_rounded,
+        'wtw_plus_one_recommendation': soft_cap_size,
+        'gestalt_advice': advice
     }
 
 
@@ -169,6 +202,8 @@ def main():
     parser.add_argument('--k2', type=float, help='K2 value (optional)')
     parser.add_argument('--acd', type=float, help='Anterior chamber depth (optional)')
     parser.add_argument('--wtw', type=float, help='White-to-white (optional)')
+    parser.add_argument('--toric', action='store_true', help='Allow toric exception for WTW+1 soft cap')
+    parser.add_argument('--gestalt', action='store_true', help='Enable gestalt advisory rules')
 
     args = parser.parse_args()
 
@@ -186,6 +221,10 @@ def main():
         manual_features['csv_acd'] = args.acd
     if args.wtw is not None:
         manual_features['csv_wtw'] = args.wtw
+    if args.toric:
+        manual_features['toric'] = True
+    if args.gestalt:
+        manual_features['gestalt'] = True
 
     predict(args.xml_file, args.eye, manual_features)
 

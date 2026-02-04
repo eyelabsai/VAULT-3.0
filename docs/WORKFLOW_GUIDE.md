@@ -120,6 +120,11 @@ From **CSV roster**:
 - **Missing WTW**: Not present in some INI exports
 - Consider: Add missing data manually or update `scripts/pipeline/feature_config.py` (TRAINING_FEATURES)
 
+### Gestalt advisory (post-processing)
+**Note:** Gestalt rules are now post-processing only and do **not** change model outputs.
+- **App:** Toggle “Enable Gestalt Advisory (post-processing)” in the sidebar
+- **CLI:** `python scripts/prediction/predict_new_patient.py --gestalt ...`
+
 ### Issue: Model performance not improving
 **Solution:** 
 - Need more training data (aim for 100+ cases)

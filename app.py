@@ -12,70 +12,14 @@ import pickle
 import warnings
 import configparser
 from datetime import datetime, date
+from scripts.prediction.gestalt_postprocess import apply_gestalt_advice
 
 warnings.filterwarnings('ignore')
 
-# --- NOMOGRAM LOGIC ---
-def get_nomogram_size(wtw, acd):
-    """Implementation of the sizing nomogram from the provided table."""
-    if wtw < 10.5 or wtw >= 13.0:
-        return 0.0
-    
-    if 10.5 <= wtw < 10.7:
-        return 12.1 if acd > 3.5 else 0.0
-    elif 10.7 <= wtw < 11.1:
-        return 12.1
-    elif 11.1 <= wtw < 11.2:
-        return 12.6 if acd > 3.5 else 12.1
-    elif 11.2 <= wtw < 11.5:
-        return 12.6
-    elif 11.5 <= wtw < 11.7:
-        return 13.2 if acd > 3.5 else 12.6
-    elif 11.7 <= wtw < 12.2:
-        return 13.2
-    elif 12.2 <= wtw < 12.3:
-        return 13.7 if acd > 3.5 else 13.2
-    elif 12.3 <= wtw < 13.0:
-        return 13.7
-    
-    return 0.0
-
 # --- FEATURE ENGINEERING ---
 def engineer_features(data):
-    """Apply the same gestalt feature engineering as used in training."""
-    df = pd.DataFrame([data])
-    
-    # Core Features (already in data)
-    # ['Age', 'WTW', 'ACD_internal', 'ICL_Power', 'AC_shape_ratio', 'SimK_steep', 'ACV', 'TCRP_Km', 'TCRP_Astigmatism']
-    
-    # 1. Buckets
-    df['WTW_Bucket'] = pd.cut(df['WTW'], bins=[0, 11.6, 11.9, 12.4, 20], labels=[0, 1, 2, 3]).astype(int)
-    df['ACD_Bucket'] = pd.cut(df['ACD_internal'], bins=[0, 3.1, 3.3, 10], labels=[0, 1, 2]).astype(int)
-    df['Shape_Bucket'] = pd.cut(df['AC_shape_ratio'], bins=[0, 58, 62.5, 68, 300], labels=[0, 1, 2, 3]).astype(int)
-    
-    # 2. Interactions
-    df['Space_Volume'] = df['WTW'] * df['ACD_internal']
-    df['Aspect_Ratio'] = df['WTW'] / df['ACD_internal']
-    df['Power_Density'] = abs(df['ICL_Power']) / df['ACV']
-    
-    # 3. Advanced Gestalt
-    df['High_Power_Deep_ACD'] = ((abs(df['ICL_Power']) > 14) & (df['ACD_internal'] > 3.3)).astype(int)
-    df['Chamber_Tightness'] = df['ACV'] / df['WTW']
-    df['Curvature_Depth_Ratio'] = df['SimK_steep'] / df['ACD_internal']
-    
-    # 4. Rotational/Age
-    df['Stability_Risk'] = ((df['TCRP_Astigmatism'] > 1.5) & (df['WTW'] > 12.0)).astype(int)
-    df['Age_Space_Ratio'] = df['Age'] / df['ACD_internal']
-    
-    # 5. Nomogram
-    df['Nomogram_Size'] = df.apply(lambda row: get_nomogram_size(row['WTW'], row['ACD_internal']), axis=1)
-    
-    # 6. Conservative Deviations
-    df['Volume_Constraint'] = ((df['Nomogram_Size'] > 12.1) & (df['ACV'] < 170)).astype(int)
-    df['Steep_Eye_Adjustment'] = ((df['Nomogram_Size'] > 12.1) & (df['SimK_steep'] > 46.0)).astype(int)
-    df['Safety_Downsize_Flag'] = ((df['Nomogram_Size'] == 13.2) & (abs(df['ICL_Power']) < 10.0)).astype(int)
-    
-    return df
+    """No-op feature engineering (gestalt removed)."""
+    return pd.DataFrame([data])
 
 # --- MODEL LOADING ---
 @st.cache_resource
@@ -211,6 +155,8 @@ def main():
         age = st.number_input("Age", 18, 90, clamp(ini_vals.get('Age', 35), 18, 90))
         wtw = st.number_input("WTW (mm)", 10.0, 15.0, clamp(ini_vals.get('WTW', 11.8), 10.0, 15.0), step=0.1)
         acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, clamp(ini_vals.get('ACD_internal', 3.20), 2.0, 5.0), step=0.01)
+        toric = st.checkbox("Toric lens planned? (WTW+1 exception)", value=False)
+        gestalt_advisory = st.checkbox("Enable Gestalt Advisory (post-processing)", value=False)
         
         # ICL Power removed from UI as per user request
         # Setting a standard median value in background for model stability
@@ -247,6 +193,28 @@ def main():
         top_indices = np.argsort(lens_probs)[::-1]
         best_size = lens_classes[top_indices[0]]
         best_prob = lens_probs[top_indices[0]]
+        best_size_val = float(best_size)
+
+        # Soft WTW+1 cap (non-absolute): prefer a smaller size only if confidence is close
+        soft_recommended = best_size_val
+        soft_note = None
+        if not toric:
+            wtw_cap = wtw + 1.0
+            if best_size_val > wtw_cap:
+                eligible = [
+                    (float(size), prob)
+                    for size, prob in zip(lens_classes, lens_probs)
+                    if float(size) <= wtw_cap
+                ]
+                if eligible:
+                    alt_size, alt_prob = max(eligible, key=lambda x: x[1])
+                    if alt_prob >= (best_prob - 0.10):
+                        soft_recommended = alt_size
+                        soft_note = f"WTW+1 soft cap suggests {alt_size:.1f}mm (prob {alt_prob:.1%})"
+                    else:
+                        soft_note = "WTW+1 soft cap exceeded, but model confidence is higher for a larger size"
+                else:
+                    soft_note = "WTW+1 soft cap exceeded; no smaller size available"
         
         # Vault prediction
         vault_scaled = vault_scaler.transform(X)
@@ -257,8 +225,10 @@ def main():
         col_res1, col_res2 = st.columns([1, 1])
         
         with col_res1:
-            st.markdown(f"### Lens Size: **{best_size}mm**")
-            st.write(f"**Probability:** {best_prob:.1%}")
+            st.markdown(f"### Lens Size: **{soft_recommended:.1f}mm**")
+            st.write(f"**Model Top Pick:** {best_size_val:.1f}mm ({best_prob:.1%})")
+            if soft_note:
+                st.warning(soft_note)
             
         with col_res2:
             st.markdown(f"### Predicted Vault: **{int(pred_vault)}µm**")
@@ -270,6 +240,19 @@ def main():
         if pred_vault < 250: st.error("Low Vault Predicted (Below 250µm)")
         elif pred_vault > 800: st.warning("High Vault Predicted (Above 800µm)")
         else: st.success("Optimal Vault Range Predicted")
+
+        # Gestalt advisory (post-processing)
+        advice = apply_gestalt_advice(
+            input_data=input_data,
+            model_size=best_size_val,
+            model_prob=best_prob,
+            enabled=gestalt_advisory,
+            toric=toric,
+        )
+        if advice:
+            st.markdown("### Gestalt Advisory")
+            for item in advice:
+                st.warning(f"{item['recommendation']} — {item['reason']}")
 
         # Probability Breakdown
         st.markdown("### Size Probability Distribution")
