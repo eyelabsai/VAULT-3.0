@@ -8,15 +8,15 @@ When you get new INI files, follow this simple workflow:
 ```bash
 # Delete old INI files and XMLs
 rm -rf "XML files"/*
-rm images/*.ini
-rm images/*.zip
+rm data/images/*.ini
+rm data/images/*.zip
 
 # Or just add new files alongside existing ones
 ```
 
 ### Step 2: Add New Files
-1. Place new **ZIP files** or loose **INI files** in the `images/` folder
-2. Update the **Excel roster** (`excel/VAULT 3.0.xlsx`) with new patient data
+1. Place new **ZIP files** or loose **INI files** in the `data/images/` folder
+2. Update the **Excel roster** (`data/excel/VAULT 3.0.xlsx`) with new patient data
 
 ### Step 3: Run Complete Pipeline
 ```bash
@@ -66,10 +66,16 @@ After running the pipeline:
 
 | File | Description |
 |------|-------------|
-| `training_data.csv` | Complete dataset for ML training |
-| `flagged_incomplete_cases.csv` | Cases with outcomes but missing features (review these) |
-| `matched_patients.csv` | XML ↔ CSV crosswalk |
-| `roster.md` | Quick patient reference |
+| `data/processed/training_data.csv` | Complete dataset for ML training |
+| `data/processed/flagged_incomplete_cases.csv` | Outcomes present but missing required features |
+| `data/processed/matched_patients.csv` | XML ↔ CSV crosswalk |
+| `data/processed/missing_outcomes.csv` | Outcomes missing (Vault/Lens Size) |
+| `data/processed/failed_extractions.csv` | XMLs that failed extraction |
+| `data/processed/unmatched_xmls.csv` | XMLs with no roster match |
+| `data/processed/missing_xml_ids.csv` | Missing numeric IDs in XML sequence |
+| `data/processed/duplicate_xml_ids.csv` | Duplicate numeric IDs |
+| `data/processed/nonstandard_xml_filenames.csv` | Non-numeric XML filenames |
+| `data/processed/roster.md` | Quick patient reference |
 | `lens_size_model.pkl` | Trained lens size classifier |
 | `vault_model.pkl` | Trained vault regressor |
 | `*_scaler.pkl` | Feature scalers for normalization |
@@ -103,16 +109,16 @@ From **CSV roster**:
 ## 🚨 Common Issues
 
 ### Issue: Some XMLs not matching with CSV
-**Solution:** Check `matched_patients.csv` for match notes. Common causes:
+**Solution:** Check `data/processed/matched_patients.csv` for match notes. Common causes:
 - Name variations (spelling, order)
 - DOB format differences
 - Missing patients in roster
 
 ### Issue: Flagged incomplete cases
-**Solution:** Review `flagged_incomplete_cases.csv`:
+**Solution:** Review `data/processed/flagged_incomplete_cases.csv`:
 - **Missing ACD_internal**: Check if XML has `-9999` sentinel value
 - **Missing WTW**: Not present in some INI exports
-- Consider: Add missing data manually or exclude from training
+- Consider: Add missing data manually or update `scripts/pipeline/feature_config.py` (TRAINING_FEATURES)
 
 ### Issue: Model performance not improving
 **Solution:** 
@@ -140,28 +146,28 @@ From **CSV roster**:
 ### Pipeline fails at Excel conversion
 ```bash
 # Check if Excel file exists
-ls -lh excel/*.xlsx
+ls -lh data/excel/*.xlsx
 
 # Manually convert if needed
-python excel_to_csv.py excel/VAULT\ 3.0.xlsx
+python scripts/pipeline/excel_to_csv.py data/excel/VAULT\ 3.0.xlsx
 ```
 
 ### No INI files processed
 ```bash
 # Check images folder
-ls -lh images/
+ls -lh data/images/
 
 # Manually process specific file
-python ini_to_xml.py images/yourfile.ini
+python scripts/pipeline/ini_to_xml.py data/images/yourfile.ini
 ```
 
 ### Training fails
 ```bash
 # Check training data
-head training_data.csv
+head data/processed/training_data.csv
 
 # Count complete cases
-python -c "import pandas as pd; df = pd.read_csv('training_data.csv'); print(f'Complete: {df.dropna().shape[0]}')"
+python -c "import pandas as pd; df = pd.read_csv('data/processed/training_data.csv'); print(f'Complete: {df.dropna().shape[0]}')"
 ```
 
 ---
@@ -184,10 +190,10 @@ python -c "import pandas as pd; df = pd.read_csv('training_data.csv'); print(f'C
 python run_pipeline.py && python train_model.py
 
 # Check current status
-python -c "import pandas as pd; df = pd.read_csv('training_data.csv'); complete = df.dropna(); print(f'Training cases: {len(complete)}')"
+python -c "import pandas as pd; df = pd.read_csv('data/processed/training_data.csv'); complete = df.dropna(); print(f'Training cases: {len(complete)}')"
 
 # View flagged cases
-cat flagged_incomplete_cases.csv
+cat data/processed/flagged_incomplete_cases.csv
 
 # Check model files
 ls -lh *.pkl

@@ -26,6 +26,7 @@ warnings.filterwarnings('ignore')
 
 # Import performance tracking
 from track_performance import save_run
+from scripts.pipeline.feature_config import TRAINING_FEATURES
 
 
 def load_and_prepare_data():
@@ -34,17 +35,10 @@ def load_and_prepare_data():
     print("LOADING TRAINING DATA")
     print("="*70)
     
-    df = pd.read_csv('training_data.csv')
+    df = pd.read_csv('data/processed/training_data.csv')
     
-    # OPTIMAL FEATURE SET (as of 524 training cases - Dec 27, 2025)
-    # Found by feature_selection_analysis.py progressive addition method
-    # 6 features → 71.1% lens accuracy, 131.0µm vault MAE
-    # vs 5 features → 67.9% lens accuracy, 131.7µm vault MAE
-    # vs 13 features → 67.8% lens accuracy, 130.9µm vault MAE
-    #
-    # NOTE: All 13 features are still extracted by extract_features.py
-    # Re-run feature_selection_analysis.py every ~50-100 new cases to reassess
-    feature_cols = ['Age', 'WTW', 'ACD_internal', 'SEQ', 'CCT', 'AC_shape_ratio']
+    # Use the same feature list as preprocessing gates
+    feature_cols = TRAINING_FEATURES
     
     # ALL AVAILABLE FEATURES (still extracted, can test anytime):
     # ['Age', 'WTW', 'ACD_internal', 'ACV', 'ACA_global', 

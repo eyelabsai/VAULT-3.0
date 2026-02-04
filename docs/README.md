@@ -21,12 +21,12 @@ That's it! This one command:
 
 ```
 Vault 3.0/
-├── images/                      # PUT NEW INI/ZIP FILES HERE
+├── data/
+│   ├── images/                  # PUT NEW INI/ZIP FILES HERE
+│   ├── excel/
+│   │   └── VAULT 3.0.xlsx       # UPDATE THIS WITH NEW PATIENTS
+│   └── processed/               # Generated audit + training outputs
 ├── XML files/                   # Auto-generated XMLs
-├── excel/
-│   └── VAULT 3.0.xlsx          # UPDATE THIS WITH NEW PATIENTS
-├── training_data.csv            # Generated: ML dataset
-├── flagged_incomplete_cases.csv # Generated: Cases to review
 └── *.pkl                        # Generated: Trained models
 ```
 
@@ -40,8 +40,8 @@ Vault 3.0/
 
 ### Option 1: Keep Existing Data
 ```bash
-# 1. Add new INI/ZIP files to images/
-# 2. Update excel/VAULT 3.0.xlsx with new patients
+# 1. Add new INI/ZIP files to data/images/
+# 2. Update data/excel/VAULT 3.0.xlsx with new patients
 # 3. Run workflow
 ./update_and_train.sh
 ```
@@ -50,10 +50,10 @@ Vault 3.0/
 ```bash
 # 1. Clear old data
 rm -rf "XML files"/*
-rm images/*.ini images/*.zip
+rm data/images/*.ini data/images/*.zip
 
-# 2. Add new files to images/
-# 3. Replace excel/VAULT 3.0.xlsx
+# 2. Add new files to data/images/
+# 3. Replace data/excel/VAULT 3.0.xlsx
 # 4. Run workflow
 ./update_and_train.sh
 ```
@@ -77,10 +77,16 @@ rm images/*.ini images/*.zip
 
 | File | Purpose |
 |------|---------|
-| `training_data.csv` | Ready for ML training |
-| `flagged_incomplete_cases.csv` | Cases with missing data - review these |
-| `matched_patients.csv` | Shows XML↔Excel matching |
-| `roster.md` | Quick patient list |
+| `data/processed/training_data.csv` | Ready for ML training |
+| `data/processed/flagged_incomplete_cases.csv` | Cases with missing data - review these |
+| `data/processed/matched_patients.csv` | Shows XML↔Excel matching |
+| `data/processed/missing_outcomes.csv` | Outcomes missing (Vault/Lens Size) |
+| `data/processed/failed_extractions.csv` | XMLs that failed extraction |
+| `data/processed/unmatched_xmls.csv` | XMLs with no roster match |
+| `data/processed/missing_xml_ids.csv` | Missing numeric IDs in XML sequence |
+| `data/processed/duplicate_xml_ids.csv` | Duplicate numeric IDs |
+| `data/processed/nonstandard_xml_filenames.csv` | Non-numeric XML filenames |
+| `data/processed/roster.md` | Quick patient list |
 | `lens_size_model.pkl` | Trained classifier |
 | `vault_model.pkl` | Trained regressor |
 
@@ -88,12 +94,12 @@ rm images/*.ini images/*.zip
 
 1. **Review flagged cases:**
    ```bash
-   cat flagged_incomplete_cases.csv
+   cat data/processed/flagged_incomplete_cases.csv
    ```
 
 2. **Check training size:**
    ```bash
-   python -c "import pandas as pd; print(f'Cases: {len(pd.read_csv(\"training_data.csv\").dropna())}')"
+   python -c "import pandas as pd; print(f'Cases: {len(pd.read_csv(\"data/processed/training_data.csv\").dropna())}')"
    ```
 
 3. **Verify model files exist:**
@@ -111,10 +117,10 @@ python run_pipeline.py
 python train_model.py
 
 # Convert single INI file
-python ini_to_xml.py path/to/file.ini
+python scripts/pipeline/ini_to_xml.py data/images/yourfile.ini
 
 # Convert Excel to CSV
-python excel_to_csv.py excel/VAULT\ 3.0.xlsx
+python scripts/pipeline/excel_to_csv.py data/excel/VAULT\ 3.0.xlsx
 ```
 
 ## 📖 Documentation
@@ -145,21 +151,21 @@ python excel_to_csv.py excel/VAULT\ 3.0.xlsx
 ### Pipeline fails
 ```bash
 # Check file exists
-ls -lh excel/*.xlsx
-ls -lh images/
+ls -lh data/excel/*.xlsx
+ls -lh data/images/
 
 # Run individual steps
-python excel_to_csv.py excel/VAULT\ 3.0.xlsx
-python ini_to_xml.py --auto
+python scripts/pipeline/excel_to_csv.py data/excel/VAULT\ 3.0.xlsx
+python scripts/pipeline/ini_to_xml.py --auto
 ```
 
 ### Training fails
 ```bash
 # Check data quality
-head training_data.csv
+head data/processed/training_data.csv
 
 # Look for issues
-python -c "import pandas as pd; df = pd.read_csv('training_data.csv'); print(df.info())"
+python -c "import pandas as pd; df = pd.read_csv('data/processed/training_data.csv'); print(df.info())"
 ```
 
 ### Names not matching
@@ -177,10 +183,10 @@ python -c "import pandas as pd; df = pd.read_csv('training_data.csv'); print(df.
 ls -lh *.csv *.pkl
 
 # View results
-cat training_data.csv | head -10
+cat data/processed/training_data.csv | head -10
 
 # Count cases
-wc -l training_data.csv
+wc -l data/processed/training_data.csv
 ```
 
 ---

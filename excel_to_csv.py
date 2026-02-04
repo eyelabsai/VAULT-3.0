@@ -111,9 +111,9 @@ def main():
         print("  python excel_to_csv.py <excel_file> <csv_file>   # Convert with custom output")
         print("  python excel_to_csv.py <excel_file> --all        # Convert all sheets to separate CSV files")
         print("\nExample:")
-        print("  python excel_to_csv.py excel/VAULT 3.0.xlsx")
-        print("  python excel_to_csv.py excel/VAULT 3.0.xlsx output.csv")
-        print("  python excel_to_csv.py excel/VAULT 3.0.xlsx --all")
+        print("  python excel_to_csv.py data/excel/VAULT 3.0.xlsx")
+        print("  python excel_to_csv.py data/excel/VAULT 3.0.xlsx output.csv")
+        print("  python excel_to_csv.py data/excel/VAULT 3.0.xlsx --all")
         sys.exit(1)
     
     excel_file = sys.argv[1]

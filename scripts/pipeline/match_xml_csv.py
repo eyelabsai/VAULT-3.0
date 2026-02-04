@@ -108,7 +108,7 @@ def remove_name_suffixes(name):
     return ' '.join(base_name_parts), suffix
 
 
-def create_name_variations(name):
+def create_name_variations(name, assume_surname_first=False):
     """
     Create variations of a name for matching.
     Handles surname-first and first-name-first formats.
@@ -164,6 +164,20 @@ def create_name_variations(name):
         variations.add(' '.join(parts))
         # Reverse order (surname first <-> first name first)
         variations.add(' '.join(reversed(parts)))
+
+        # If name has middle parts, add variants without middle names
+        if len(parts) >= 3:
+            first = parts[0]
+            last = parts[-1]
+            variations.add(f"{first} {last}")
+            variations.add(f"{last} {first}")
+
+            # For XML names that are surname-first with multi-part surnames,
+            # add the first-name-first variant while preserving surname order.
+            if assume_surname_first:
+                first_name = parts[-1]
+                surname_parts = parts[:-1]
+                variations.add(f"{first_name} {' '.join(surname_parts)}")
         
         # Also try with hyphenated names
         if len(parts) > 2:
@@ -331,7 +345,7 @@ def match_xml_to_csv():
         eye = xml_info['eye'].upper()
         
         # Create name variations for matching
-        name_variations = create_name_variations(xml_info['full_name'])
+        name_variations = create_name_variations(xml_info['full_name'], assume_surname_first=True)
         
         # Try to match with variations
         matched = False

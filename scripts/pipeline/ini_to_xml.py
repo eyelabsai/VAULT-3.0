@@ -19,6 +19,9 @@ XML_OUTPUT_DIR = "XML files"
 ROSTER_FILE = "data/processed/roster.md"
 IMAGES_DIR = "data/images"
 
+def is_copy_filename(filename):
+    return " - Copy" in filename
+
 
 def extract_patient_info(xml_file_path):
     """
@@ -143,8 +146,8 @@ def ini_to_xml(ini_file_path, xml_file_path=None):
         print(f"  - {os.path.basename(xml_file_path)} already exists, skipping.")
         return xml_file_path
     
-    # Read the INI file
-    config = configparser.ConfigParser()
+    # Read the INI file (tolerate stray lines without '=')
+    config = configparser.ConfigParser(allow_no_value=True, strict=False)
     # Preserve case sensitivity
     config.optionxform = str
     
@@ -259,6 +262,10 @@ def extract_zip_and_process(zip_file_path):
         skipped = 0
         for ini_path in sorted(ini_files):
             ini_filename = os.path.basename(ini_path)
+            if is_copy_filename(ini_filename):
+                print(f"\nSkipping copy INI: {ini_filename}")
+                skipped += 1
+                continue
             
             # Check if XML already exists before processing
             xml_basename = os.path.splitext(ini_filename)[0] + '.xml'
@@ -313,6 +320,10 @@ def process_all_ini_files():
     processed = 0
     skipped = 0
     for ini_file in sorted(ini_files):
+        if is_copy_filename(ini_file):
+            print(f"\nSkipping copy INI: {ini_file}")
+            skipped += 1
+            continue
         ini_path = os.path.join(IMAGES_DIR, ini_file)
         
         # Check if XML already exists
@@ -415,6 +426,9 @@ def auto_process():
             print(f"\nFound {len(manual_inis)} loose INI file(s) in {XML_OUTPUT_DIR}. Processing...\n")
             processed = 0
             for ini_file in sorted(manual_inis):
+                if is_copy_filename(ini_file):
+                    print(f"  - Skipping copy INI: {ini_file}")
+                    continue
                 ini_path = os.path.join(XML_OUTPUT_DIR, ini_file)
                 xml_path = ini_to_xml(ini_path)
                 if xml_path:

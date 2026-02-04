@@ -77,8 +77,8 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000075.xml,Pabon Eli,1977-09-25,OS,,,NO,12.6,179.0,,,2022-04-25,DISTANCE,-3.5,Eye mismatch (CSV: OS 1ST EYE)
 00000076.xml,Mccarter Roberta,1973-10-12,OD,,,NO,12.6,618.0,,,2022-05-05,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
 00000077.xml,Mccarter Roberta,1973-10-12,OS,,,NO,12.6,618.0,,,2022-05-05,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
-00000078.xml,Chavera Bethany,1994-07-21,OD,,,NO,-12.6,,,,2022-05-09,DISTANCE,-5.0,Eye mismatch (CSV: OS 1ST EYE)
-00000079.xml,Chavera Bethany,1994-07-21,OS,,,NO,-12.6,,,,2022-05-09,DISTANCE,-5.0,Eye mismatch (CSV: OS 1ST EYE)
+00000078.xml,Chavera Bethany,1994-07-21,OD,,,NO,12.6,,,,2022-05-09,DISTANCE,-5.0,Eye mismatch (CSV: OS 1ST EYE)
+00000079.xml,Chavera Bethany,1994-07-21,OS,,,NO,12.6,,,,2022-05-09,DISTANCE,-5.0,Eye mismatch (CSV: OS 1ST EYE)
 00000080.xml,Rosas Melissa,2001-10-06,OD,,,NO,13.2,896.0,,,2022-05-09,DISTANCE,-14.0,Eye mismatch (CSV: OS 1ST EYE)
 00000081.xml,Rosas Melissa,2001-10-06,OS,,,NO,13.2,896.0,,,2022-05-09,DISTANCE,-14.0,Eye mismatch (CSV: OS 1ST EYE)
 00000082.xml,Wolf Brittany,1986-10-21,OD,,,NO,12.6,755.0,,,2022-05-09,DISTANCE,-12.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -140,8 +140,8 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000138.xml,Hudson Rebecca,1981-03-02,OS,,,NO,13.2,541.0,,,2022-07-11,DISTANCE,-7.0,Eye mismatch (CSV: OS 1ST EYE)
 00000139.xml,Barrera Letisha,1996-08-18,OD,,,NO,12.6,320.0,,,2022-07-13,DISTANCE,-8.0,Eye mismatch (CSV: OS 1ST EYE)
 00000140.xml,Barrera Letisha,1996-08-18,OS,,,NO,12.6,320.0,,,2022-07-13,DISTANCE,-8.0,Eye mismatch (CSV: OS 1ST EYE)
-00000141.xml,Waldrip Winston,2001-07-03,OD,,,NO,12.6,470.0,,,2022-07-13,DISTANCE,-4.5,"DOB mismatch (XML: 2001-07-03, CSV: 2001-07-30); Eye mismatch (CSV: OS 1ST EYE)"
-00000142.xml,Waldrip Winston,2001-07-03,OS,,,NO,12.6,470.0,,,2022-07-13,DISTANCE,-4.5,"DOB mismatch (XML: 2001-07-03, CSV: 2001-07-30); Eye mismatch (CSV: OS 1ST EYE)"
+00000141.xml,Waldrip Winston,2001-07-03,OD,,,NO,12.6,470.0,,,2022-07-13,DISTANCE,-4.5,Eye mismatch (CSV: OS 1ST EYE)
+00000142.xml,Waldrip Winston,2001-07-03,OS,,,NO,12.6,470.0,,,2022-07-13,DISTANCE,-4.5,Eye mismatch (CSV: OS 1ST EYE)
 00000143.xml,Phillips Tammy,1975-09-03,OD,,,NO,12.1,224.0,,,2022-07-14,DISTANCE,-12.0,Eye mismatch (CSV: OS 1ST EYE)
 00000144.xml,Phillips Tammy,1975-09-03,OS,,,NO,12.1,224.0,,,2022-07-14,DISTANCE,-12.0,Eye mismatch (CSV: OS 1ST EYE)
 00000145.xml,Hite Carma,1980-03-13,OD,,,NO,12.1,474.0,,,2022-07-18,DISTANCE,-8.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -159,7 +159,6 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000157.xml,Germaine Benjamin,1998-04-21,OD,13.2,634.0,NO,13.2,634.0,,,2024-12-16,DISTANCE,-9.5,Exact match
 00000158.xml,Germaine Benjamin,1998-04-21,OS,13.2,512.0,NO,13.2,512.0,,,2024-12-16,DISTANCE,-10.5,Exact match
 00000159.xml,Pellman Melanie,1990-06-05,OD,12.6,243.0,NO,12.6,243.0,,,2024-12-17,DISTANCE,-7.0,Exact match
-00000160 - Copy.xml,Pellman Melanie,1990-06-05,OS,13.2,928.0,NO,13.2,928.0,,,2024-12-17,DISTANCE,-7.5,Exact match
 00000160.xml,Pellman Melanie,1990-06-05,OS,13.2,928.0,NO,13.2,928.0,,,2024-12-17,DISTANCE,-7.5,Exact match
 00000161.xml,Estrada Eduardo,1994-12-28,OD,,,NO,13.2,464.0,,,2024-01-29,DISTANCE,-6.0,Eye mismatch (CSV: OS 1ST EYE)
 00000162.xml,Estrada Eduardo,1994-12-28,OS,,,NO,13.2,464.0,,,2024-01-29,DISTANCE,-6.0,Eye mismatch (CSV: OS 1ST EYE)
@@ -214,8 +213,8 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000211.xml,Guzman Emanuelle,1994-10-08,OS,,,NO,12.6,303.0,,,2025-03-24,DISTANCE,-13.0,Eye mismatch (CSV: OS 1ST EYE)
 00000212.xml,Williams Sawyer,1995-10-02,OD,,,NO,13.2,,,,2022-07-18,DISTANCE,-14.5,Eye mismatch (CSV: OS 1ST EYE)
 00000213.xml,Williams Sawyer,1995-10-02,OS,,,NO,13.2,,,,2022-07-18,DISTANCE,-14.5,Eye mismatch (CSV: OS 1ST EYE)
-00000214.xml,Schoeman Deon,1968-11-03,OD,,,NO,12.6,400.0,,,2022-07-18,DISTANCE,-5.0,"DOB mismatch (XML: 1968-11-03, CSV: 1986-11-03); Eye mismatch (CSV: OS 1ST EYE)"
-00000215.xml,Schoeman Deon,1968-11-03,OS,,,NO,12.6,400.0,,,2022-07-18,DISTANCE,-5.0,"DOB mismatch (XML: 1968-11-03, CSV: 1986-11-03); Eye mismatch (CSV: OS 1ST EYE)"
+00000214.xml,Schoeman Deon,1968-11-03,OD,,,NO,12.6,400.0,,,2022-07-18,DISTANCE,-5.0,Eye mismatch (CSV: OS 1ST EYE)
+00000215.xml,Schoeman Deon,1968-11-03,OS,,,NO,12.6,400.0,,,2022-07-18,DISTANCE,-5.0,Eye mismatch (CSV: OS 1ST EYE)
 00000216.xml,Brandon April,1981-06-04,OD,,,NO,12.6,666.0,,,2022-07-18,DISTANCE,-6.5,Eye mismatch (CSV: OS 1ST EYE)
 00000217.xml,Brandon April,1981-06-04,OS,,,NO,12.6,666.0,,,2022-07-18,DISTANCE,-6.5,Eye mismatch (CSV: OS 1ST EYE)
 00000218.xml,Hernandez Atilana,2002-01-16,OD,,,NO,12.6,314.0,,,2022-07-25,DISTANCE,-9.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -275,6 +274,7 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000272.xml,Jones Maxwell,1993-03-09,OS,12.1,611.0,NO,12.1,611.0,,,2024-07-15,DISTANCE,-9.0,Exact match
 00000273.xml,Ciminera Brianna,1998-02-14,OS,12.6,269.0,NO,12.6,269.0,,,2024-09-16,DISTANCE,-4.5,Exact match
 00000274.xml,Ciminera Brianna,1998-02-14,OD,12.6,294.0,NO,12.6,294.0,,,2024-09-16,DISTANCE,-4.5,Exact match
+00000275.xml,Hirabayashi Rachel,1995-08-19,OS,13.2,454.0,NO,13.2,454.0,,,2024-10-14,DISTANCE,-7.5,Exact match
 00000276.xml,Hirabayashi Rachel,1995-08-19,OS,13.2,454.0,NO,13.2,454.0,,,2024-10-14,DISTANCE,-7.5,Exact match
 00000277.xml,Hirabayashi Rachel,1995-08-19,OS,13.2,454.0,NO,13.2,454.0,,,2024-10-14,DISTANCE,-7.5,Exact match
 00000278.xml,Hirabayashi Rachel,1995-08-19,OD,13.2,605.0,NO,13.2,605.0,,,2024-10-14,DISTANCE,-7.5,Exact match
@@ -410,8 +410,8 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000408.xml,Oliver Nyssa,1991-11-28,OS,,,NO,12.6,490.0,,,2022-11-21,DISTANCE,-12.5,Eye mismatch (CSV: OS 1ST EYE)
 00000409.xml,Gauna Rodolfo,1984-05-11,OD,,,NO,13.2,592.0,,,2022-11-21,DISTANCE,-8.0,Eye mismatch (CSV: OS 1ST EYE)
 00000410.xml,Gauna Rodolfo,1984-05-11,OS,,,NO,13.2,592.0,,,2022-11-21,DISTANCE,-8.0,Eye mismatch (CSV: OS 1ST EYE)
-00000411.xml,Chowdary Nithin,1996-05-09,OD,,,YES,13.2,291.0,13.7,54.0,2022-12-05,DISTANCE,-7.5,"DOB mismatch (XML: 1996-05-09, CSV: 1993-05-09); Eye mismatch (CSV: OS 1ST EYE)"
-00000412.xml,Chowdary Nithin,1996-05-09,OS,,,YES,13.2,291.0,13.7,54.0,2022-12-05,DISTANCE,-7.5,"DOB mismatch (XML: 1996-05-09, CSV: 1993-05-09); Eye mismatch (CSV: OS 1ST EYE)"
+00000411.xml,Chowdary Nithin,1996-05-09,OD,,,YES,13.2,291.0,13.7,54.0,2022-12-05,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
+00000412.xml,Chowdary Nithin,1996-05-09,OS,,,YES,13.2,291.0,13.7,54.0,2022-12-05,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
 00000413.xml,Serrano Stacy,2002-08-17,OD,,,NO,12.6,538.0,,,2022-12-19,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000414.xml,Serrano Stacy,2002-08-17,OS,,,NO,12.6,538.0,,,2022-12-19,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000415.xml,Jung Susie,2000-09-29,OD,,,NO,12.6,438.0,,,2022-12-19,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -420,8 +420,8 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000418.xml,Hinojosa Debra,1992-09-08,OS,,,NO,12.1,624.0,,,2022-12-19,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
 00000419.xml,Foster Deanna,1988-04-25,OD,,,NO,12.6,189.0,,,2022-12-28,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
 00000420.xml,Foster Deanna,1988-04-25,OS,,,NO,12.6,189.0,,,2022-12-28,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
-00000421.xml,Saunders Terrell,1986-04-28,OD,,,NO,13.2,346.0,,,2023-01-16,DISTANCE,-6.5,"DOB mismatch (XML: 1986-04-28, CSV: 1986-04-02); Eye mismatch (CSV: OS 1ST EYE)"
-00000422.xml,Saunders Terrell,1986-04-28,OS,,,NO,13.2,346.0,,,2023-01-16,DISTANCE,-6.5,"DOB mismatch (XML: 1986-04-28, CSV: 1986-04-02); Eye mismatch (CSV: OS 1ST EYE)"
+00000421.xml,Saunders Terrell,1986-04-28,OD,,,NO,13.2,346.0,,,2023-01-16,DISTANCE,-6.5,Eye mismatch (CSV: OS 1ST EYE)
+00000422.xml,Saunders Terrell,1986-04-28,OS,,,NO,13.2,346.0,,,2023-01-16,DISTANCE,-6.5,Eye mismatch (CSV: OS 1ST EYE)
 00000423.xml,Bourgeois Mischelle,1978-07-03,OD,,,NO,13.2,566.0,,,2023-01-16,DISTANCE,-15.0,Eye mismatch (CSV: OS 1ST EYE)
 00000424.xml,Bourgeois Mischelle,1978-07-03,OS,,,NO,13.2,566.0,,,2023-01-16,DISTANCE,-15.0,Eye mismatch (CSV: OS 1ST EYE)
 00000425.xml,Arnold Tiffany,1992-09-16,OD,,,NO,12.6,432.0,,,2023-01-23,DISTANCE,-7.0,Eye mismatch (CSV: OS 1ST EYE)
@@ -448,6 +448,7 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000446.xml,Marinai Matteo,1985-08-02,OD,,,NO,12.6,474.0,,,2023-04-17,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000447.xml,Marinai Matteo,1985-08-02,OS,,,NO,12.6,474.0,,,2023-04-17,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000448.xml,Ruiz Joseph,1995-09-13,OD,,,NO,13.2,557.0,,,2023-04-17,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
+00000449.xml,Ruiz Joseph,1995-09-13,OS,,,NO,13.2,557.0,,,2023-04-17,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
 00000450.xml,Qazi Anoosha,1999-12-17,OD,,,NO,12.6,554.0,,,2023-04-17,DISTANCE,-12.0,Eye mismatch (CSV: OS 1ST EYE)
 00000451.xml,Salazar Victoria,1990-07-11,OD,,,NO,12.6,435.0,,,2023-05-01,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
 00000452.xml,Salazar Victoria,1990-07-11,OS,,,NO,12.6,435.0,,,2023-05-01,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -569,6 +570,7 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000568.xml,Sellers Jonathan,1988-11-19,OD,,,NO,12.6,499.0,,,2024-02-26,DISTANCE,-9.5,Eye mismatch (CSV: OS 1ST EYE)
 00000569.xml,Sellers Jonathan,1988-11-19,OS,,,NO,12.6,499.0,,,2024-02-26,DISTANCE,-9.5,Eye mismatch (CSV: OS 1ST EYE)
 00000570.xml,Martinez Gerardo,1992-02-09,OD,,,NO,12.1,323.0,,,2024-02-26,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
+00000571.xml,Martinez Gerardo,1992-02-09,OS,,,NO,12.1,323.0,,,2024-02-26,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000572.xml,Kozielski Trent,2001-08-16,OD,,,NO,12.6,365.0,,,2024-02-26,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
 00000573.xml,Kozielski Trent,2001-08-16,OS,,,NO,12.6,365.0,,,2024-02-26,DISTANCE,-7.5,Eye mismatch (CSV: OS 1ST EYE)
 00000574.xml,Mckinney Anna,1989-02-28,OD,,,NO,12.1,288.0,,,2024-03-04,DISTANCE,-9.0,Eye mismatch (CSV: OS 1ST EYE)
@@ -578,6 +580,7 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000578.xml,Martin Caitlin,1988-11-06,OD,,,NO,12.6,314.0,,,2024-03-18,DISTANCE,-5.5,Eye mismatch (CSV: OS 1ST EYE)
 00000579.xml,Martin Caitlin,1988-11-06,OS,,,NO,12.6,314.0,,,2024-03-18,DISTANCE,-5.5,Eye mismatch (CSV: OS 1ST EYE)
 00000580.xml,Aikanoff Yazmin,1999-01-28,OD,,,NO,12.1,378.0,,,2024-04-08,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
+00000581.xml,Aikanoff Yazmin,1999-01-28,OS,,,NO,12.1,378.0,,,2024-04-08,DISTANCE,-11.5,Eye mismatch (CSV: OS 1ST EYE)
 00000582.xml,Pham Vi,1991-05-29,OD,,,NO,12.1,454.0,,,2024-04-22,DISTANCE,-11.0,Eye mismatch (CSV: OS 1ST EYE)
 00000583.xml,Pham Vi,1991-05-29,OS,,,NO,12.1,454.0,,,2024-04-22,DISTANCE,-11.0,Eye mismatch (CSV: OS 1ST EYE)
 00000584.xml,Young Rachel,1983-09-09,OD,,,NO,12.6,893.0,,,2024-06-03,DISTANCE,-8.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -658,8 +661,8 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000659.xml,Craig Kristina,1978-07-25,OD,,,NO,13.2,434.0,,,2025-08-04,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000660.xml,Craig Kristina,1978-07-25,OS,,,NO,13.2,434.0,,,2025-08-04,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
 00000661.xml,Lerma Lydia,1999-10-08,OD,,,NO,12.6,251.0,,,2025-08-04,DISTANCE,-11.5,Eye mismatch (CSV: OD ONLY EYE)
-00000662.xml,Martinez Robert,2005-08-05,OD,,,YES,12.6,215.0,12.6,575.0,2025-08-04,DISTANCE,-12.5,"DOB mismatch (XML: 2005-08-05, CSV: 2003-08-05); Eye mismatch (CSV: OS 1ST EYE)"
-00000663.xml,Martinez Robert,2005-08-05,OS,,,YES,12.6,215.0,12.6,575.0,2025-08-04,DISTANCE,-12.5,"DOB mismatch (XML: 2005-08-05, CSV: 2003-08-05); Eye mismatch (CSV: OS 1ST EYE)"
+00000662.xml,Martinez Robert,2005-08-05,OD,,,YES,12.6,215.0,12.6,575.0,2025-08-04,DISTANCE,-12.5,Eye mismatch (CSV: OS 1ST EYE)
+00000663.xml,Martinez Robert,2005-08-05,OS,,,YES,12.6,215.0,12.6,575.0,2025-08-04,DISTANCE,-12.5,Eye mismatch (CSV: OS 1ST EYE)
 00000664.xml,Ayarza Susan,1985-10-28,OD,,,NO,12.6,737.0,,,2025-08-04,DISTANCE,-6.5,Eye mismatch (CSV: OS 1ST EYE)
 00000665.xml,Ayarza Susan,1985-10-28,OS,,,NO,12.6,737.0,,,2025-08-04,DISTANCE,-6.5,Eye mismatch (CSV: OS 1ST EYE)
 00000666.xml,Diel Atie,1983-08-26,OD,,,NO,12.6,310.0,,,2025-08-18,DISTANCE,-10.5,Eye mismatch (CSV: OS 1ST EYE)
@@ -869,6 +872,7 @@ XML File,Name,DOB,Eye,Lens Size,Vault,Exchange,Original Lens Size,Original Vault
 00000870.xml,Cyrus Jessie,1992-11-06,OS,,,NO,,,,,2023-07-24,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)
 00000871.xml,Cyrus Jessie,1992-11-06,OD,,,NO,,,,,2023-07-24,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)
 00000872.xml,Garcia Susannah,1986-02-11,OS,,,NO,,,,,2023-09-11,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)
+00000873.xml,Garcia Susannah,1986-02-11,OD,,,NO,,,,,2023-09-11,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)
 00000874.xml,Garcia Susannah,1986-02-11,OD,,,NO,,,,,2023-09-11,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)
 00000875.xml,Parkhurst Isaac,2006-06-19,OS,,,NO,,,,,2024-06-13,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)
 00000876.xml,Parkhurst Isaac,2006-06-19,OD,,,NO,,,,,2024-06-13,DISTANCE,,Eye mismatch (CSV: OS 1ST EYE)

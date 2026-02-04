@@ -26,6 +26,7 @@ warnings.filterwarnings('ignore')
 
 # Import performance tracking
 from track_performance import save_run
+from scripts.pipeline.feature_config import TRAINING_FEATURES
 
 
 def get_nomogram_size(wtw, acd):
@@ -61,9 +62,8 @@ def load_and_prepare_data():
     
     df = pd.read_csv('data/processed/training_data.csv')
     
-    # CORE FEATURES
-    feature_cols = ['Age', 'WTW', 'ACD_internal', 'ICL_Power', 'AC_shape_ratio', 
-                    'SimK_steep', 'ACV', 'TCRP_Km', 'TCRP_Astigmatism']
+    # Use the same feature list as preprocessing gates
+    feature_cols = TRAINING_FEATURES
     target_cols = ['Lens_Size', 'Vault']
     
     # Filter complete cases

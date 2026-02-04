@@ -16,6 +16,7 @@ from match_xml_csv import (
     create_name_variations,
     load_csv_data
 )
+from feature_config import TRAINING_FEATURES
 
 
 XML_DIR = "XML files"
@@ -237,7 +238,7 @@ def merge_with_csv(xml_features, csv_lookup):
         return None
     
     # Try to find match in CSV using same logic as match_xml_csv.py
-    name_variations = create_name_variations(name)
+    name_variations = create_name_variations(name, assume_surname_first=True)
     
     matched_data = None
     matched_key = None
@@ -398,7 +399,7 @@ def extract_all_features():
             continue
         
         # Try to match using multiple strategies
-        name_variations = create_name_variations(name)
+        name_variations = create_name_variations(name, assume_surname_first=True)
         matched_data = None
         
         # Strategy 1: Exact match (name + DOB + eye)
@@ -546,8 +547,8 @@ def extract_all_features():
     
     # Save flagged incomplete cases (have outcomes but missing features)
     both_outcomes = df[['Vault', 'Lens_Size']].notna().all(axis=1)
-    # UPDATED: Only flag if missing the Top 6 critical features (with ICL_Power)
-    feature_cols = ['Age', 'WTW', 'ACD_internal', 'ICL_Power', 'AC_shape_ratio', 'SimK_steep']
+    # Flag based on configurable training feature list
+    feature_cols = TRAINING_FEATURES
     all_features = df[feature_cols].notna().all(axis=1)
     incomplete = both_outcomes & ~all_features
     
