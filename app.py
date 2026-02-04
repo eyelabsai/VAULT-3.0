@@ -181,7 +181,7 @@ def main():
         for col in feature_names:
             if col not in df_eng.columns:
                 df_eng[col] = np.nan
-        X = df_eng[feature_names]
+        X = df_eng[feature_names].fillna(0)
         X_scaled = lens_scaler.transform(X)
         
         # Predictions
