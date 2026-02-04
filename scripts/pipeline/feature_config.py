@@ -7,4 +7,6 @@ TRAINING_FEATURES = [
     "Age",
     "WTW",
     "ACD_internal",
+    "ACV",
+    "SimK_steep",
 ]
