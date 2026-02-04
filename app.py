@@ -12,7 +12,6 @@ import pickle
 import warnings
 import configparser
 from datetime import datetime, date
-from scripts.prediction.gestalt_postprocess import apply_gestalt_advice
 
 warnings.filterwarnings('ignore')
 
@@ -155,9 +154,6 @@ def main():
         age = st.number_input("Age", 18, 90, clamp(ini_vals.get('Age', 35), 18, 90))
         wtw = st.number_input("WTW (mm)", 10.0, 15.0, clamp(ini_vals.get('WTW', 11.8), 10.0, 15.0), step=0.1)
         acd = st.number_input("ACD Internal (mm)", 2.0, 5.0, clamp(ini_vals.get('ACD_internal', 3.20), 2.0, 5.0), step=0.01)
-        toric = st.checkbox("Toric lens planned? (WTW+1 exception)", value=False)
-        gestalt_advisory = st.checkbox("Enable Gestalt Advisory (post-processing)", value=False)
-        
         # ICL Power removed from UI as per user request
         # Setting a standard median value in background for model stability
         pwr = -9.0 
@@ -193,28 +189,6 @@ def main():
         top_indices = np.argsort(lens_probs)[::-1]
         best_size = lens_classes[top_indices[0]]
         best_prob = lens_probs[top_indices[0]]
-        best_size_val = float(best_size)
-
-        # Soft WTW+1 cap (non-absolute): prefer a smaller size only if confidence is close
-        soft_recommended = best_size_val
-        soft_note = None
-        if not toric:
-            wtw_cap = wtw + 1.0
-            if best_size_val > wtw_cap:
-                eligible = [
-                    (float(size), prob)
-                    for size, prob in zip(lens_classes, lens_probs)
-                    if float(size) <= wtw_cap
-                ]
-                if eligible:
-                    alt_size, alt_prob = max(eligible, key=lambda x: x[1])
-                    if alt_prob >= (best_prob - 0.10):
-                        soft_recommended = alt_size
-                        soft_note = f"WTW+1 soft cap suggests {alt_size:.1f}mm (prob {alt_prob:.1%})"
-                    else:
-                        soft_note = "WTW+1 soft cap exceeded, but model confidence is higher for a larger size"
-                else:
-                    soft_note = "WTW+1 soft cap exceeded; no smaller size available"
         
         # Vault prediction
         vault_scaled = vault_scaler.transform(X)
@@ -225,10 +199,8 @@ def main():
         col_res1, col_res2 = st.columns([1, 1])
         
         with col_res1:
-            st.markdown(f"### Lens Size: **{soft_recommended:.1f}mm**")
-            st.write(f"**Model Top Pick:** {best_size_val:.1f}mm ({best_prob:.1%})")
-            if soft_note:
-                st.warning(soft_note)
+            st.markdown(f"### Lens Size: **{best_size}mm**")
+            st.write(f"**Probability:** {best_prob:.1%}")
             
         with col_res2:
             st.markdown(f"### Predicted Vault: **{int(pred_vault)}µm**")
@@ -240,19 +212,6 @@ def main():
         if pred_vault < 250: st.error("Low Vault Predicted (Below 250µm)")
         elif pred_vault > 800: st.warning("High Vault Predicted (Above 800µm)")
         else: st.success("Optimal Vault Range Predicted")
-
-        # Gestalt advisory (post-processing)
-        advice = apply_gestalt_advice(
-            input_data=input_data,
-            model_size=best_size_val,
-            model_prob=best_prob,
-            enabled=gestalt_advisory,
-            toric=toric,
-        )
-        if advice:
-            st.markdown("### Gestalt Advisory")
-            for item in advice:
-                st.warning(f"{item['recommendation']} — {item['reason']}")
 
         # Probability Breakdown
         st.markdown("### Size Probability Distribution")
