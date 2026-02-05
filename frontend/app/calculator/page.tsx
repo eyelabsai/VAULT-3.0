@@ -442,18 +442,6 @@ export default function Calculator() {
                   Based on the file uploaded and surgical results of thousands of eyes, 
                   the size most likely to result in an acceptable vault range is as above.
                 </p>
-                <p>
-                  The probability of an outlier requiring repeat surgical intervention 
-                  for size mismatch is &lt;{(() => {
-                    const v = result.vault_pred_um;
-                    if (v < 400) return 36;
-                    if (v < 500) return 15;
-                    if (v < 600) return 7;
-                    if (v < 700) return 6;
-                    if (v < 800) return 20;
-                    return 83;
-                  })()}%
-                </p>
                 <div className="color-legend">
                   <p><span className="legend-green">Green</span> — Indicates the size that best aligns with this eye's measured anatomy and is expected to produce a vault closest to the ideal range based on prior results.</p>
                   <p><span className="legend-yellow">Yellow</span> — Indicates a size that is anatomically plausible based on surgeon discretion.</p>
