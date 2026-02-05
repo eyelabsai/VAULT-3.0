@@ -427,8 +427,8 @@ export default function Calculator() {
           </div>
 
           <div className="vault-section">
-            <h3 className="vault-title">PREDICTED VAULT</h3>
-            <div className="vault-value">{result ? `${result.vault_pred_um} µm` : "—"}</div>
+            {/* <h3 className="vault-title">PREDICTED VAULT</h3>
+            <div className="vault-value">{result ? `${result.vault_pred_um} µm` : "—"}</div> */}
             {result && (
               <p className="vault-range">
                 Expected Range: {result.vault_range_um[0]} - {result.vault_range_um[1]} µm
