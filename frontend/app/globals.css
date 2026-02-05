@@ -280,12 +280,12 @@ body {
 }
 
 .eye-badge {
-  font-size: 16px;
+  font-size: 22px;
   color: #ffffff;
   letter-spacing: 1px;
-  padding: 8px 24px;
-  border-radius: 6px;
-  font-weight: 500;
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-weight: 600;
 }
 
 .eye-badge.eye-right {
