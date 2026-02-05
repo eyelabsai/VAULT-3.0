@@ -1,7 +1,21 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Home() {
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const router = useRouter();
+
+  const handleStartClick = () => {
+    setShowDisclaimer(true);
+  };
+
+  const handleAccept = () => {
+    router.push("/calculator");
+  };
+
   return (
     <main className="landing-page">
       <div className="landing-container">
@@ -19,9 +33,9 @@ export default function Home() {
             Pentacam-Based, AI-Driven ICL Sizing Nomogram
           </p>
           
-          <Link href="/calculator" className="landing-button">
+          <button onClick={handleStartClick} className="landing-button">
             START
-          </Link>
+          </button>
         </div>
         
         <footer className="landing-footer">
@@ -36,6 +50,23 @@ export default function Home() {
           </a>
         </footer>
       </div>
+
+      {/* Disclaimer Modal */}
+      {showDisclaimer && (
+        <div className="disclaimer-overlay" onClick={() => setShowDisclaimer(false)}>
+          <div className="disclaimer-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="disclaimer-title">📋 Clinical Disclaimer</h2>
+            <p className="disclaimer-text">
+              Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
+              It is not intended to replace surgeon judgement, and does not claim to result in 
+              zero sizing errors or potential need for additional surgical interventions.
+            </p>
+            <button className="disclaimer-accept-btn" onClick={handleAccept}>
+              ✓ Accept & Continue
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
