@@ -443,10 +443,25 @@ body {
 
 /* Print Styles */
 @media print {
+  body {
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .calc-page {
+    background: #ffffff !important;
+  }
+
+  .calc-header {
+    display: none !important;
+  }
+
   .calc-sidebar,
   .calc-btn-primary,
   .print-btn,
-  .browse-btn {
+  .browse-btn,
+  .calc-footer {
     display: none !important;
   }
   
@@ -456,6 +471,75 @@ body {
   
   .calc-results {
     width: 100%;
+    padding: 20px;
+  }
+
+  .results-header {
+    margin-bottom: 24px;
+  }
+
+  .patient-name {
+    color: #000000 !important;
+  }
+
+  .eye-badge {
+    color: #000000 !important;
+    background: #e5e7eb !important;
+    border-color: #9ca3af !important;
+  }
+
+  .size-section-wrapper {
+    background: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+  }
+
+  .size-title {
+    color: #374151 !important;
+  }
+
+  .size-card {
+    background: #ffffff !important;
+    border-color: #d1d5db !important;
+  }
+
+  .size-card.best {
+    background: #dcfce7 !important;
+    border-color: #22c55e !important;
+  }
+
+  .size-card.second {
+    background: #fef9c3 !important;
+    border-color: #eab308 !important;
+  }
+
+  .size-value {
+    color: #000000 !important;
+  }
+
+  .size-card.best .size-value,
+  .size-card.best .size-prob {
+    color: #166534 !important;
+  }
+
+  .size-card.second .size-value,
+  .size-card.second .size-prob {
+    color: #854d0e !important;
+  }
+
+  .size-prob {
+    color: #6b7280 !important;
+  }
+
+  .vault-title {
+    color: #374151 !important;
+  }
+
+  .vault-value {
+    color: #000000 !important;
+  }
+
+  .vault-range {
+    color: #6b7280 !important;
   }
 }
 

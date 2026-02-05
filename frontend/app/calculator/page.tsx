@@ -155,7 +155,17 @@ export default function Calculator() {
   };
 
   const handlePrint = () => {
+    const lastName = form.LastName || "";
+    const firstName = form.FirstName || "";
+    const eye = form.Eye || "";
+    const namePart = `${lastName}${firstName ? "_" + firstName : ""}`.trim();
+    const fileName = namePart 
+      ? `${namePart}_${eye}_ICL_Vault`.replace(/\s+/g, "_")
+      : "ICL_Vault_Report";
+    
+    document.title = fileName;
     window.print();
+    document.title = "ICL Vault";
   };
 
   const sizeProbabilities = result?.size_probabilities || defaultSizes;
