@@ -290,59 +290,75 @@ body {
 
 .size-section {
   margin-bottom: 48px;
+  text-align: center;
 }
 
 .size-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  color: #9ca3af;
   margin: 0 0 24px;
   letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .size-grid {
-  display: grid;
+  display: inline-grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 40px;
-  max-width: 700px;
+  gap: 16px;
 }
 
 .size-card {
   text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px 24px;
+  transition: all 0.2s;
 }
 
-.size-card.best .size-value {
-  color: #ed2024;
+.size-card.best {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .size-value {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 300;
   color: #ffffff;
   margin-bottom: 4px;
 }
 
 .size-prob {
-  font-size: 24px;
+  font-size: 20px;
   color: #6b7280;
+}
+
+.size-card.best .size-prob {
+  color: #ffffff;
 }
 
 .vault-section {
   margin-bottom: 48px;
+  text-align: center;
 }
 
 .vault-title {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   color: #ffffff;
   margin: 0 0 8px;
   letter-spacing: 1px;
 }
 
 .vault-range {
-  font-size: 18px;
+  font-size: 16px;
   color: #6b7280;
   margin: 0;
+}
+
+.print-btn-container {
+  text-align: center;
 }
 
 .print-btn {
