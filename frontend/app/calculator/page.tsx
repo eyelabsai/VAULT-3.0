@@ -161,6 +161,7 @@ export default function Calculator() {
   const patientName = form.LastName || form.FirstName 
     ? `${form.LastName || ""}${form.LastName && form.FirstName ? ", " : ""}${form.FirstName || ""}`
     : "LAST NAME, FIRST NAME";
+  const eyeLabel = form.Eye || "—";
 
   return (
     <main className="calc-page">
@@ -339,7 +340,7 @@ export default function Calculator() {
         <section className="calc-results">
           <div className="results-header">
             <h2 className="patient-name">{patientName}</h2>
-            <span className="eye-label">{form.Eye || "RIGHT EYE"}</span>
+            <span className="eye-label">{eyeLabel}</span>
           </div>
 
           <div className="size-section">
@@ -352,7 +353,7 @@ export default function Calculator() {
                 >
                   <div className="size-value">{item.size_mm}</div>
                   <div className="size-prob">
-                    {result ? `${(item.probability * 100).toFixed(0)}%` : "XX%"}
+                    {result ? `${(item.probability * 100).toFixed(0)}%` : "—%"}
                   </div>
                 </div>
               ))}
