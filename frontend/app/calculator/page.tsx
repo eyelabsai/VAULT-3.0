@@ -179,14 +179,6 @@ export default function Calculator() {
       <div className="calc-layout">
         {/* Left Sidebar */}
         <aside className="calc-sidebar">
-          <button 
-            className="calc-btn-primary" 
-            onClick={handlePredict} 
-            disabled={status === "loading"}
-          >
-            {status === "loading" ? "Calculating..." : "Calculate"}
-          </button>
-
           <div className="sidebar-section">
             <div className="sidebar-title">Import Pentacam INI</div>
             <div 
@@ -217,6 +209,13 @@ export default function Calculator() {
                 onChange={(e) => handleIniUpload(e.target.files?.[0] ?? null)}
               />
             </div>
+            <button 
+              className="calc-btn-primary" 
+              onClick={handlePredict} 
+              disabled={status === "loading"}
+            >
+              {status === "loading" ? "Calculating..." : "Calculate"}
+            </button>
           </div>
 
           <div className="sidebar-section">
