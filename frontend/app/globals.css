@@ -519,6 +519,11 @@ body {
   color: #ffffff;
 }
 
+.disclaimer-warning {
+  color: #f87171;
+  font-weight: 500;
+}
+
 .color-legend {
   margin-top: 16px;
   padding-top: 12px;

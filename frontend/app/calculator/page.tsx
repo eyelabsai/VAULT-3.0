@@ -438,10 +438,22 @@ export default function Calculator() {
             )}
             {result && (
               <div className="results-disclaimer">
-                <p>
-                  Based on the file uploaded and surgical results of thousands of eyes, 
-                  the size most likely to result in an acceptable vault range is as above.
-                </p>
+                {(() => {
+                  const v = result.vault_pred_um;
+                  const outlierPct = v < 400 ? 36 : v < 500 ? 15 : v < 600 ? 7 : v < 700 ? 6 : v < 800 ? 20 : 83;
+                  if (outlierPct > 10) {
+                    return (
+                      <p className="disclaimer-warning">
+                        WARNING: Based on eye anatomy, there is an &gt;10% risk the resulting vault may be outside the manufacturer's specified range (250–900 µm).
+                      </p>
+                    );
+                  }
+                  return (
+                    <p>
+                      Based on the file uploaded and surgical results of thousands of eyes, the size most likely to result in an acceptable vault range is as above. The probability of an outlier requiring repeat surgical intervention for size mismatch is &lt;10% based on the data this model was trained on.
+                    </p>
+                  );
+                })()}
                 <div className="color-legend">
                   <p><span className="legend-green">Green</span> — Indicates the size that best aligns with this eye's measured anatomy and is expected to produce a vault closest to the ideal range based on prior results.</p>
                   <p><span className="legend-yellow">Yellow</span> — Indicates a size that is anatomically plausible based on surgeon discretion.</p>
