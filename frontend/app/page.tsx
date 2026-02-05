@@ -26,10 +26,10 @@ export default function Home() {
         
         <footer className="landing-footer">
           <Image
-            src="/images/vault flavicon.svg"
+            src="/images/bimini-darkmode.svg"
             alt="Bimini"
-            width={100}
-            height={30}
+            width={120}
+            height={40}
             className="footer-logo"
           />
         </footer>
