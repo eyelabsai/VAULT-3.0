@@ -140,9 +140,10 @@ export default function Calculator() {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.name.endsWith(".ini")) {
+    if (file && file.name.toLowerCase().endsWith(".ini")) {
       handleIniUpload(file);
     }
   };
@@ -227,8 +228,9 @@ export default function Calculator() {
             <div className="sidebar-title">Import Pentacam INI</div>
             <div 
               className={`dropzone ${isDragging ? "dragging" : ""}`}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
+              onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
               onDrop={handleDrop}
             >
               {uploadedFileName ? (
