@@ -25,13 +25,15 @@ export default function Home() {
         </div>
         
         <footer className="landing-footer">
-          <Image
-            src="/images/bimini-darkmode.svg"
-            alt="Bimini"
-            width={120}
-            height={40}
-            className="footer-logo"
-          />
+          <a href="https://biminiai.com/" target="_blank" rel="noopener noreferrer">
+            <Image
+              src="/images/bimini-darkmode.svg"
+              alt="Bimini"
+              width={120}
+              height={40}
+              className="footer-logo"
+            />
+          </a>
         </footer>
       </div>
     </main>

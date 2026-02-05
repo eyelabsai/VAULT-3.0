@@ -195,14 +195,14 @@ export default function Calculator() {
   return (
     <main className="calc-page">
       {/* Bimini Logo Top Right */}
-      <div className="bimini-logo-topright">
+      <a href="https://biminiai.com/" target="_blank" rel="noopener noreferrer" className="bimini-logo-topright">
         <Image
           src="/images/bimini-darkmode.svg"
           alt="Bimini"
           width={100}
           height={32}
         />
-      </div>
+      </a>
 
       {/* Header */}
       <header className="calc-header">
