@@ -407,7 +407,7 @@ export default function Calculator() {
 
           <div className="size-section">
             <div className="size-section-wrapper">
-              <h3 className="size-title">BEST SIZE PROBABILITY</h3>
+              <h3 className="size-title">VAULT 3 SUGGESTED SIZE</h3>
               <div className="size-grid">
                 {sizeProbabilities.map((item) => {
                   const isBest = result && item.size_mm === result.lens_size_mm;
