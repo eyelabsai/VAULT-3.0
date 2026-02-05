@@ -299,7 +299,7 @@ body {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 24px 32px;
+  padding: 32px 48px;
 }
 
 .size-title {
@@ -314,7 +314,7 @@ body {
 .size-grid {
   display: inline-grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 24px;
 }
 
 .size-card {
@@ -322,7 +322,7 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  padding: 20px 24px;
+  padding: 24px 32px;
   transition: all 0.2s;
 }
 
