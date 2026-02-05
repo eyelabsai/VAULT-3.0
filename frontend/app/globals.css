@@ -211,23 +211,32 @@ body {
 
 .bio-field {
   margin-bottom: 0;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 8px;
 }
 
 .bio-field:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 3px solid rgba(59, 130, 246, 0.4);
 }
 
 .bio-field:nth-child(even) {
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(168, 85, 247, 0.08);
+  border-left: 3px solid rgba(168, 85, 247, 0.4);
+}
+
+.bio-field:nth-child(odd) label {
+  color: #93c5fd;
+}
+
+.bio-field:nth-child(even) label {
+  color: #d8b4fe;
 }
 
 .bio-field label {
   display: block;
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
   margin-bottom: 8px;
 }
 
