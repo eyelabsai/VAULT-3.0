@@ -106,12 +106,29 @@ export default function Calculator() {
       const payload = await response.json();
       const extracted = payload.extracted || {};
 
-      setForm((prev) => ({
-        ...prev,
+      const newForm = {
+        ...form,
         ...extracted,
-        ICL_Power: prev.ICL_Power
-      }));
+        ICL_Power: form.ICL_Power
+      };
+      setForm(newForm);
       setUploadedFileName(file.name);
+      
+      // Auto-run prediction after INI upload
+      try {
+        const predictResponse = await fetch(`${apiBase}/predict`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newForm)
+        });
+
+        if (predictResponse.ok) {
+          const predictPayload = await predictResponse.json();
+          setResult(predictPayload);
+        }
+      } catch {
+        // Silently fail prediction, user can manually calculate
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
       setUploadedFileName(null);

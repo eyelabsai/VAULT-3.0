@@ -215,8 +215,9 @@ body {
 
 .bio-field label {
   display: block;
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e5e7eb;
   margin-bottom: 6px;
 }
 
