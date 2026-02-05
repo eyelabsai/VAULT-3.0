@@ -53,7 +53,7 @@ export default function Home() {
 
       {/* Disclaimer Modal */}
       {showDisclaimer && (
-        <div className="disclaimer-overlay" onClick={() => setShowDisclaimer(false)}>
+        <div className="disclaimer-overlay">
           <div className="disclaimer-modal" onClick={(e) => e.stopPropagation()}>
             <h2 className="disclaimer-title">Clinical Disclaimer</h2>
             <p className="disclaimer-text">
@@ -61,9 +61,14 @@ export default function Home() {
               It is not intended to replace surgeon judgement, and does not claim to result in 
               zero sizing errors or potential need for additional surgical interventions.
             </p>
-            <button className="disclaimer-accept-btn" onClick={handleAccept}>
-              ✓ Accept & Continue
-            </button>
+            <div className="disclaimer-buttons">
+              <button className="disclaimer-decline-btn" onClick={() => window.location.href = "https://google.com"}>
+                Decline
+              </button>
+              <button className="disclaimer-accept-btn" onClick={handleAccept}>
+                Accept & Continue
+              </button>
+            </div>
           </div>
         </div>
       )}

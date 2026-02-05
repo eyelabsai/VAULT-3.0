@@ -816,6 +816,29 @@ body {
   margin: 0 0 24px;
 }
 
+.disclaimer-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.disclaimer-decline-btn {
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #9ca3af;
+  background: transparent;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.disclaimer-decline-btn:hover {
+  color: #ffffff;
+  border-color: #6b7280;
+}
+
 .disclaimer-accept-btn {
   padding: 14px 40px;
   font-size: 16px;
