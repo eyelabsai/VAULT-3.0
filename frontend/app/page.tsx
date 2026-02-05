@@ -55,7 +55,7 @@ export default function Home() {
       {showDisclaimer && (
         <div className="disclaimer-overlay" onClick={() => setShowDisclaimer(false)}>
           <div className="disclaimer-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="disclaimer-title">📋 Clinical Disclaimer</h2>
+            <h2 className="disclaimer-title">Clinical Disclaimer</h2>
             <p className="disclaimer-text">
               Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
               It is not intended to replace surgeon judgement, and does not claim to result in 
