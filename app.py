@@ -264,6 +264,17 @@ def main():
         
         # Display - Clinical Version
         st.divider()
+        st.markdown(
+            f"""
+            <div style="text-align:center; font-size: 1.6rem; line-height: 1.6;">
+              <div style="font-size: 2.4rem; font-weight: 800;">Lens Size: {best_size}mm</div>
+              <div style="font-size: 1.6rem; margin-bottom: 0.6rem;">Probability: {best_prob:.1%}</div>
+              <div style="font-size: 2.2rem; font-weight: 700;">Predicted Vault: {int(pred_vault)}µm</div>
+              <div style="font-size: 1.6rem;">Expected Range: {int(pred_vault-125)}-{int(pred_vault+125)}µm</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
         col_res1, col_res2 = st.columns([1, 1])
         
         with col_res1:
