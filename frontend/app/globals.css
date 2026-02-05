@@ -308,35 +308,47 @@ body {
   background: #262626;
   border-radius: 6px;
   overflow: hidden;
+  border: 1px solid #374151;
+}
+
+.stepper-input:focus-within {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
 }
 
 .stepper-input input {
   flex: 1;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: transparent;
   border: none;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 16px;
   text-align: left;
+  min-width: 0;
 }
 
 .stepper-input input:focus {
   outline: none;
 }
 
+.stepper-input input::selection {
+  background: rgba(96, 165, 250, 0.3);
+}
+
 .stepper-input button {
-  width: 32px;
-  background: transparent;
+  width: 40px;
+  background: #333333;
   border: none;
   border-left: 1px solid #374151;
-  color: #9ca3af;
-  font-size: 14px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .stepper-input button:hover {
-  background: #333333;
+  background: #444444;
   color: #ffffff;
 }
 
