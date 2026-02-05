@@ -532,12 +532,21 @@ body {
     color-adjust: exact !important;
   }
 
+  @page {
+    size: letter landscape;
+    margin: 0.5cm;
+  }
+
   body {
     background: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .calc-page {
     background: #000000 !important;
+    min-height: auto !important;
+    height: auto !important;
   }
 
   .calc-sidebar,
@@ -550,31 +559,53 @@ body {
 
   .calc-header {
     display: flex !important;
+    padding: 10px 20px 5px !important;
+  }
+
+  .calc-header img {
+    width: 200px !important;
+    height: auto !important;
+  }
+
+  .calc-tagline {
+    font-size: 12px !important;
+    margin-top: 4px !important;
   }
 
   .bimini-logo-topright {
     display: block !important;
+    top: 10px !important;
+    right: 15px !important;
+  }
+
+  .bimini-logo-topright img {
+    width: 80px !important;
+    height: auto !important;
   }
   
   .calc-layout {
-    padding: 20px;
+    padding: 10px 20px !important;
   }
   
   .calc-results {
     width: 100%;
-    padding: 20px;
+    padding: 10px !important;
   }
 
   .results-header {
-    margin-bottom: 24px;
+    margin-bottom: 15px !important;
+    gap: 10px !important;
   }
 
   .patient-name {
     color: #9ca3af !important;
+    font-size: 22px !important;
   }
 
   .eye-badge {
     color: #ffffff !important;
+    font-size: 16px !important;
+    padding: 8px 20px !important;
   }
 
   .eye-badge.eye-right {
@@ -589,18 +620,30 @@ body {
     color: #c084fc !important;
   }
 
+  .size-section {
+    margin-bottom: 20px !important;
+  }
+
   .size-section-wrapper {
     background: rgba(255, 255, 255, 0.03) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding: 15px 25px !important;
   }
 
   .size-title {
     color: #9ca3af !important;
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .size-grid {
+    gap: 15px !important;
   }
 
   .size-card {
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 15px 20px !important;
   }
 
   .size-card.best {
@@ -615,6 +658,7 @@ body {
 
   .size-value {
     color: #ffffff !important;
+    font-size: 26px !important;
   }
 
   .size-card.best .size-value,
@@ -629,18 +673,28 @@ body {
 
   .size-prob {
     color: #6b7280 !important;
+    font-size: 16px !important;
+  }
+
+  .vault-section {
+    margin-bottom: 15px !important;
   }
 
   .vault-title {
     color: #9ca3af !important;
+    font-size: 14px !important;
   }
 
   .vault-value {
     color: #ffffff !important;
+    font-size: 28px !important;
+    margin-bottom: 4px !important;
   }
 
   .vault-range {
     color: #6b7280 !important;
+    font-size: 14px !important;
+    margin: 0 !important;
   }
 }
 
