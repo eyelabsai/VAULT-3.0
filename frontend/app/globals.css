@@ -540,14 +540,20 @@ body {
     background: #000000 !important;
   }
 
-  .calc-header,
   .calc-sidebar,
   .calc-btn-primary,
   .print-btn,
   .browse-btn,
-  .calc-footer,
-  .bimini-logo-topright {
+  .calc-footer {
     display: none !important;
+  }
+
+  .calc-header {
+    display: flex !important;
+  }
+
+  .bimini-logo-topright {
+    display: block !important;
   }
   
   .calc-layout {
