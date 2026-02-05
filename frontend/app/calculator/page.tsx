@@ -376,11 +376,10 @@ export default function Calculator() {
                 Expected Range: {result.vault_range_um[0]} - {result.vault_range_um[1]} µm
               </p>
             )}
+            <button className="print-btn" onClick={handlePrint}>
+              PRINT
+            </button>
           </div>
-
-          <button className="print-btn" onClick={handlePrint}>
-            PRINT
-          </button>
         </section>
       </div>
 
