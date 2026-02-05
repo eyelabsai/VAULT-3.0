@@ -56,6 +56,7 @@ const defaultSizes: SizeProbability[] = [
 
 export default function Calculator() {
   const [form, setForm] = useState<PredictionForm>(defaultForm);
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -68,15 +69,35 @@ export default function Calculator() {
     []
   );
 
+  const getInputValue = (key: keyof PredictionForm, decimals: number = 2) => {
+    if (key in inputValues) {
+      return inputValues[key];
+    }
+    const val = form[key];
+    if (typeof val === "number") {
+      return val.toFixed(decimals);
+    }
+    return String(val ?? "");
+  };
+
   const onFieldChange = (key: keyof PredictionForm, value: string) => {
+    setInputValues((prev) => ({ ...prev, [key]: value }));
     if (key === "LastName" || key === "FirstName") {
       setForm((prev) => ({ ...prev, [key]: value }));
     } else {
-      setForm((prev) => ({
-        ...prev,
-        [key]: value === "" ? "" : Number(value)
-      }));
+      const numVal = parseFloat(value);
+      if (!isNaN(numVal)) {
+        setForm((prev) => ({ ...prev, [key]: numVal }));
+      }
     }
+  };
+
+  const onFieldBlur = (key: keyof PredictionForm) => {
+    setInputValues((prev) => {
+      const newValues = { ...prev };
+      delete newValues[key];
+      return newValues;
+    });
   };
 
   const incrementField = (key: keyof PredictionForm, step: number) => {
@@ -275,9 +296,11 @@ export default function Calculator() {
               <label>Age</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  value={form.Age}
+                  type="text"
+                  inputMode="numeric"
+                  value={getInputValue("Age", 0)}
                   onChange={(e) => onFieldChange("Age", e.target.value)}
+                  onBlur={() => onFieldBlur("Age")}
                 />
                 <button onClick={() => incrementField("Age", -1)}>−</button>
                 <button onClick={() => incrementField("Age", 1)}>+</button>
@@ -288,10 +311,11 @@ export default function Calculator() {
               <label>WTW (mm)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.WTW.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("WTW")}
                   onChange={(e) => onFieldChange("WTW", e.target.value)}
+                  onBlur={() => onFieldBlur("WTW")}
                 />
                 <button onClick={() => incrementField("WTW", -0.1)}>−</button>
                 <button onClick={() => incrementField("WTW", 0.1)}>+</button>
@@ -305,10 +329,11 @@ export default function Calculator() {
               <label>ACD Internal (mm)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.ACD_internal.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("ACD_internal")}
                   onChange={(e) => onFieldChange("ACD_internal", e.target.value)}
+                  onBlur={() => onFieldBlur("ACD_internal")}
                 />
                 <button onClick={() => incrementField("ACD_internal", -0.01)}>−</button>
                 <button onClick={() => incrementField("ACD_internal", 0.01)}>+</button>
@@ -322,10 +347,11 @@ export default function Calculator() {
               <label>AC Shape Ratio (Jump)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.AC_shape_ratio.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("AC_shape_ratio")}
                   onChange={(e) => onFieldChange("AC_shape_ratio", e.target.value)}
+                  onBlur={() => onFieldBlur("AC_shape_ratio")}
                 />
                 <button onClick={() => incrementField("AC_shape_ratio", -1)}>−</button>
                 <button onClick={() => incrementField("AC_shape_ratio", 1)}>+</button>
@@ -336,10 +362,11 @@ export default function Calculator() {
               <label>SimK Steep (D)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.SimK_steep.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("SimK_steep")}
                   onChange={(e) => onFieldChange("SimK_steep", e.target.value)}
+                  onBlur={() => onFieldBlur("SimK_steep")}
                 />
                 <button onClick={() => incrementField("SimK_steep", -0.1)}>−</button>
                 <button onClick={() => incrementField("SimK_steep", 0.1)}>+</button>
@@ -350,10 +377,11 @@ export default function Calculator() {
               <label>ACV (mm³)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.ACV.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("ACV")}
                   onChange={(e) => onFieldChange("ACV", e.target.value)}
+                  onBlur={() => onFieldBlur("ACV")}
                 />
                 <button onClick={() => incrementField("ACV", -1)}>−</button>
                 <button onClick={() => incrementField("ACV", 1)}>+</button>
@@ -364,10 +392,11 @@ export default function Calculator() {
               <label>TCRP Km (D)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.TCRP_Km.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("TCRP_Km")}
                   onChange={(e) => onFieldChange("TCRP_Km", e.target.value)}
+                  onBlur={() => onFieldBlur("TCRP_Km")}
                 />
                 <button onClick={() => incrementField("TCRP_Km", -0.1)}>−</button>
                 <button onClick={() => incrementField("TCRP_Km", 0.1)}>+</button>
@@ -378,10 +407,11 @@ export default function Calculator() {
               <label>TCRP Astigmatism (D)</label>
               <div className="stepper-input">
                 <input
-                  type="number"
-                  step="0.01"
-                  value={form.TCRP_Astigmatism.toFixed(2)}
+                  type="text"
+                  inputMode="decimal"
+                  value={getInputValue("TCRP_Astigmatism")}
                   onChange={(e) => onFieldChange("TCRP_Astigmatism", e.target.value)}
+                  onBlur={() => onFieldBlur("TCRP_Astigmatism")}
                 />
                 <button onClick={() => incrementField("TCRP_Astigmatism", -0.25)}>−</button>
                 <button onClick={() => incrementField("TCRP_Astigmatism", 0.25)}>+</button>
