@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     siteName: "ICL Vault",
     images: [
       {
-        url: "/images/vault-dark-mode.svg",
-        width: 676,
-        height: 216,
+        url: "/images/vaultlogo.png",
+        width: 1200,
+        height: 630,
         alt: "ICL Vault Logo",
       },
     ],
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ICL Vault",
     description: "Pentacam-Based, AI-Driven ICL Sizing Nomogram for lens size and vault prediction",
-    images: ["/images/vault-dark-mode.svg"],
+    images: ["/images/vaultlogo.png"],
   },
   icons: {
     icon: "/images/vault flavicon.svg",
