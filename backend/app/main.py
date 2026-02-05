@@ -155,6 +155,10 @@ def parse_ini_content(ini_content: str) -> dict:
                     extracted["TCRP_Astigmatism"] = float(value)
                 elif key == "Eye":
                     extracted["Eye"] = value.strip().upper()
+                elif key == "Name" and current_section == "Patient Data":
+                    extracted["FirstName"] = value.strip()
+                elif key == "Surname" and current_section == "Patient Data":
+                    extracted["LastName"] = value.strip()
                 elif key == "DOB" and current_section == "Patient Data":
                     try:
                         dob = datetime.strptime(value, "%Y-%m-%d")
