@@ -209,7 +209,8 @@ def health():
 
 @app.post("/parse-ini")
 async def parse_ini(file: UploadFile = File(...)):
-    if not file.filename.endswith(".ini"):
+    filename = (file.filename or "").lower()
+    if not filename.endswith(".ini"):
         raise HTTPException(status_code=400, detail="Only .ini files are supported.")
 
     raw = await file.read()
