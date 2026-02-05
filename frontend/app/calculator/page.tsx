@@ -296,6 +296,9 @@ export default function Calculator() {
                 <button onClick={() => incrementField("WTW", -0.1)}>−</button>
                 <button onClick={() => incrementField("WTW", 0.1)}>+</button>
               </div>
+              {(form.WTW < 8 || form.WTW > 14) && (
+                <span className="field-warning">Check value (expected 8–14 mm)</span>
+              )}
             </div>
 
             <div className="bio-field">
@@ -310,6 +313,9 @@ export default function Calculator() {
                 <button onClick={() => incrementField("ACD_internal", -0.01)}>−</button>
                 <button onClick={() => incrementField("ACD_internal", 0.01)}>+</button>
               </div>
+              {(form.ACD_internal < 0 || form.ACD_internal > 6) && (
+                <span className="field-warning">Check value (expected 0–6 mm)</span>
+              )}
             </div>
 
             <div className="bio-field">
