@@ -526,30 +526,32 @@ body {
 
 /* Print Styles */
 @media print {
-  body {
-    background: #ffffff !important;
+  * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: #000000 !important;
   }
 
   .calc-page {
-    background: #ffffff !important;
+    background: #000000 !important;
   }
 
-  .calc-header {
-    display: none !important;
-  }
-
+  .calc-header,
   .calc-sidebar,
   .calc-btn-primary,
   .print-btn,
   .browse-btn,
-  .calc-footer {
+  .calc-footer,
+  .bimini-logo-topright {
     display: none !important;
   }
   
   .calc-layout {
-    padding: 0;
+    padding: 20px;
   }
   
   .calc-results {
@@ -562,51 +564,61 @@ body {
   }
 
   .patient-name {
-    color: #000000 !important;
+    color: #9ca3af !important;
   }
 
   .eye-badge {
-    color: #000000 !important;
-    background: #e5e7eb !important;
-    border-color: #9ca3af !important;
+    color: #ffffff !important;
+  }
+
+  .eye-badge.eye-right {
+    background: rgba(59, 130, 246, 0.25) !important;
+    border: 1px solid rgba(59, 130, 246, 0.5) !important;
+    color: #60a5fa !important;
+  }
+
+  .eye-badge.eye-left {
+    background: rgba(168, 85, 247, 0.25) !important;
+    border: 1px solid rgba(168, 85, 247, 0.5) !important;
+    color: #c084fc !important;
   }
 
   .size-section-wrapper {
-    background: #f3f4f6 !important;
-    border-color: #d1d5db !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
   .size-title {
-    color: #374151 !important;
+    color: #9ca3af !important;
   }
 
   .size-card {
-    background: #ffffff !important;
-    border-color: #d1d5db !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 
   .size-card.best {
-    background: #dcfce7 !important;
-    border-color: #22c55e !important;
+    background: rgba(34, 197, 94, 0.15) !important;
+    border-color: rgba(34, 197, 94, 0.4) !important;
   }
 
   .size-card.second {
-    background: #fef9c3 !important;
-    border-color: #eab308 !important;
+    background: rgba(250, 204, 21, 0.15) !important;
+    border-color: rgba(250, 204, 21, 0.4) !important;
   }
 
   .size-value {
-    color: #000000 !important;
+    color: #ffffff !important;
   }
 
   .size-card.best .size-value,
   .size-card.best .size-prob {
-    color: #166534 !important;
+    color: #4ade80 !important;
   }
 
   .size-card.second .size-value,
   .size-card.second .size-prob {
-    color: #854d0e !important;
+    color: #facc15 !important;
   }
 
   .size-prob {
@@ -614,11 +626,11 @@ body {
   }
 
   .vault-title {
-    color: #374151 !important;
+    color: #9ca3af !important;
   }
 
   .vault-value {
-    color: #000000 !important;
+    color: #ffffff !important;
   }
 
   .vault-range {
