@@ -381,10 +381,9 @@ def main():
             <div class="disclaimer-box">
                 <div class="disclaimer-title">📋 Clinical Disclaimer</div>
                 <div class="disclaimer-text">
-                    Based on the file uploaded and surgical results of thousands of eyes, 
-                    the size most likely to result in an acceptable vault range is as above.<br><br>
-                    <strong>The probability of an outlier requiring repeat surgical intervention 
-                    for size mismatch is &lt;13%</strong>
+                    Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
+                    It is not intended to replace surgeon judgement, and does not claim to result in 
+                    zero sizing errors or potential need for additional surgical interventions.
                 </div>
             </div>
             """, unsafe_allow_html=True)
