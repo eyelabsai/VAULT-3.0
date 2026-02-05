@@ -265,10 +265,18 @@ body {
 
 .results-header {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   margin-bottom: 32px;
+}
+
+.patient-name {
+  font-size: 28px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 1px;
 }
 
 .patient-name {

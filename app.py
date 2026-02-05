@@ -147,11 +147,17 @@ def parse_ini_file(ini_content: str) -> dict:
                 elif key == 'TCRP 3mm zone pupil Asti [D]':
                     extracted['TCRP_Astigmatism'] = float(value)
                 
-                # 8. Eye laterality
+                # 8. Patient name
+                elif key == 'Name' and current_section == 'Patient Data':
+                    extracted['First_Name'] = value.strip()
+                elif key == 'Surname' and current_section == 'Patient Data':
+                    extracted['Last_Name'] = value.strip()
+
+                # 9. Eye laterality
                 elif key == 'Eye':
                     extracted['Eye'] = value.strip().upper()
                 
-                # 9. Age extraction from DOB
+                # 10. Age extraction from DOB
                 elif key == 'DOB' and current_section == 'Patient Data':
                     try:
                         dob = datetime.strptime(value, '%Y-%m-%d')
@@ -168,6 +174,16 @@ def parse_ini_file(ini_content: str) -> dict:
     # Calculate AC Shape Ratio = ACV / ACD_internal (same as extract_features.py)
     if 'ACV' in extracted and 'ACD_internal' in extracted and extracted['ACD_internal'] > 0:
         extracted['ac_shape'] = round(extracted['ACV'] / extracted['ACD_internal'], 2)
+
+    # Combine patient name if present
+    first = extracted.get('First_Name')
+    last = extracted.get('Last_Name')
+    if first and last:
+        extracted['Full_Name'] = f"{last} {first}"
+    elif last:
+        extracted['Full_Name'] = last
+    elif first:
+        extracted['Full_Name'] = first
         
     return extracted
 
@@ -238,6 +254,12 @@ def main():
 
     if predict_btn:
         st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
+        name_val = ini_vals.get('Full_Name')
+        if name_val:
+            st.markdown(
+                f'<div style="text-align:center; font-size: 2.0rem; font-weight: 700;">Patient: {name_val}</div>',
+                unsafe_allow_html=True
+            )
         if eye_val:
             st.markdown(
                 f'<div style="text-align:center; font-size: 2.0rem; font-weight: 700;">Eye: {eye_val}</div>',

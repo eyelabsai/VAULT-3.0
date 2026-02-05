@@ -347,11 +347,18 @@ export default function Calculator() {
 
         {/* Main Results Area */}
         <section className="calc-results">
-          {form.Eye && (
+          {(form.FirstName || form.LastName || form.Eye) && (
             <div className="results-header">
-              <span className={`eye-badge ${form.Eye === "OD" ? "eye-right" : "eye-left"}`}>
-                {form.Eye} — {form.Eye === "OD" ? "Right Eye" : "Left Eye"}
-              </span>
+              {(form.FirstName || form.LastName) && (
+                <span className="patient-name">
+                  {`${form.LastName || ""} ${form.FirstName || ""}`.trim() || "Patient"}
+                </span>
+              )}
+              {form.Eye && (
+                <span className={`eye-badge ${form.Eye === "OD" ? "eye-right" : "eye-left"}`}>
+                  {form.Eye} — {form.Eye === "OD" ? "Right Eye" : "Left Eye"}
+                </span>
+              )}
             </div>
           )}
 
