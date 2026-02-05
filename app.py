@@ -238,6 +238,11 @@ def main():
 
     if predict_btn:
         st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
+        if eye_val:
+            st.markdown(
+                f'<div style="text-align:center; font-size: 2.0rem; font-weight: 700;">Eye: {eye_val}</div>',
+                unsafe_allow_html=True
+            )
         input_data = {
             'Age': age, 'WTW': wtw, 'ACD_internal': acd, 'ICL_Power': pwr,
             'AC_shape_ratio': shape, 'SimK_steep': simk, 'ACV': acv,
