@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 type PredictionForm = {
   Age: number;
@@ -206,13 +207,16 @@ export default function Calculator() {
 
       {/* Header */}
       <header className="calc-header">
-        <Image
-          src="/images/vault-dark-mode.svg"
-          alt="Vault 3"
-          width={280}
-          height={90}
-          priority
-        />
+        <Link href="/">
+          <Image
+            src="/images/vault-dark-mode.svg"
+            alt="Vault 3"
+            width={280}
+            height={90}
+            priority
+            className="vault-logo-link"
+          />
+        </Link>
         <p className="calc-tagline">Pentacam-Based, AI-Driven ICL Sizing Nomogram</p>
       </header>
 

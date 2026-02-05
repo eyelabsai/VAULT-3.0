@@ -129,6 +129,15 @@ body {
   padding: 16px 24px 12px;
 }
 
+.vault-logo-link {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.vault-logo-link:hover {
+  opacity: 0.8;
+}
+
 .calc-tagline {
   color: #6b7280;
   font-size: 14px;
