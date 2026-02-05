@@ -356,11 +356,19 @@ body {
 }
 
 .vault-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: #9ca3af;
   margin: 0 0 8px;
   letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.vault-value {
+  font-size: 36px;
+  font-weight: 300;
+  color: #ffffff;
+  margin-bottom: 8px;
 }
 
 .vault-range {
