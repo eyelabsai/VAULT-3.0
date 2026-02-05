@@ -161,10 +161,6 @@ export default function Calculator() {
   };
 
   const sizeProbabilities = result?.size_probabilities || defaultSizes;
-  const patientName = form.LastName || form.FirstName 
-    ? `${form.LastName || ""}${form.LastName && form.FirstName ? ", " : ""}${form.FirstName || ""}`
-    : "LAST NAME, FIRST NAME";
-  const eyeLabel = form.Eye || "—";
 
   return (
     <main className="calc-page">
@@ -347,10 +343,11 @@ export default function Calculator() {
 
         {/* Main Results Area */}
         <section className="calc-results">
-          <div className="results-header">
-            <h2 className="patient-name">{patientName}</h2>
-            {form.Eye && <span className="eye-badge">{form.Eye}</span>}
-          </div>
+          {form.Eye && (
+            <div className="results-header">
+              <span className="eye-badge">{form.Eye}</span>
+            </div>
+          )}
 
           <div className="size-section">
             <div className="size-section-wrapper">
