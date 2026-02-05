@@ -416,9 +416,9 @@ export default function Calculator() {
                       className={`size-card ${isBest ? "best" : ""} ${isSecond ? "second" : ""}`}
                     >
                       <div className="size-value">{item.size_mm}</div>
-                      <div className="size-prob">
+                      {/* <div className="size-prob">
                         {result ? `${(item.probability * 100).toFixed(0)}%` : "—%"}
-                      </div>
+                      </div> */}
                     </div>
                   );
                 })}
