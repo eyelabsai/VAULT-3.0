@@ -126,7 +126,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 24px 12px;
+  padding: 10px 24px 8px;
 }
 
 .vault-logo-link {
@@ -154,22 +154,22 @@ body {
 
 /* Sidebar */
 .calc-sidebar {
-  width: 380px;
+  width: 340px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .calc-btn-primary {
   width: 100%;
-  margin-top: 16px;
-  padding: 14px 20px;
+  margin-top: 12px;
+  padding: 12px 16px;
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(168, 85, 247, 0.3));
   color: #ffffff;
   border: 1px solid rgba(139, 92, 246, 0.4);
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -188,8 +188,8 @@ body {
 
 .sidebar-section {
   background: #1a1a1a;
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
 .sidebar-title {
@@ -202,7 +202,7 @@ body {
 .dropzone {
   border: 1px dashed #374151;
   border-radius: 8px;
-  padding: 20px;
+  padding: 14px;
   text-align: center;
   transition: all 0.2s;
 }
@@ -248,9 +248,9 @@ body {
 }
 
 .bio-field {
-  margin-bottom: 6px;
-  padding: 12px 14px;
-  border-radius: 8px;
+  margin-bottom: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
 }
 
 .bio-field:nth-child(odd) {
@@ -298,9 +298,9 @@ body {
 
 .bio-field label {
   display: block;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .stepper-input {
@@ -312,7 +312,7 @@ body {
 
 .stepper-input input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 8px 10px;
   background: transparent;
   border: none;
   color: #ffffff;
@@ -325,12 +325,12 @@ body {
 }
 
 .stepper-input button {
-  width: 36px;
+  width: 32px;
   background: transparent;
   border: none;
   border-left: 1px solid #374151;
   color: #9ca3af;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
 }

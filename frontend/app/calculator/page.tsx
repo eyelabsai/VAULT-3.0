@@ -390,7 +390,9 @@ export default function Calculator() {
             <div className="results-header">
               {(form.FirstName || form.LastName) && (
                 <span className="patient-name">
-                  {`${form.LastName || ""} ${form.FirstName || ""}`.trim() || "Patient"}
+                  {form.LastName && form.FirstName 
+                    ? `${form.LastName}, ${form.FirstName}` 
+                    : form.LastName || form.FirstName || "Patient"}
                 </span>
               )}
               {form.Eye && (
