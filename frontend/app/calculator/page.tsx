@@ -349,7 +349,9 @@ export default function Calculator() {
         <section className="calc-results">
           {form.Eye && (
             <div className="results-header">
-              <span className="eye-badge">{form.Eye}</span>
+              <span className={`eye-badge ${form.Eye === "OD" ? "eye-right" : "eye-left"}`}>
+                {form.Eye} — {form.Eye === "OD" ? "Right Eye" : "Left Eye"}
+              </span>
             </div>
           )}
 
