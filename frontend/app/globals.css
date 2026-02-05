@@ -179,6 +179,13 @@ body {
   color: #e5e7eb;
 }
 
+.dropzone .uploaded-file {
+  color: #4ade80;
+  font-weight: 500;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
+
 .dropzone-hint {
   font-size: 12px;
   color: #6b7280;
@@ -257,8 +264,9 @@ body {
 
 .results-header {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
   margin-bottom: 32px;
 }
 
@@ -270,10 +278,14 @@ body {
   letter-spacing: 1px;
 }
 
-.eye-label {
-  font-size: 20px;
-  color: #9ca3af;
+.eye-badge {
+  font-size: 16px;
+  color: #ffffff;
   letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .size-section {

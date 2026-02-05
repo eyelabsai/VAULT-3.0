@@ -59,6 +59,7 @@ export default function Calculator() {
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const apiBase = useMemo(
@@ -112,8 +113,10 @@ export default function Calculator() {
         LastName: prev.LastName,
         FirstName: prev.FirstName
       }));
+      setUploadedFileName(file.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
+      setUploadedFileName(null);
     } finally {
       setStatus("idle");
     }
@@ -196,8 +199,14 @@ export default function Calculator() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleDrop}
             >
-              <p>Drag and drop file here</p>
-              <span className="dropzone-hint">Limit 200MB per file • INI</span>
+              {uploadedFileName ? (
+                <p className="uploaded-file">{uploadedFileName}</p>
+              ) : (
+                <>
+                  <p>Drag and drop file here</p>
+                  <span className="dropzone-hint">Limit 200MB per file • INI</span>
+                </>
+              )}
               <button 
                 className="browse-btn"
                 onClick={() => fileInputRef.current?.click()}
@@ -340,7 +349,7 @@ export default function Calculator() {
         <section className="calc-results">
           <div className="results-header">
             <h2 className="patient-name">{patientName}</h2>
-            <span className="eye-label">{eyeLabel}</span>
+            {form.Eye && <span className="eye-badge">{form.Eye}</span>}
           </div>
 
           <div className="size-section">
