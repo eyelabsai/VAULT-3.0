@@ -96,6 +96,29 @@ def load_models():
         st.error(f"Model files not found. Please ensure .pkl files are in the root directory. Error: {e}")
         return None, None, None, None, None
 
+# --- UNCERTAINTY ESTIMATE ---
+@st.cache_data
+def get_vault_residual_sigma(feature_names):
+    """Estimate vault residual sigma from training data (no retraining)."""
+    try:
+        df = pd.read_csv("data/processed/training_data.csv")
+        df = df[df["Vault"].notna()].copy()
+        if df.empty:
+            return None
+
+        with open("vault_model.pkl", "rb") as f:
+            vault_model = pickle.load(f)
+        with open("vault_scaler.pkl", "rb") as f:
+            vault_scaler = pickle.load(f)
+
+        X = df[feature_names].copy().fillna(0)
+        X_scaled = vault_scaler.transform(X)
+        preds = vault_model.predict(X_scaled)
+        residuals = df["Vault"].values - preds
+        return float(np.std(residuals, ddof=1))
+    except Exception:
+        return None
+
 # --- UI HELPERS ---
 def parse_ini_file(ini_content: str) -> dict:
     """
@@ -210,6 +233,10 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize session state for disclaimer
+if 'disclaimer_accepted' not in st.session_state:
+    st.session_state.disclaimer_accepted = False
+
 def main():
     lens_model, lens_scaler, vault_model, vault_scaler, feature_names = load_models()
     if not lens_model: return
@@ -288,6 +315,10 @@ def main():
         # Vault prediction
         vault_scaled = vault_scaler.transform(X)
         pred_vault = vault_model.predict(vault_scaled)[0]
+        sigma = get_vault_residual_sigma(feature_names)
+        ci_margin = 1.96 * sigma if sigma else 125
+        ci_low = int(pred_vault - ci_margin)
+        ci_high = int(pred_vault + ci_margin)
         
         # Display - Clinical Version
         st.divider()
@@ -299,7 +330,10 @@ def main():
             
         with col_res2:
             st.markdown(f"### Predicted Vault: **{int(pred_vault)}µm**")
-            st.info(f"**Expected Range:** {int(pred_vault-125)}-{int(pred_vault+125)}µm")
+            if sigma:
+                st.info(f"**Estimated 95% Range:** {ci_low}-{ci_high}µm")
+            else:
+                st.info(f"**Expected Range:** {ci_low}-{ci_high}µm")
         
         st.divider()
         
@@ -315,28 +349,73 @@ def main():
             cols[i].metric(f"{size}mm", f"{prob:.1%}")
     
     else:
-        # Welcome screen
-        st.info("Enter patient measurements in the sidebar and click Calculate")
+        # Welcome screen with disclaimer popup
         st.markdown('<p class="main-header">Vault 3.0</p>', unsafe_allow_html=True)
         
-        st.markdown("""
-        Clinical decision support system for **ICL Lens Size** and **Post-operative Vault** prediction.
-        
-        ### Parameters
-        | Measurement | Source |
-        |-------------|--------|
-        | **Age** | Patient DOB |
-        | **WTW** | Cornea Dia Horizontal |
-        | **ACD Internal** | ACD (Int.) |
-        | **ACV** | Chamber Volume |
-        | **SimK** | Km (Front) |
-        """)
-        
-        st.markdown("""
-        ---
-        **Note:** This tool is for clinical decision support only. Final lens selection should 
-        incorporate clinical judgment and patient-specific factors.
-        """)
+        if not st.session_state.disclaimer_accepted:
+            # Disclaimer popup
+            st.markdown("""
+            <style>
+            .disclaimer-box {
+                background: white;
+                border-radius: 16px;
+                padding: 2rem;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+                max-width: 600px;
+                margin: 2rem auto;
+                text-align: center;
+            }
+            .disclaimer-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #2d3748;
+                margin-bottom: 1rem;
+            }
+            .disclaimer-text {
+                font-size: 1.1rem;
+                color: #4a5568;
+                line-height: 1.6;
+                margin-bottom: 1.5rem;
+            }
+            </style>
+            <div class="disclaimer-box">
+                <div class="disclaimer-title">📋 Clinical Disclaimer</div>
+                <div class="disclaimer-text">
+                    Based on the file uploaded and surgical results of thousands of eyes, 
+                    the size most likely to result in an acceptable vault range is as above.<br><br>
+                    <strong>The probability of an outlier requiring repeat surgical intervention 
+                    for size mismatch is &lt;13%</strong>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("✓ Accept & Continue", type="primary", use_container_width=True):
+                    st.session_state.disclaimer_accepted = True
+                    st.rerun()
+        else:
+            # Normal welcome screen after disclaimer accepted
+            st.info("Enter patient measurements in the sidebar and click Calculate")
+            
+            st.markdown("""
+            Clinical decision support system for **ICL Lens Size** and **Post-operative Vault** prediction.
+            
+            ### Parameters
+            | Measurement | Source |
+            |-------------|--------|
+            | **Age** | Patient DOB |
+            | **WTW** | Cornea Dia Horizontal |
+            | **ACD Internal** | ACD (Int.) |
+            | **ACV** | Chamber Volume |
+            | **SimK** | Km (Front) |
+            """)
+            
+            st.markdown("""
+            ---
+            **Note:** This tool is for clinical decision support only. Final lens selection should 
+            incorporate clinical judgment and patient-specific factors.
+            """)
 
 if __name__ == '__main__':
     main()
