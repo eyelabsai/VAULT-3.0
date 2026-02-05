@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useMemo, useState, useRef } from "react";
 import Image from "next/image";
 
 type PredictionForm = {
@@ -15,6 +14,8 @@ type PredictionForm = {
   TCRP_Km: number;
   TCRP_Astigmatism: number;
   Eye?: string;
+  LastName?: string;
+  FirstName?: string;
 };
 
 type SizeProbability = {
@@ -40,14 +41,25 @@ const defaultForm: PredictionForm = {
   SimK_steep: 44.0,
   ACV: 180.0,
   TCRP_Km: 44.0,
-  TCRP_Astigmatism: 1.0
+  TCRP_Astigmatism: 1.0,
+  LastName: "",
+  FirstName: ""
 };
+
+const defaultSizes: SizeProbability[] = [
+  { size_mm: 12.1, probability: 0 },
+  { size_mm: 12.6, probability: 0 },
+  { size_mm: 13.2, probability: 0 },
+  { size_mm: 13.7, probability: 0 }
+];
 
 export default function Calculator() {
   const [form, setForm] = useState<PredictionForm>(defaultForm);
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const apiBase = useMemo(
     () => process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
@@ -55,9 +67,20 @@ export default function Calculator() {
   );
 
   const onFieldChange = (key: keyof PredictionForm, value: string) => {
+    if (key === "LastName" || key === "FirstName") {
+      setForm((prev) => ({ ...prev, [key]: value }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [key]: value === "" ? "" : Number(value)
+      }));
+    }
+  };
+
+  const incrementField = (key: keyof PredictionForm, step: number) => {
     setForm((prev) => ({
       ...prev,
-      [key]: value === "" ? "" : Number(value)
+      [key]: Number((Number(prev[key]) + step).toFixed(2))
     }));
   };
 
@@ -85,12 +108,23 @@ export default function Calculator() {
       setForm((prev) => ({
         ...prev,
         ...extracted,
-        ICL_Power: prev.ICL_Power
+        ICL_Power: prev.ICL_Power,
+        LastName: prev.LastName,
+        FirstName: prev.FirstName
       }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setStatus("idle");
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith(".ini")) {
+      handleIniUpload(file);
     }
   };
 
@@ -119,169 +153,237 @@ export default function Calculator() {
     }
   };
 
-  return (
-    <main className="calculator-page">
-      <nav className="calculator-nav">
-        <Link href="/" className="nav-logo">
-          <Image
-            src="/images/vault-dark-mode.svg"
-            alt="Vault 3"
-            width={120}
-            height={40}
-            priority
-          />
-        </Link>
-      </nav>
+  const handlePrint = () => {
+    window.print();
+  };
 
-      <header className="calculator-header">
-        <h1 className="calculator-title">ICL Sizing Calculator</h1>
-        <p className="calculator-subtitle">
-          Clinical decision support for ICL lens size and post-operative vault prediction
-        </p>
+  const sizeProbabilities = result?.size_probabilities || defaultSizes;
+  const patientName = form.LastName || form.FirstName 
+    ? `${form.LastName || ""}${form.LastName && form.FirstName ? ", " : ""}${form.FirstName || ""}`
+    : "LAST NAME, FIRST NAME";
+
+  return (
+    <main className="calc-page">
+      {/* Header */}
+      <header className="calc-header">
+        <Image
+          src="/images/vault-dark-mode.svg"
+          alt="Vault 3"
+          width={280}
+          height={90}
+          priority
+        />
+        <p className="calc-tagline">Pentacam-Based, AI-Driven ICL Sizing Nomogram</p>
       </header>
 
-      <div className="calculator-grid">
-        <section className="calculator-card">
-          <div className="section-title">Data Import</div>
-          <div className="field">
-            <label htmlFor="iniUpload">Pentacam INI</label>
-            <input
-              id="iniUpload"
-              type="file"
-              accept=".ini"
-              onChange={(event) => handleIniUpload(event.target.files?.[0] ?? null)}
-            />
-          </div>
-          {form.Eye && (
-            <div className="field">
-              <label>Eye</label>
-              <div className="pill">{form.Eye}</div>
-            </div>
-          )}
-          <div className="section-title">Patient Biometrics</div>
-          <div className="field">
-            <label>Age</label>
-            <input
-              type="number"
-              value={form.Age}
-              onChange={(event) => onFieldChange("Age", event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label>WTW (mm)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={form.WTW}
-              onChange={(event) => onFieldChange("WTW", event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label>ACD Internal (mm)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.ACD_internal}
-              onChange={(event) => onFieldChange("ACD_internal", event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label>AC Shape Ratio (Jump)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={form.AC_shape_ratio}
-              onChange={(event) =>
-                onFieldChange("AC_shape_ratio", event.target.value)
-              }
-            />
-          </div>
-          <div className="field">
-            <label>SimK Steep (D)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={form.SimK_steep}
-              onChange={(event) => onFieldChange("SimK_steep", event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label>ACV (mm³)</label>
-            <input
-              type="number"
-              step="1"
-              value={form.ACV}
-              onChange={(event) => onFieldChange("ACV", event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label>TCRP Km (D)</label>
-            <input
-              type="number"
-              step="0.1"
-              value={form.TCRP_Km}
-              onChange={(event) => onFieldChange("TCRP_Km", event.target.value)}
-            />
-          </div>
-          <div className="field">
-            <label>TCRP Astigmatism (D)</label>
-            <input
-              type="number"
-              step="0.25"
-              value={form.TCRP_Astigmatism}
-              onChange={(event) =>
-                onFieldChange("TCRP_Astigmatism", event.target.value)
-              }
-            />
-          </div>
-          <button className="calculator-button" onClick={handlePredict} disabled={status === "loading"}>
+      <div className="calc-layout">
+        {/* Left Sidebar */}
+        <aside className="calc-sidebar">
+          <button 
+            className="calc-btn-primary" 
+            onClick={handlePredict} 
+            disabled={status === "loading"}
+          >
             {status === "loading" ? "Calculating..." : "Calculate"}
           </button>
+
+          <div className="sidebar-section">
+            <div className="sidebar-title">Import Pentacam INI</div>
+            <div 
+              className={`dropzone ${isDragging ? "dragging" : ""}`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+            >
+              <p>Drag and drop file here</p>
+              <span className="dropzone-hint">Limit 200MB per file • INI</span>
+              <button 
+                className="browse-btn"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Browse files
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".ini"
+                style={{ display: "none" }}
+                onChange={(e) => handleIniUpload(e.target.files?.[0] ?? null)}
+              />
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <div className="sidebar-title">Patient Biometrics</div>
+            
+            <div className="bio-field">
+              <label>Eye: {form.Eye || "—"}</label>
+            </div>
+
+            <div className="bio-field">
+              <label>Age</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  value={form.Age}
+                  onChange={(e) => onFieldChange("Age", e.target.value)}
+                />
+                <button onClick={() => incrementField("Age", -1)}>−</button>
+                <button onClick={() => incrementField("Age", 1)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>WTW (mm)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.WTW.toFixed(2)}
+                  onChange={(e) => onFieldChange("WTW", e.target.value)}
+                />
+                <button onClick={() => incrementField("WTW", -0.1)}>−</button>
+                <button onClick={() => incrementField("WTW", 0.1)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>ACD Internal (mm)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.ACD_internal.toFixed(2)}
+                  onChange={(e) => onFieldChange("ACD_internal", e.target.value)}
+                />
+                <button onClick={() => incrementField("ACD_internal", -0.01)}>−</button>
+                <button onClick={() => incrementField("ACD_internal", 0.01)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>AC Shape Ratio (Jump)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.AC_shape_ratio.toFixed(2)}
+                  onChange={(e) => onFieldChange("AC_shape_ratio", e.target.value)}
+                />
+                <button onClick={() => incrementField("AC_shape_ratio", -1)}>−</button>
+                <button onClick={() => incrementField("AC_shape_ratio", 1)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>SimK Steep (D)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.SimK_steep.toFixed(2)}
+                  onChange={(e) => onFieldChange("SimK_steep", e.target.value)}
+                />
+                <button onClick={() => incrementField("SimK_steep", -0.1)}>−</button>
+                <button onClick={() => incrementField("SimK_steep", 0.1)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>ACV (mm³)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.ACV.toFixed(2)}
+                  onChange={(e) => onFieldChange("ACV", e.target.value)}
+                />
+                <button onClick={() => incrementField("ACV", -1)}>−</button>
+                <button onClick={() => incrementField("ACV", 1)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>TCRP Km (D)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.TCRP_Km.toFixed(2)}
+                  onChange={(e) => onFieldChange("TCRP_Km", e.target.value)}
+                />
+                <button onClick={() => incrementField("TCRP_Km", -0.1)}>−</button>
+                <button onClick={() => incrementField("TCRP_Km", 0.1)}>+</button>
+              </div>
+            </div>
+
+            <div className="bio-field">
+              <label>TCRP Astigmatism (D)</label>
+              <div className="stepper-input">
+                <input
+                  type="number"
+                  step="0.01"
+                  value={form.TCRP_Astigmatism.toFixed(2)}
+                  onChange={(e) => onFieldChange("TCRP_Astigmatism", e.target.value)}
+                />
+                <button onClick={() => incrementField("TCRP_Astigmatism", -0.25)}>−</button>
+                <button onClick={() => incrementField("TCRP_Astigmatism", 0.25)}>+</button>
+              </div>
+            </div>
+          </div>
+
           {error && <p className="error">{error}</p>}
-        </section>
+        </aside>
 
-        <section className="calculator-card">
-          <div className="section-title">Results</div>
-          {!result && (
-            <p className="placeholder-text">Enter patient measurements and click Calculate.</p>
-          )}
-          {result && (
-            <>
-              <div>
-                <label>Lens Size</label>
-                <div className="result-value">{result.lens_size_mm} mm</div>
-                <div className="pill">
-                  Probability: {(result.lens_probability * 100).toFixed(1)}%
-                </div>
-              </div>
-              <div style={{ marginTop: 24 }}>
-                <label>Predicted Vault</label>
-                <div className="result-value">{result.vault_pred_um} µm</div>
-                <div className="pill">
-                  Expected Range: {result.vault_range_um[0]}-{result.vault_range_um[1]} µm
-                </div>
-              </div>
-              <div style={{ marginTop: 16 }} className={`alert ${result.vault_flag}`}>
-                {result.vault_flag === "ok" && "Optimal Vault Range Predicted"}
-                {result.vault_flag === "low" && "Low Vault Predicted (Below 250µm)"}
-                {result.vault_flag === "high" && "High Vault Predicted (Above 800µm)"}
-              </div>
+        {/* Main Results Area */}
+        <section className="calc-results">
+          <div className="results-header">
+            <h2 className="patient-name">{patientName}</h2>
+            <span className="eye-label">{form.Eye || "RIGHT EYE"}</span>
+          </div>
 
-              <div style={{ marginTop: 24 }}>
-                <div className="section-title">Size Probability Distribution</div>
-                <div className="prob-grid">
-                  {result.size_probabilities.map((item) => (
-                    <div className="prob-card" key={item.size_mm}>
-                      <div>{item.size_mm}mm</div>
-                      <strong>{(item.probability * 100).toFixed(1)}%</strong>
-                    </div>
-                  ))}
+          <div className="size-section">
+            <h3 className="size-title">BEST SIZE PROBABILITY</h3>
+            <div className="size-grid">
+              {sizeProbabilities.map((item) => (
+                <div 
+                  key={item.size_mm} 
+                  className={`size-card ${result && item.size_mm === result.lens_size_mm ? "best" : ""}`}
+                >
+                  <div className="size-value">{item.size_mm}</div>
+                  <div className="size-prob">
+                    {result ? `${(item.probability * 100).toFixed(0)}%` : "XX%"}
+                  </div>
                 </div>
-              </div>
-            </>
-          )}
+              ))}
+            </div>
+          </div>
+
+          <div className="vault-section">
+            <h3 className="vault-title">
+              PREDICTED VAULT: {result ? `${result.vault_pred_um}` : "XXX"}
+            </h3>
+            <p className="vault-range">
+              Expected Range: {result ? `${result.vault_range_um[0]} - ${result.vault_range_um[1]}` : ""}
+            </p>
+          </div>
+
+          <button className="print-btn" onClick={handlePrint}>
+            PRINT
+          </button>
         </section>
       </div>
+
+      {/* Footer */}
+      <footer className="calc-footer">
+        <Image
+          src="/images/vault flavicon.svg"
+          alt="Bimini"
+          width={80}
+          height={24}
+          className="footer-logo"
+        />
+      </footer>
     </main>
   );
 }
