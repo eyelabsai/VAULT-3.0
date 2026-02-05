@@ -248,7 +248,7 @@ def predict(payload: PredictionInput):
 
     if pred_vault < 250:
         vault_flag = "low"
-    elif pred_vault > 800:
+    elif pred_vault > 900:
         vault_flag = "high"
     else:
         vault_flag = "ok"

@@ -373,7 +373,7 @@ def main():
         
         # Logic Check
         if pred_vault < 250: st.error("Low Vault Predicted (Below 250µm)")
-        elif pred_vault > 800: st.warning("High Vault Predicted (Above 800µm)")
+        elif pred_vault > 900: st.warning("High Vault Predicted (Above 900µm)")
         else: st.success("Optimal Vault Range Predicted")
 
         # Probability Breakdown
