@@ -436,6 +436,26 @@ export default function Calculator() {
                 Expected Range: {result.vault_range_um[0]} - {result.vault_range_um[1]} µm
               </p>
             )}
+            {result && (
+              <div className="results-disclaimer">
+                <p>
+                  Based on the file uploaded and surgical results of thousands of eyes, 
+                  the size most likely to result in an acceptable vault range is as above.
+                </p>
+                <p>
+                  <strong>The probability of an outlier requiring repeat surgical intervention 
+                  for size mismatch is &lt;{(() => {
+                    const v = result.vault_pred_um;
+                    if (v < 400) return 36;
+                    if (v < 500) return 15;
+                    if (v < 600) return 7;
+                    if (v < 700) return 6;
+                    if (v < 800) return 20;
+                    return 83;
+                  })()}%</strong>
+                </p>
+              </div>
+            )}
             <button className="print-btn" onClick={handlePrint}>
               PRINT
             </button>

@@ -493,6 +493,31 @@ body {
   margin: 0 0 24px;
 }
 
+.results-disclaimer {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid #4299e1;
+  padding: 16px 20px;
+  margin: 16px auto 24px;
+  max-width: 500px;
+  text-align: left;
+  border-radius: 4px;
+}
+
+.results-disclaimer p {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.results-disclaimer p:last-child {
+  margin-bottom: 0;
+}
+
+.results-disclaimer strong {
+  color: #ffffff;
+}
+
 .print-btn {
   padding: 12px 32px;
   background: transparent;
