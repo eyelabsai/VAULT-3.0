@@ -353,19 +353,21 @@ export default function Calculator() {
           </div>
 
           <div className="size-section">
-            <h3 className="size-title">BEST SIZE PROBABILITY</h3>
-            <div className="size-grid">
-              {sizeProbabilities.map((item) => (
-                <div 
-                  key={item.size_mm} 
-                  className={`size-card ${result && item.size_mm === result.lens_size_mm ? "best" : ""}`}
-                >
-                  <div className="size-value">{item.size_mm}</div>
-                  <div className="size-prob">
-                    {result ? `${(item.probability * 100).toFixed(0)}%` : "—%"}
+            <div className="size-section-wrapper">
+              <h3 className="size-title">BEST SIZE PROBABILITY</h3>
+              <div className="size-grid">
+                {sizeProbabilities.map((item) => (
+                  <div 
+                    key={item.size_mm} 
+                    className={`size-card ${result && item.size_mm === result.lens_size_mm ? "best" : ""}`}
+                  >
+                    <div className="size-value">{item.size_mm}</div>
+                    <div className="size-prob">
+                      {result ? `${(item.probability * 100).toFixed(0)}%` : "—%"}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 

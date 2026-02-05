@@ -293,11 +293,19 @@ body {
   text-align: center;
 }
 
+.size-section-wrapper {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 24px 32px;
+}
+
 .size-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #9ca3af;
-  margin: 0 0 24px;
+  margin: 0 0 20px;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
@@ -318,8 +326,8 @@ body {
 }
 
 .size-card.best {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.4);
 }
 
 .size-value {
@@ -334,8 +342,12 @@ body {
   color: #6b7280;
 }
 
+.size-card.best .size-value {
+  color: #4ade80;
+}
+
 .size-card.best .size-prob {
-  color: #ffffff;
+  color: #4ade80;
 }
 
 .vault-section {
