@@ -251,8 +251,8 @@ export default function Calculator() {
           <div className="sidebar-section">
             <div className="sidebar-title">Patient Biometrics</div>
             
-            <div className="bio-field">
-              <label>Eye: {form.Eye || "—"}</label>
+            <div className={`bio-field eye-field ${form.Eye === "OD" ? "eye-od" : ""} ${form.Eye === "OS" ? "eye-os" : ""}`}>
+              <label>Eye: {form.Eye ? `${form.Eye} — ${form.Eye === "OD" ? "Right Eye" : "Left Eye"}` : "—"}</label>
             </div>
 
             <div className="bio-field">

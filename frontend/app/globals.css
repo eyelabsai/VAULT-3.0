@@ -233,6 +233,31 @@ body {
   color: #d8b4fe;
 }
 
+.bio-field.eye-field {
+  background: transparent;
+  border-left: none;
+}
+
+.bio-field.eye-od {
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-left: 3px solid rgba(59, 130, 246, 0.6) !important;
+}
+
+.bio-field.eye-od label {
+  color: #60a5fa !important;
+  font-size: 16px;
+}
+
+.bio-field.eye-os {
+  background: rgba(168, 85, 247, 0.15) !important;
+  border-left: 3px solid rgba(168, 85, 247, 0.6) !important;
+}
+
+.bio-field.eye-os label {
+  color: #c084fc !important;
+  font-size: 16px;
+}
+
 .bio-field label {
   display: block;
   font-size: 15px;
