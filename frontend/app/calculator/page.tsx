@@ -444,7 +444,7 @@ export default function Calculator() {
                   if (outlierPct > 10) {
                     return (
                       <p className="disclaimer-warning">
-                        WARNING: Based on eye anatomy, there is an &gt;10% risk the resulting vault may be outside the manufacturer's specified range (250–900 µm).
+                        ⚠️ WARNING: Anatomical measurements indicate an increased likelihood of vault outside the manufacturer's specified range (250–900 µm).
                       </p>
                     );
                   }
