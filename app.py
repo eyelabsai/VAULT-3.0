@@ -320,6 +320,26 @@ def main():
         ci_low = int(pred_vault - ci_margin)
         ci_high = int(pred_vault + ci_margin)
         
+        # Calculate outlier probability based on predicted vault range
+        def get_outlier_probability(predicted_vault):
+            """Return probability of outlier (100 - P(actual in 250-900)) based on predicted vault."""
+            if predicted_vault < 300:
+                return 35.6  # 100 - 64.4
+            elif predicted_vault < 400:
+                return 35.6  # 100 - 64.4
+            elif predicted_vault < 500:
+                return 15.2  # 100 - 84.8
+            elif predicted_vault < 600:
+                return 6.8   # 100 - 93.2
+            elif predicted_vault < 700:
+                return 6.4   # 100 - 93.6
+            elif predicted_vault < 800:
+                return 20.0  # 100 - 80.0
+            else:
+                return 83.3  # 100 - 16.7
+        
+        outlier_prob = get_outlier_probability(pred_vault)
+        
         # Display - Clinical Version
         st.divider()
         col_res1, col_res2 = st.columns([1, 1])
@@ -329,11 +349,25 @@ def main():
             st.write(f"**Probability:** {best_prob:.1%}")
             
         with col_res2:
-            st.markdown(f"### Predicted Vault: **{int(pred_vault)}µm**")
+            # Predicted vault is calculated but not displayed (kept commented out)
+            # st.markdown(f"### Predicted Vault: **{int(pred_vault)}µm**")
+            st.markdown(f"### Expected Vault Range")
             if sigma:
-                st.info(f"**Estimated 95% Range:** {ci_low}-{ci_high}µm")
+                st.info(f"**{ci_low}–{ci_high}µm**")
             else:
-                st.info(f"**Expected Range:** {ci_low}-{ci_high}µm")
+                st.info(f"**{ci_low}-{ci_high}µm**")
+        
+        # Disclaimer with dynamic outlier probability
+        st.markdown(f"""
+        <div style="background: #f7fafc; border-left: 4px solid #4299e1; padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+            <p style="margin: 0; color: #2d3748; font-size: 0.95rem;">
+                Based on the file uploaded and surgical results of thousands of eyes, 
+                the size most likely to result in an acceptable vault range is as above.<br><br>
+                <strong>The probability of an outlier requiring repeat surgical intervention 
+                for size mismatch is &lt;{outlier_prob:.0f}%</strong>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.divider()
         
