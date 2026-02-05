@@ -161,6 +161,11 @@ export default function Calculator() {
   };
 
   const sizeProbabilities = result?.size_probabilities || defaultSizes;
+  
+  const sortedByProb = result 
+    ? [...result.size_probabilities].sort((a, b) => b.probability - a.probability)
+    : [];
+  const secondBestSize = sortedByProb.length > 1 ? sortedByProb[1].size_mm : null;
 
   return (
     <main className="calc-page">
@@ -352,17 +357,21 @@ export default function Calculator() {
             <div className="size-section-wrapper">
               <h3 className="size-title">BEST SIZE PROBABILITY</h3>
               <div className="size-grid">
-                {sizeProbabilities.map((item) => (
-                  <div 
-                    key={item.size_mm} 
-                    className={`size-card ${result && item.size_mm === result.lens_size_mm ? "best" : ""}`}
-                  >
-                    <div className="size-value">{item.size_mm}</div>
-                    <div className="size-prob">
-                      {result ? `${(item.probability * 100).toFixed(0)}%` : "—%"}
+                {sizeProbabilities.map((item) => {
+                  const isBest = result && item.size_mm === result.lens_size_mm;
+                  const isSecond = result && item.size_mm === secondBestSize;
+                  return (
+                    <div 
+                      key={item.size_mm} 
+                      className={`size-card ${isBest ? "best" : ""} ${isSecond ? "second" : ""}`}
+                    >
+                      <div className="size-value">{item.size_mm}</div>
+                      <div className="size-prob">
+                        {result ? `${(item.probability * 100).toFixed(0)}%` : "—%"}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
