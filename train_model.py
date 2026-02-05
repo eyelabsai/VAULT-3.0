@@ -6,7 +6,6 @@ Trains models to predict:
 1. Lens Size (classification - discrete sizes like 12.6, 13.2, 13.7)
 2. Vault (regression - continuous measurement)
 
-Uses cross-validation due to small dataset size (56 cases).
 """
 
 import pandas as pd

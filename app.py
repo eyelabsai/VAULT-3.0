@@ -147,7 +147,11 @@ def parse_ini_file(ini_content: str) -> dict:
                 elif key == 'TCRP 3mm zone pupil Asti [D]':
                     extracted['TCRP_Astigmatism'] = float(value)
                 
-                # 8. Age extraction from DOB
+                # 8. Eye laterality
+                elif key == 'Eye':
+                    extracted['Eye'] = value.strip().upper()
+                
+                # 9. Age extraction from DOB
                 elif key == 'DOB' and current_section == 'Patient Data':
                     try:
                         dob = datetime.strptime(value, '%Y-%m-%d')
@@ -207,6 +211,12 @@ def main():
         
         def clamp(val, min_v, max_v):
             return max(min_v, min(val, max_v))
+
+        eye_val = ini_vals.get('Eye')
+        if eye_val:
+            st.markdown(f"**Eye:** {eye_val}")
+        else:
+            st.markdown("**Eye:** —")
 
         age = st.number_input("Age", 18, 90, clamp(ini_vals.get('Age', 35), 18, 90))
         wtw = st.number_input("WTW (mm)", 10.0, 15.0, clamp(ini_vals.get('WTW', 11.8), 10.0, 15.0), step=0.1)
