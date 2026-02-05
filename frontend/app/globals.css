@@ -518,6 +518,26 @@ body {
   color: #ffffff;
 }
 
+.color-legend {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.color-legend p {
+  font-size: 13px;
+}
+
+.legend-green {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.legend-yellow {
+  color: #facc15;
+  font-weight: 600;
+}
+
 .print-btn {
   padding: 12px 32px;
   background: transparent;

@@ -454,6 +454,10 @@ export default function Calculator() {
                     return 83;
                   })()}%
                 </p>
+                <div className="color-legend">
+                  <p><span className="legend-green">Green</span> — Indicates the size that best aligns with this eye's measured anatomy and is expected to produce a vault closest to the ideal range based on prior results.</p>
+                  <p><span className="legend-yellow">Yellow</span> — Indicates a size that is anatomically plausible based on surgeon discretion.</p>
+                </div>
               </div>
             )}
             <button className="print-btn" onClick={handlePrint}>
