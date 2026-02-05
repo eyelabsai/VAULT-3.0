@@ -109,9 +109,7 @@ export default function Calculator() {
       setForm((prev) => ({
         ...prev,
         ...extracted,
-        ICL_Power: prev.ICL_Power,
-        LastName: prev.LastName,
-        FirstName: prev.FirstName
+        ICL_Power: prev.ICL_Power
       }));
       setUploadedFileName(file.name);
     } catch (err) {
