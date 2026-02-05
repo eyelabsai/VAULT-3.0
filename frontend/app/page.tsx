@@ -62,11 +62,11 @@ export default function Home() {
               zero sizing errors or potential need for additional surgical interventions.
             </p>
             <div className="disclaimer-buttons">
-              <button className="disclaimer-decline-btn" onClick={() => window.location.href = "https://google.com"}>
-                Decline
-              </button>
               <button className="disclaimer-accept-btn" onClick={handleAccept}>
                 Accept & Continue
+              </button>
+              <button className="disclaimer-decline-btn" onClick={() => window.location.href = "https://google.com"}>
+                Decline
               </button>
             </div>
           </div>
