@@ -62,12 +62,26 @@ body {
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+    border-color: #374151;
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(237, 32, 36, 0.3), 0 0 40px rgba(237, 32, 36, 0.15);
+    border-color: rgba(237, 32, 36, 0.5);
+  }
 }
 
 .landing-button:hover {
   color: #ffffff;
-  border-color: #6b7280;
-  background: rgba(255, 255, 255, 0.05);
+  border-color: #ed2024;
+  background: rgba(237, 32, 36, 0.1);
+  animation: none;
+  box-shadow: 0 0 25px rgba(237, 32, 36, 0.4);
 }
 
 .landing-footer {
