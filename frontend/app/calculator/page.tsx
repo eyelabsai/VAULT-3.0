@@ -450,7 +450,7 @@ export default function Calculator() {
                   }
                   return (
                     <p>
-                      Based on the file uploaded and surgical results of thousands of eyes, the size most likely to result in an acceptable vault range is as above. The probability of an outlier requiring repeat surgical intervention for size mismatch is &lt;10% based on the data this model was trained on.
+                      Based on the file uploaded and surgical results of thousands of eyes, the size most likely to result in an acceptable vault range is as above. The probability of an outlier requiring repeat surgical intervention for size mismatch is &lt;1% based on the data this model was trained on.
                     </p>
                   );
                 })()}
