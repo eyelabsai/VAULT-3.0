@@ -239,6 +239,44 @@ For Vercel (Next.js frontend), add:
 
 ---
 
+## Exporting Beta Data
+
+Use the export script to pull all data from Supabase into clean reports:
+
+```bash
+# Full report (summary + scans + features + probabilities)
+python scripts/export_beta_data.py --all
+
+# Save to CSV files (data/exports/)
+python scripts/export_beta_data.py --csv
+
+# Filter by doctor
+python scripts/export_beta_data.py --user "Aaron" --all
+
+# Just summary + scan table
+python scripts/export_beta_data.py
+```
+
+### CSV Exports (saved to `data/exports/`)
+
+| File | Contents |
+|------|----------|
+| `beta_export_*.csv` | All scans with features, predictions, outcomes |
+| `outcomes_*.csv` | Only scans with recorded surgical outcomes |
+| `training_ready_*.csv` | Features + outcomes, ready for model retraining |
+
+### Creating Beta User Accounts
+
+```bash
+# Create accounts (no email sent to users)
+python scripts/create_beta_users.py
+
+# Or create a single account:
+# Edit the BETA_USERS list in the script and re-run
+```
+
+---
+
 ## Useful Links
 
 - **Dashboard:** https://supabase.com/dashboard/project/awdzlhqzubllaidhqsnw
