@@ -6,6 +6,7 @@ import Image from "next/image";
 
 export default function WelcomePage() {
   const [userName, setUserName] = useState<string>("");
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -19,15 +20,31 @@ export default function WelcomePage() {
         return;
       }
 
-      // Get user's name from metadata
       const firstName = session.user.user_metadata?.first_name || "";
       setUserName(firstName);
     };
     checkAuthAndGetName();
   }, [router]);
 
-  const handleContinue = () => {
+  const handleGetStarted = () => {
+    setShowDisclaimer(true);
+  };
+
+  const handleAccept = async () => {
+    // Mark disclaimer as accepted in user metadata
+    const { createClient } = await import("@/lib/supabase");
+    const supabase = createClient();
+    await supabase.auth.updateUser({
+      data: { disclaimer_accepted: true },
+    });
     router.push("/calculator");
+  };
+
+  const handleDecline = async () => {
+    const { createClient } = await import("@/lib/supabase");
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
   };
 
   return (
@@ -45,15 +62,15 @@ export default function WelcomePage() {
           
           <div className="welcome-card">
             <h1 className="welcome-title">
-              Welcome{userName ? `, ${userName}` : ""}! 🎉
+              Welcome{userName ? `, Dr. ${userName}` : ""}!
             </h1>
             <p className="welcome-text">
-              Your account has been verified successfully.
+              Your account is ready.
               <br />
-              You're ready to start using ICL Vault.
+              Please review and accept the clinical disclaimer to continue.
             </p>
             
-            <button onClick={handleContinue} className="landing-button welcome-btn">
+            <button onClick={handleGetStarted} className="landing-button welcome-btn">
               GET STARTED
             </button>
           </div>
@@ -71,6 +88,28 @@ export default function WelcomePage() {
           </a>
         </footer>
       </div>
+
+      {/* Clinical Disclaimer Modal */}
+      {showDisclaimer && (
+        <div className="disclaimer-overlay">
+          <div className="disclaimer-modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="disclaimer-title">Clinical Disclaimer</h2>
+            <p className="disclaimer-text">
+              Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
+              It is not intended to replace surgeon judgement, and does not claim to result in 
+              zero sizing errors or potential need for additional surgical interventions.
+            </p>
+            <div className="disclaimer-buttons">
+              <button className="disclaimer-accept-btn" onClick={handleAccept}>
+                Accept & Continue
+              </button>
+              <button className="disclaimer-decline-btn" onClick={handleDecline}>
+                Decline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

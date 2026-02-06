@@ -1,18 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Home() {
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const router = useRouter();
 
   const handleStartClick = () => {
-    setShowDisclaimer(true);
-  };
-
-  const handleAccept = () => {
     router.push("/login");
   };
 
@@ -51,27 +45,6 @@ export default function Home() {
         </footer>
       </div>
 
-      {/* Disclaimer Modal */}
-      {showDisclaimer && (
-        <div className="disclaimer-overlay">
-          <div className="disclaimer-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="disclaimer-title">Clinical Disclaimer</h2>
-            <p className="disclaimer-text">
-              Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
-              It is not intended to replace surgeon judgement, and does not claim to result in 
-              zero sizing errors or potential need for additional surgical interventions.
-            </p>
-            <div className="disclaimer-buttons">
-              <button className="disclaimer-accept-btn" onClick={handleAccept}>
-                Accept & Continue
-              </button>
-              <button className="disclaimer-decline-btn" onClick={() => window.location.href = "https://google.com"}>
-                Decline
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
