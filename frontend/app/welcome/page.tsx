@@ -62,7 +62,7 @@ export default function WelcomePage() {
           
           <div className="welcome-card">
             <h1 className="welcome-title">
-              Welcome{userName ? `, Dr. ${userName}` : ""}!
+              Welcome{userName ? `, ${userName}` : ""}!
             </h1>
             <p className="welcome-text">
               Your account is ready.
