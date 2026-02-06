@@ -229,12 +229,14 @@ export default function LoginPage() {
                 <button onClick={() => setMode("forgot")} className="link-btn">
                   Forgot password?
                 </button>
+                {/* Signup disabled for beta - uncomment to enable
                 <p>
                   Don't have an account?{" "}
                   <button onClick={() => setMode("signup")} className="link-btn">
                     Sign up
                   </button>
                 </p>
+                */}
               </>
             )}
             {mode === "signup" && (
