@@ -21,7 +21,7 @@ router = APIRouter(prefix="/beta", tags=["beta"])
 
 # Model version for tracking
 MODEL_VERSION = "v1.0.0-beta"
-VAULT_MAE = 131.0  # Current model MAE
+VAULT_MAE = 134.0  # Current model MAE (759 cases, Feb 2026)
 
 
 # =============================================================================
