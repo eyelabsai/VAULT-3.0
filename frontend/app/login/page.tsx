@@ -29,13 +29,24 @@ export default function LoginPage() {
 
     try {
       const supabase = await getSupabase();
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
-      router.push("/calculator");
+
+      // Check if first time login (sign_in_count not set or last_sign_in matches created_at)
+      const user = data.user;
+      const createdAt = new Date(user.created_at).getTime();
+      const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+      const isFirstLogin = Math.abs(createdAt - lastSignIn) < 60000; // within 1 minute
+
+      if (isFirstLogin) {
+        router.push("/welcome");
+      } else {
+        router.push("/calculator");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
