@@ -3,6 +3,7 @@ Beta API Routes for Vault 3.0
 Handles INI uploads, predictions, and outcome recording with Supabase.
 """
 
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -375,4 +376,89 @@ async def export_data(user: dict = Depends(get_current_user)):
         "count": len(data),
         "data": data,
         "note": "Only scans with recorded outcomes are included.",
+    }
+
+
+ADMIN_KEY = os.getenv("ADMIN_EXPORT_KEY", "vaultbeta2026")
+
+
+@router.get("/admin/export")
+async def admin_export(key: str = ""):
+    """
+    Admin-only: Export ALL beta data across all users.
+    Protected by simple admin key in query param.
+    """
+    if key != ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+
+    client = get_supabase_client()
+
+    profiles_raw = client.table("profiles").select("*").execute()
+    profiles = {p["id"]: p for p in (profiles_raw.data or [])}
+
+    patients_raw = client.table("patients").select("*").execute()
+    patient_by_id = {p["id"]: p for p in (patients_raw.data or [])}
+
+    scans_raw = client.table("scans").select("*").order("created_at", desc=True).execute()
+    predictions_raw = client.table("predictions").select("*").execute()
+    outcomes_raw = client.table("outcomes").select("*").execute()
+
+    pred_by_scan = {}
+    for p in (predictions_raw.data or []):
+        pred_by_scan.setdefault(p["scan_id"], []).append(p)
+
+    outcome_by_scan = {o["scan_id"]: o for o in (outcomes_raw.data or [])}
+
+    rows = []
+    for scan in (scans_raw.data or []):
+        patient = patient_by_id.get(scan["patient_id"], {})
+        profile = profiles.get(scan["user_id"], {})
+        preds = pred_by_scan.get(scan["id"], [])
+        latest_pred = preds[-1] if preds else {}
+        outcome = outcome_by_scan.get(scan["id"], {})
+        features = scan.get("features") or {}
+
+        probs = latest_pred.get("lens_probabilities") or {}
+
+        rows.append({
+            "scan_id": scan["id"],
+            "doctor": profile.get("full_name") or profile.get("email", "Unknown"),
+            "doctor_email": profile.get("email", ""),
+            "patient_id": patient.get("anonymous_id", ""),
+            "eye": scan.get("eye", ""),
+            "scan_date": (scan.get("created_at") or "")[:10],
+            "age": features.get("Age"),
+            "wtw": features.get("WTW"),
+            "acd_internal": features.get("ACD_internal"),
+            "acv": features.get("ACV"),
+            "ac_shape_ratio": features.get("AC_shape_ratio"),
+            "simk_steep": features.get("SimK_steep"),
+            "tcrp_km": features.get("TCRP_Km"),
+            "tcrp_astigmatism": features.get("TCRP_Astigmatism"),
+            "icl_power": features.get("ICL_Power"),
+            "cct": features.get("CCT"),
+            "predicted_lens_size": latest_pred.get("predicted_lens_size"),
+            "predicted_vault": latest_pred.get("predicted_vault"),
+            "vault_range_low": latest_pred.get("vault_range_low"),
+            "vault_range_high": latest_pred.get("vault_range_high"),
+            "prob_12_1": probs.get("12.1", 0),
+            "prob_12_6": probs.get("12.6", 0),
+            "prob_13_2": probs.get("13.2", 0),
+            "prob_13_7": probs.get("13.7", 0),
+            "model_version": latest_pred.get("model_version", ""),
+            "actual_lens_size": outcome.get("actual_lens_size"),
+            "actual_vault": outcome.get("actual_vault"),
+            "surgery_date": outcome.get("surgery_date"),
+        })
+
+    total_doctors = len(set(r["doctor_email"] for r in rows))
+    with_outcomes = sum(1 for r in rows if r["actual_lens_size"] or r["actual_vault"])
+
+    return {
+        "summary": {
+            "total_scans": len(rows),
+            "total_doctors": total_doctors,
+            "with_outcomes": with_outcomes,
+        },
+        "scans": rows,
     }
