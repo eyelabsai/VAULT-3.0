@@ -122,6 +122,13 @@ body {
   opacity: 1;
 }
 
+.user-menu-topright {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 100;
+}
+
 .calc-header {
   display: flex;
   flex-direction: column;

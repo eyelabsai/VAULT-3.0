@@ -4,6 +4,9 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const UserMenu = dynamic(() => import("@/components/UserMenu"), { ssr: false });
 
 type PredictionForm = {
   Age: number;
@@ -247,15 +250,10 @@ export default function Calculator() {
 
   return (
     <main className="calc-page">
-      {/* Bimini Logo Top Right */}
-      <a href="https://biminiai.com/" target="_blank" rel="noopener noreferrer" className="bimini-logo-topright">
-        <Image
-          src="/images/bimini-darkmode.svg"
-          alt="Bimini"
-          width={100}
-          height={32}
-        />
-      </a>
+      {/* User Menu Top Right */}
+      <div className="user-menu-topright">
+        <UserMenu />
+      </div>
 
       {/* Header */}
       <header className="calc-header">
