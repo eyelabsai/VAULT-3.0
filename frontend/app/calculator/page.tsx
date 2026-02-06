@@ -129,49 +129,88 @@ export default function Calculator() {
     }));
   };
 
+  const getAccessToken = async (): Promise<string | null> => {
+    const { createClient } = await import("@/lib/supabase");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  };
+
   const handleIniUpload = async (file: File | null) => {
     if (!file) return;
     setError(null);
     setStatus("loading");
 
     try {
+      const token = await getAccessToken();
+
+      // Use beta upload endpoint (saves to Supabase + runs prediction)
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(`${apiBase}/parse-ini`, {
+      formData.append("anonymous_id", `${form.LastName || "Patient"}-${form.FirstName || Date.now()}`);
+      formData.append("icl_power", String(form.ICL_Power));
+
+      const response = await fetch(`${apiBase}/beta/upload`, {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData
       });
 
       if (!response.ok) {
-        const payload = await response.json();
-        throw new Error(payload.detail || "Failed to parse INI file.");
-      }
-
-      const payload = await response.json();
-      const extracted = payload.extracted || {};
-
-      const newForm = {
-        ...form,
-        ...extracted,
-        ICL_Power: form.ICL_Power
-      };
-      setForm(newForm);
-      setUploadedFileName(file.name);
-      
-      // Auto-run prediction after INI upload
-      try {
-        const predictResponse = await fetch(`${apiBase}/predict`, {
+        // Fallback to original parse-ini if beta endpoint fails
+        const fallbackFormData = new FormData();
+        fallbackFormData.append("file", file);
+        const fallbackResponse = await fetch(`${apiBase}/parse-ini`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newForm)
+          body: fallbackFormData
         });
 
-        if (predictResponse.ok) {
-          const predictPayload = await predictResponse.json();
-          setResult(predictPayload);
+        if (!fallbackResponse.ok) {
+          const payload = await fallbackResponse.json();
+          throw new Error(payload.detail || "Failed to parse INI file.");
         }
-      } catch {
-        // Silently fail prediction, user can manually calculate
+
+        const payload = await fallbackResponse.json();
+        const extracted = payload.extracted || {};
+        const newForm = { ...form, ...extracted, ICL_Power: form.ICL_Power };
+        setForm(newForm);
+        setUploadedFileName(file.name);
+
+        // Auto-run prediction
+        try {
+          const predictResponse = await fetch(`${apiBase}/predict`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newForm)
+          });
+          if (predictResponse.ok) {
+            setResult(await predictResponse.json());
+          }
+        } catch {
+          // Silently fail prediction
+        }
+      } else {
+        // Beta endpoint succeeded — extract features + prediction from response
+        const payload = await response.json();
+        const features = payload.features || {};
+
+        const newForm = { ...form, ...features, ICL_Power: form.ICL_Power };
+        setForm(newForm);
+        setUploadedFileName(file.name);
+
+        // Set prediction result if returned
+        if (payload.prediction) {
+          setResult({
+            lens_size_mm: payload.prediction.lens_size_mm,
+            lens_probability: payload.prediction.lens_probability,
+            vault_pred_um: payload.prediction.vault_pred_um,
+            vault_range_um: payload.prediction.vault_range_um,
+            vault_flag: payload.prediction.vault_flag,
+            size_probabilities: Object.entries(payload.prediction.size_probabilities || {}).map(
+              ([size, prob]) => ({ size_mm: parseFloat(size), probability: prob as number })
+            ),
+          });
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
