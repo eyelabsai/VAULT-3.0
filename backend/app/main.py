@@ -262,7 +262,7 @@ def predict(payload: PredictionInput):
         lens_size_mm=best_size,
         lens_probability=best_prob,
         vault_pred_um=pred_vault,
-        vault_range_um=[pred_vault - 125, pred_vault + 125],
+        vault_range_um=[pred_vault - 131, pred_vault + 131],
         vault_flag=vault_flag,
         size_probabilities=size_probs,
     )
