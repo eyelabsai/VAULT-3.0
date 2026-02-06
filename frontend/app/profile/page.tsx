@@ -23,6 +23,10 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -79,6 +83,43 @@ export default function ProfilePage() {
       setMessage(err instanceof Error ? err.message : "Failed to update profile");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setChangingPassword(true);
+    setMessage(null);
+
+    if (newPassword !== confirmNewPassword) {
+      setMessage("Passwords do not match");
+      setChangingPassword(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setMessage("Password must be at least 6 characters");
+      setChangingPassword(false);
+      return;
+    }
+
+    try {
+      const { createClient } = await import("@/lib/supabase");
+      const supabase = createClient();
+      
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) throw error;
+
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setShowPasswordForm(false);
+      setMessage("Password updated successfully!");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Failed to update password");
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -171,6 +212,50 @@ export default function ProfilePage() {
                 </button>
                 <button onClick={handleSave} className="profile-save-btn" disabled={saving}>
                   {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Change Password Section */}
+        <div className="profile-card" style={{ marginTop: "24px" }}>
+          <h2 style={{ fontSize: "18px", fontWeight: "600", color: "#ffffff", margin: "0 0 16px", textAlign: "center" }}>
+            Security
+          </h2>
+          
+          {!showPasswordForm ? (
+            <button onClick={() => setShowPasswordForm(true)} className="profile-edit-btn">
+              Change Password
+            </button>
+          ) : (
+            <div className="profile-edit-form">
+              <div className="form-field">
+                <label>New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+              </div>
+              <div className="form-field">
+                <label>Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  minLength={6}
+                />
+              </div>
+              <div className="profile-edit-actions">
+                <button onClick={() => { setShowPasswordForm(false); setNewPassword(""); setConfirmNewPassword(""); }} className="profile-cancel-btn">
+                  Cancel
+                </button>
+                <button onClick={handleChangePassword} className="profile-save-btn" disabled={changingPassword}>
+                  {changingPassword ? "Updating..." : "Update Password"}
                 </button>
               </div>
             </div>

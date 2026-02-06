@@ -66,12 +66,11 @@ export default function UserMenu() {
     );
   }
 
-  // Get initials from name or email
+  // Get first initial only from name or email
   const firstName = user.user_metadata?.first_name || "";
-  const lastName = user.user_metadata?.last_name || "";
-  const initials = firstName && lastName
-    ? `${firstName[0]}${lastName[0]}`.toUpperCase()
-    : user.email?.substring(0, 2).toUpperCase() || "U";
+  const initials = firstName
+    ? firstName[0].toUpperCase()
+    : user.email?.[0]?.toUpperCase() || "U";
   
   const displayName = firstName || user.email?.split("@")[0] || "User";
 
@@ -93,7 +92,7 @@ export default function UserMenu() {
           <div className="dropdown-header">
             <div className="dropdown-avatar">{initials}</div>
             <div className="dropdown-user-info">
-              <span className="dropdown-name">{firstName && lastName ? `${firstName} ${lastName}` : displayName}</span>
+              <span className="dropdown-name">{firstName || displayName}</span>
               <span className="dropdown-email">{user.email}</span>
             </div>
           </div>
