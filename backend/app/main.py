@@ -24,10 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include beta routes
-from .routes_beta import router as beta_router
-app.include_router(beta_router)
-
 
 class PredictionInput(BaseModel):
     Age: int = Field(..., ge=18, le=90)
@@ -270,3 +266,8 @@ def predict(payload: PredictionInput):
         vault_flag=vault_flag,
         size_probabilities=size_probs,
     )
+
+
+# Include beta routes (at bottom to avoid circular import)
+from .routes_beta import router as beta_router
+app.include_router(beta_router)
