@@ -6,7 +6,8 @@ import Image from "next/image";
 
 export default function WelcomePage() {
   const [userName, setUserName] = useState<string>("");
-  const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [step, setStep] = useState<"welcome" | "disclaimer">("welcome");
+  const [accepting, setAccepting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,12 +27,8 @@ export default function WelcomePage() {
     checkAuthAndGetName();
   }, [router]);
 
-  const handleGetStarted = () => {
-    setShowDisclaimer(true);
-  };
-
   const handleAccept = async () => {
-    // Mark disclaimer as accepted in user metadata
+    setAccepting(true);
     const { createClient } = await import("@/lib/supabase");
     const supabase = createClient();
     await supabase.auth.updateUser({
@@ -60,11 +57,41 @@ export default function WelcomePage() {
             priority
           />
           
-          <div className="welcome-card">
-            <h1 className="welcome-title">
-              Welcome{userName ? `, ${userName}` : ""}
-            </h1>
-          </div>
+          {step === "welcome" && (
+            <div className="welcome-card" style={{ animation: "fadeIn 0.5s ease-out" }}>
+              <h1 className="welcome-title">
+                Welcome{userName ? `, ${userName}` : ""}
+              </h1>
+              <p className="welcome-subtitle">
+                Thank you for joining ICL Vault
+              </p>
+              <button onClick={() => setStep("disclaimer")} className="landing-button welcome-btn">
+                CONTINUE
+              </button>
+            </div>
+          )}
+
+          {step === "disclaimer" && (
+            <div className="disclaimer-card" style={{ animation: "fadeIn 0.5s ease-out" }}>
+              <h2 className="disclaimer-card-title">Clinical Disclaimer</h2>
+              <p className="disclaimer-card-text">
+                Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
+                It is not intended to replace surgeon judgement, and does not claim to result in 
+                zero sizing errors or potential need for additional surgical interventions.
+              </p>
+              <p className="disclaimer-card-prompt">
+                Please review and accept to continue.
+              </p>
+              <div className="disclaimer-card-actions">
+                <button className="disclaimer-accept-btn" onClick={handleAccept} disabled={accepting}>
+                  {accepting ? "Loading..." : "Accept & Continue"}
+                </button>
+                <button className="disclaimer-decline-btn" onClick={handleDecline}>
+                  Decline
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         
         <footer className="landing-footer">
@@ -79,28 +106,6 @@ export default function WelcomePage() {
           </a>
         </footer>
       </div>
-
-      {/* Clinical Disclaimer Modal */}
-      {showDisclaimer && (
-        <div className="disclaimer-overlay">
-          <div className="disclaimer-modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="disclaimer-title">Clinical Disclaimer</h2>
-            <p className="disclaimer-text">
-              Vault AI is one tool to assist surgeons in selecting ICL size for their patients. 
-              It is not intended to replace surgeon judgement, and does not claim to result in 
-              zero sizing errors or potential need for additional surgical interventions.
-            </p>
-            <div className="disclaimer-buttons">
-              <button className="disclaimer-accept-btn" onClick={handleAccept}>
-                Accept & Continue
-              </button>
-              <button className="disclaimer-decline-btn" onClick={handleDecline}>
-                Decline
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
