@@ -967,6 +967,7 @@ body {
   color: #ffffff;
   font-size: 16px;
   transition: all 0.2s;
+  width: 100%;
 }
 
 .form-field input:focus {
@@ -977,6 +978,34 @@ body {
 
 .form-field input::placeholder {
   color: #6b7280;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper input {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.password-toggle:hover {
+  color: #9ca3af;
 }
 
 .login-btn {
