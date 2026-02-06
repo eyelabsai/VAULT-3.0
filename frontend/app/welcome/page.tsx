@@ -6,7 +6,7 @@ import Image from "next/image";
 
 export default function WelcomePage() {
   const [userName, setUserName] = useState<string>("");
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -62,17 +62,8 @@ export default function WelcomePage() {
           
           <div className="welcome-card">
             <h1 className="welcome-title">
-              Welcome{userName ? `, ${userName}` : ""}!
+              Welcome{userName ? `, ${userName}` : ""}
             </h1>
-            <p className="welcome-text">
-              Your account is ready.
-              <br />
-              Please review and accept the clinical disclaimer to continue.
-            </p>
-            
-            <button onClick={handleGetStarted} className="landing-button welcome-btn">
-              GET STARTED
-            </button>
           </div>
         </div>
         
