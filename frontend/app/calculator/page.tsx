@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type PredictionForm = {
   Age: number;
@@ -58,6 +59,24 @@ export default function Calculator() {
   const [form, setForm] = useState<PredictionForm>(defaultForm);
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<PredictionResponse | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const router = useRouter();
+
+  // Check if user is logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { createClient } = await import("@/lib/supabase");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setAuthChecked(true);
+    };
+    checkAuth();
+  }, [router]);
   const [status, setStatus] = useState<"idle" | "loading">("idle");
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -214,6 +233,17 @@ export default function Calculator() {
     ? [...result.size_probabilities].sort((a, b) => b.probability - a.probability)
     : [];
   const secondBestSize = sortedByProb.length > 1 ? sortedByProb[1].size_mm : null;
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <main className="calc-page">
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+          <p style={{ color: "#9ca3af" }}>Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="calc-page">
