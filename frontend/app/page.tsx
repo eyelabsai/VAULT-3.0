@@ -13,7 +13,7 @@ export default function Home() {
   };
 
   const handleAccept = () => {
-    router.push("/calculator");
+    router.push("/login");
   };
 
   return (
@@ -34,7 +34,7 @@ export default function Home() {
           </p>
           
           <button onClick={handleStartClick} className="landing-button">
-            START
+            LOGIN
           </button>
         </div>
         
