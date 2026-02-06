@@ -36,13 +36,10 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      // Check if first time login (sign_in_count not set or last_sign_in matches created_at)
-      const user = data.user;
-      const createdAt = new Date(user.created_at).getTime();
-      const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
-      const isFirstLogin = Math.abs(createdAt - lastSignIn) < 60000; // within 1 minute
+      // Check if user has accepted disclaimer
+      const hasAccepted = data.user?.user_metadata?.disclaimer_accepted === true;
 
-      if (isFirstLogin) {
+      if (!hasAccepted) {
         router.push("/welcome");
       } else {
         router.push("/calculator");
