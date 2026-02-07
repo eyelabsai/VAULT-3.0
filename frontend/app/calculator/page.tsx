@@ -38,15 +38,15 @@ type PredictionResponse = {
 };
 
 const defaultForm: PredictionForm = {
-  Age: 35,
-  WTW: 11.8,
-  ACD_internal: 3.2,
-  ICL_Power: -9.0,
-  AC_shape_ratio: 60.0,
-  SimK_steep: 44.0,
-  ACV: 180.0,
-  TCRP_Km: 44.0,
-  TCRP_Astigmatism: 1.0,
+  Age: 0,
+  WTW: 0,
+  ACD_internal: 0,
+  ICL_Power: -10.0,
+  AC_shape_ratio: 0,
+  SimK_steep: 0,
+  ACV: 0,
+  TCRP_Km: 0,
+  TCRP_Astigmatism: 0,
   LastName: "",
   FirstName: ""
 };
@@ -206,7 +206,6 @@ export default function Calculator() {
         setForm(newForm);
         setUploadedFileName(file.name);
 
-        // Set prediction result if returned
         if (payload.prediction) {
           setResult({
             lens_size_mm: payload.prediction.lens_size_mm,
@@ -218,6 +217,20 @@ export default function Calculator() {
               ([size, prob]) => ({ size_mm: parseFloat(size), probability: prob as number })
             ),
           });
+        } else {
+          // Missing features — tell user which ones to fill in
+          setResult(null);
+          const required = ["Age", "WTW", "ACD_internal", "ICL_Power", "AC_shape_ratio", "SimK_steep", "ACV", "TCRP_Km", "TCRP_Astigmatism"];
+          const fieldLabels: Record<string, string> = {
+            Age: "Age", WTW: "WTW", ACD_internal: "ACD Internal",
+            ICL_Power: "ICL Power", AC_shape_ratio: "AC Shape Ratio",
+            SimK_steep: "SimK Steep", ACV: "ACV", TCRP_Km: "TCRP Km",
+            TCRP_Astigmatism: "TCRP Astigmatism",
+          };
+          const missing = required.filter(f => features[f] == null);
+          if (missing.length > 0) {
+            setError(`Missing from INI: ${missing.map(f => fieldLabels[f] || f).join(", ")}. Please enter manually and click Calculate.`);
+          }
         }
       }
     } catch (err) {
