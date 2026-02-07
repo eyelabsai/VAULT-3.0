@@ -146,8 +146,10 @@ export default function Calculator() {
 
       // Use beta upload endpoint (saves to Supabase + runs prediction)
       const formData = new FormData();
+      // Use INI filename (without extension) as patient identifier
+      const baseName = file.name.replace(/\.ini$/i, "");
       formData.append("file", file);
-      formData.append("anonymous_id", `${form.LastName || "Patient"}-${form.FirstName || Date.now()}`);
+      formData.append("anonymous_id", baseName);
       formData.append("icl_power", String(form.ICL_Power));
 
       const response = await fetch(`${apiBase}/beta/upload`, {
