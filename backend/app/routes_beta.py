@@ -468,7 +468,7 @@ async def admin_export(key: str = ""):
         })
 
     total_doctors = len(set(r["doctor_email"] for r in rows))
-    with_outcomes = sum(1 for r in rows if r["actual_lens_size"] or r["actual_vault"])
+    with_outcomes = sum(1 for r in rows if r["actual_lens_size"] or r["vault_1day"])
 
     return {
         "summary": {
