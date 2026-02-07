@@ -95,7 +95,9 @@ def fetch_all_data():
             "prob_13.7": probs.get("13.7", 0),
             "model_version": latest_pred.get("model_version", ""),
             "actual_lens_size": outcome.get("actual_lens_size"),
-            "actual_vault": outcome.get("actual_vault"),
+            "vault_1day": outcome.get("vault_1day"),
+            "vault_1week": outcome.get("vault_1week"),
+            "vault_1month": outcome.get("vault_1month"),
             "surgery_date": outcome.get("surgery_date"),
             "outcome_notes": outcome.get("notes"),
             "lens_correct": None,
@@ -105,8 +107,8 @@ def fetch_all_data():
 
         if row["actual_lens_size"] and row["predicted_lens_size"]:
             row["lens_correct"] = str(row["actual_lens_size"]) == str(row["predicted_lens_size"])
-        if row["actual_vault"] is not None and row["predicted_vault"] is not None:
-            row["vault_error"] = round(float(row["actual_vault"]) - float(row["predicted_vault"]), 1)
+        if row["vault_1day"] is not None and row["predicted_vault"] is not None:
+            row["vault_error"] = round(float(row["vault_1day"]) - float(row["predicted_vault"]), 1)
 
         rows.append(row)
 
@@ -122,7 +124,7 @@ def print_summary(rows):
     print("=" * 70)
 
     doctors = set(r["doctor_email"] for r in rows)
-    with_outcomes = [r for r in rows if r["actual_lens_size"] or r["actual_vault"]]
+    with_outcomes = [r for r in rows if r["actual_lens_size"] or r["vault_1day"]]
 
     print("")
     print("SUMMARY".center(70))
@@ -141,7 +143,7 @@ def print_summary(rows):
 
     for doc in sorted(doctors):
         doc_rows = [r for r in rows if r["doctor_email"] == doc]
-        doc_outcomes = [r for r in doc_rows if r["actual_lens_size"] or r["actual_vault"]]
+        doc_outcomes = [r for r in doc_rows if r["actual_lens_size"] or r["vault_1day"]]
         name = doc_rows[0]["doctor"] if doc_rows else doc
         print(f"  {name:<35} {len(doc_rows):>8} {len(doc_outcomes):>10}")
 
@@ -179,12 +181,12 @@ def print_scan_table(rows):
         pred_vault = f"{r['predicted_vault']}µm" if r["predicted_vault"] else "—"
 
         actual = "—"
-        if r["actual_lens_size"] or r["actual_vault"]:
+        if r["actual_lens_size"] or r["vault_1day"]:
             parts = []
             if r["actual_lens_size"]:
                 parts.append(f"{r['actual_lens_size']}mm")
-            if r["actual_vault"]:
-                parts.append(f"{r['actual_vault']}µm")
+            if r["vault_1day"]:
+                parts.append(f"{r['vault_1day']}µm")
             actual = " / ".join(parts)
 
         print(f"  {r['scan_date']:<12} {doc_short:<18} {patient:<15} {r['eye']:<5} {pred_size:<10} {pred_vault:<12} {actual:<12}")
@@ -236,7 +238,7 @@ def save_csv(rows):
             writer.writerows(rows)
         print(f"\n✅ Saved: {main_file} ({len(rows)} rows)")
 
-    outcomes_rows = [r for r in rows if r["actual_lens_size"] or r["actual_vault"]]
+    outcomes_rows = [r for r in rows if r["actual_lens_size"] or r["vault_1day"]]
     if outcomes_rows:
         outcomes_file = os.path.join(EXPORT_DIR, f"outcomes_{timestamp}.csv")
         with open(outcomes_file, "w", newline="") as f:
@@ -259,7 +261,9 @@ def save_csv(rows):
             "ICL_Power": r["icl_power"],
             "CCT": r["cct"],
             "Lens_Size": r["actual_lens_size"],
-            "Vault": r["actual_vault"],
+            "Vault_1day": r["vault_1day"],
+            "Vault_1week": r["vault_1week"],
+            "Vault_1month": r["vault_1month"],
         })
     if training_rows:
         training_file = os.path.join(EXPORT_DIR, f"training_ready_{timestamp}.csv")

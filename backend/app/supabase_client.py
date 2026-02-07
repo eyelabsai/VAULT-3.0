@@ -130,10 +130,16 @@ def parse_ini_strip_phi(ini_content: str) -> dict:
         hash_input = f"{phi_data.get('last_name', '').lower()}:{phi_data.get('first_name', '').lower()}:{phi_data.get('dob', '')}"
         phi_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
 
+    # Build patient initials from name fields
+    first_initial = phi_data.get("first_name", "")[:1].upper()
+    last_initial = phi_data.get("last_name", "")[:1].upper()
+    initials = f"{first_initial}{last_initial}" if (first_initial or last_initial) else None
+
     return {
         "features": extracted,
         "phi_hash": phi_hash,
         "eye": extracted.get("Eye", "UNKNOWN"),
+        "initials": initials,
     }
 
 
@@ -295,7 +301,9 @@ class VaultDatabase:
         self,
         scan_id: str,
         actual_lens_size: str = None,
-        actual_vault: float = None,
+        vault_1day: float = None,
+        vault_1week: float = None,
+        vault_1month: float = None,
         surgery_date: str = None,
         notes: str = None,
     ) -> dict:
@@ -303,7 +311,9 @@ class VaultDatabase:
         data = {
             "scan_id": scan_id,
             "actual_lens_size": actual_lens_size,
-            "actual_vault": actual_vault,
+            "vault_1day": vault_1day,
+            "vault_1week": vault_1week,
+            "vault_1month": vault_1month,
             "surgery_date": surgery_date,
             "notes": notes,
             "updated_at": datetime.utcnow().isoformat(),

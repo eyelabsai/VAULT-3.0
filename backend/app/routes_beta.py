@@ -41,7 +41,9 @@ class UploadResponse(BaseModel):
 
 class OutcomeInput(BaseModel):
     actual_lens_size: Optional[str] = Field(None, description="Lens size used (e.g., '12.6')")
-    actual_vault: Optional[float] = Field(None, ge=0, le=2000, description="Measured vault in µm")
+    vault_1day: Optional[float] = Field(None, ge=0, le=2000, description="Vault at 1 day post-op (µm)")
+    vault_1week: Optional[float] = Field(None, ge=0, le=2000, description="Vault at 1 week post-op (µm)")
+    vault_1month: Optional[float] = Field(None, ge=0, le=2000, description="Vault at 1 month post-op (µm)")
     surgery_date: Optional[str] = Field(None, description="Surgery date (YYYY-MM-DD)")
     notes: Optional[str] = None
 
@@ -50,7 +52,9 @@ class OutcomeResponse(BaseModel):
     outcome_id: str
     scan_id: str
     actual_lens_size: Optional[str]
-    actual_vault: Optional[float]
+    vault_1day: Optional[float]
+    vault_1week: Optional[float]
+    vault_1month: Optional[float]
     message: str
 
 
@@ -147,6 +151,7 @@ async def upload_ini_file(
     parsed = parse_ini_strip_phi(content)
     features = parsed["features"]
     eye = parsed["eye"]
+    initials = parsed.get("initials")
     
     if not features:
         raise HTTPException(status_code=400, detail="Could not extract features from INI file")
@@ -154,13 +159,16 @@ async def upload_ini_file(
     # Add ICL_Power from user input (not in INI file)
     features["ICL_Power"] = icl_power
     
+    # Use initials from INI if available, fall back to provided anonymous_id
+    patient_label = initials if initials else anonymous_id
+    
     # Initialize database
     db = VaultDatabase()
     storage = VaultStorage()
     user_id = user["id"]
     
     # Get or create patient
-    patient = db.get_or_create_patient(user_id, anonymous_id)
+    patient = db.get_or_create_patient(user_id, patient_label)
     
     # Upload INI file to storage (optional - for audit trail)
     try:
@@ -233,7 +241,7 @@ async def upload_ini_file(
     return UploadResponse(
         scan_id=scan["id"],
         patient_id=patient["id"],
-        anonymous_id=anonymous_id,
+        anonymous_id=patient_label,
         eye=eye,
         features=features,
         prediction=prediction_result,
@@ -264,7 +272,9 @@ async def record_outcome(
     result = db.create_or_update_outcome(
         scan_id=scan_id,
         actual_lens_size=outcome.actual_lens_size,
-        actual_vault=outcome.actual_vault,
+        vault_1day=outcome.vault_1day,
+        vault_1week=outcome.vault_1week,
+        vault_1month=outcome.vault_1month,
         surgery_date=outcome.surgery_date,
         notes=outcome.notes,
     )
@@ -273,7 +283,9 @@ async def record_outcome(
         outcome_id=result["id"],
         scan_id=scan_id,
         actual_lens_size=outcome.actual_lens_size,
-        actual_vault=outcome.actual_vault,
+        vault_1day=outcome.vault_1day,
+        vault_1week=outcome.vault_1week,
+        vault_1month=outcome.vault_1month,
         message="Outcome recorded successfully. Thank you for contributing to model improvement!",
     )
 
@@ -324,7 +336,9 @@ async def list_scans(
             "predicted_lens_size": prediction["predicted_lens_size"] if prediction else None,
             "predicted_vault": prediction["predicted_vault"] if prediction else None,
             "actual_lens_size": outcome["actual_lens_size"] if outcome else None,
-            "actual_vault": outcome["actual_vault"] if outcome else None,
+            "vault_1day": outcome["vault_1day"] if outcome else None,
+            "vault_1week": outcome.get("vault_1week") if outcome else None,
+            "vault_1month": outcome.get("vault_1month") if outcome else None,
             "created_at": scan["created_at"],
         })
     
@@ -447,7 +461,9 @@ async def admin_export(key: str = ""):
             "prob_13_7": probs.get("13.7", 0),
             "model_version": latest_pred.get("model_version", ""),
             "actual_lens_size": outcome.get("actual_lens_size"),
-            "actual_vault": outcome.get("actual_vault"),
+            "vault_1day": outcome.get("vault_1day"),
+            "vault_1week": outcome.get("vault_1week"),
+            "vault_1month": outcome.get("vault_1month"),
             "surgery_date": outcome.get("surgery_date"),
         })
 

@@ -31,7 +31,9 @@ type Scan = {
   prob_13_7: number;
   model_version: string;
   actual_lens_size: string | null;
-  actual_vault: number | null;
+  vault_1day: number | null;
+  vault_1week: number | null;
+  vault_1month: number | null;
   surgery_date: string | null;
 };
 
@@ -213,7 +215,9 @@ export default function BetaTestPage() {
                   <SortHeader label="Pred Vault" field="predicted_vault" />
                   <SortHeader label="Range" field="vault_range_low" />
                   <SortHeader label="Actual Size" field="actual_lens_size" />
-                  <SortHeader label="Actual Vault" field="actual_vault" />
+                  <SortHeader label="Vault 1d" field="vault_1day" />
+                  <SortHeader label="Vault 1wk" field="vault_1week" />
+                  <SortHeader label="Vault 1mo" field="vault_1month" />
                   <th className="beta-th">Details</th>
                 </tr>
               </thead>
@@ -231,7 +235,9 @@ export default function BetaTestPage() {
                       <td className="beta-td">{s.predicted_vault ? `${s.predicted_vault}µm` : "—"}</td>
                       <td className="beta-td dim">{s.vault_range_low && s.vault_range_high ? `${s.vault_range_low}–${s.vault_range_high}` : "—"}</td>
                       <td className="beta-td">{s.actual_lens_size ? <span className="actual">{s.actual_lens_size}mm</span> : <span className="dim">—</span>}</td>
-                      <td className="beta-td">{s.actual_vault ? <span className="actual">{s.actual_vault}µm</span> : <span className="dim">—</span>}</td>
+                      <td className="beta-td">{s.vault_1day != null ? <span className="actual">{s.vault_1day}µm</span> : <span className="dim">—</span>}</td>
+                      <td className="beta-td">{s.vault_1week != null ? <span className="actual">{s.vault_1week}µm</span> : <span className="dim">—</span>}</td>
+                      <td className="beta-td">{s.vault_1month != null ? <span className="actual">{s.vault_1month}µm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">
                         <button className="expand-btn" onClick={() => setExpandedRow(expandedRow === s.scan_id ? null : s.scan_id)}>
                           {expandedRow === s.scan_id ? "▾" : "▸"}
@@ -240,7 +246,7 @@ export default function BetaTestPage() {
                     </tr>
                     {expandedRow === s.scan_id && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
-                        <td colSpan={10} className="beta-detail-td">
+                        <td colSpan={12} className="beta-detail-td">
                           <div className="detail-grid">
                             <div><span className="detail-label">Age</span><span className="detail-value">{fmt(s.age, 0)}</span></div>
                             <div><span className="detail-label">WTW</span><span className="detail-value">{fmt(s.wtw)}mm</span></div>
@@ -252,6 +258,9 @@ export default function BetaTestPage() {
                             <div><span className="detail-label">Astigmatism</span><span className="detail-value">{fmt(s.tcrp_astigmatism, 2)}D</span></div>
                             <div><span className="detail-label">ICL Power</span><span className="detail-value">{fmt(s.icl_power)}D</span></div>
                             <div><span className="detail-label">CCT</span><span className="detail-value">{fmt(s.cct, 0)}µm</span></div>
+                            <div><span className="detail-label">Vault 1 Day</span><span className="detail-value">{s.vault_1day != null ? `${s.vault_1day}µm` : "—"}</span></div>
+                            <div><span className="detail-label">Vault 1 Week</span><span className="detail-value">{s.vault_1week != null ? `${s.vault_1week}µm` : "—"}</span></div>
+                            <div><span className="detail-label">Vault 1 Month</span><span className="detail-value">{s.vault_1month != null ? `${s.vault_1month}µm` : "—"}</span></div>
                             <div><span className="detail-label">P(12.1)</span><span className="detail-value">{pct(s.prob_12_1)}</span></div>
                             <div><span className="detail-label">P(12.6)</span><span className="detail-value">{pct(s.prob_12_6)}</span></div>
                             <div><span className="detail-label">P(13.2)</span><span className="detail-value">{pct(s.prob_13_2)}</span></div>

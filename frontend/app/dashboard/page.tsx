@@ -15,7 +15,9 @@ type Scan = {
   predicted_lens_size: string | null;
   predicted_vault: number | null;
   actual_lens_size: string | null;
-  actual_vault: number | null;
+  vault_1day: number | null;
+  vault_1week: number | null;
+  vault_1month: number | null;
   created_at: string;
 };
 
@@ -30,6 +32,17 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedScan, setSelectedScan] = useState<Scan | null>(null);
+  const [outcomeForm, setOutcomeForm] = useState({
+    actual_lens_size: "",
+    vault_1day: "",
+    vault_1week: "",
+    vault_1month: "",
+    surgery_date: "",
+    notes: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const router = useRouter();
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -79,6 +92,74 @@ export default function DashboardPage() {
 
     checkAuthAndFetch();
   }, [router, apiBase]);
+
+  const openOutcomeModal = (scan: Scan) => {
+    setSelectedScan(scan);
+    setOutcomeForm({
+      actual_lens_size: scan.actual_lens_size || "",
+      vault_1day: scan.vault_1day != null ? String(scan.vault_1day) : "",
+      vault_1week: scan.vault_1week != null ? String(scan.vault_1week) : "",
+      vault_1month: scan.vault_1month != null ? String(scan.vault_1month) : "",
+      surgery_date: "",
+      notes: "",
+    });
+    setSubmitError(null);
+  };
+
+  const handleSubmitOutcome = async () => {
+    if (!selectedScan) return;
+    if (!outcomeForm.vault_1day) {
+      setSubmitError("Vault at 1 day is required");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const { createClient } = await import("@/lib/supabase");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+
+      const body: Record<string, unknown> = {
+        vault_1day: parseFloat(outcomeForm.vault_1day),
+      };
+      if (outcomeForm.actual_lens_size) body.actual_lens_size = outcomeForm.actual_lens_size;
+      if (outcomeForm.vault_1week) body.vault_1week = parseFloat(outcomeForm.vault_1week);
+      if (outcomeForm.vault_1month) body.vault_1month = parseFloat(outcomeForm.vault_1month);
+      if (outcomeForm.surgery_date) body.surgery_date = outcomeForm.surgery_date;
+      if (outcomeForm.notes) body.notes = outcomeForm.notes;
+
+      const res = await fetch(`${apiBase}/beta/scans/${selectedScan.id}/outcome`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.detail || "Failed to submit outcome");
+      }
+
+      const updated = await res.json();
+      setScans((prev) =>
+        prev.map((s) => (s.id === selectedScan.id ? { ...s, ...updated } : s))
+      );
+      setSelectedScan(null);
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to submit outcome");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -172,7 +253,13 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 {scans.map((scan) => (
-                  <tr key={scan.id} style={{ borderBottom: "1px solid #262626" }}>
+                  <tr
+                    key={scan.id}
+                    onClick={() => openOutcomeModal(scan)}
+                    style={{ borderBottom: "1px solid #262626", cursor: "pointer", transition: "background 0.15s" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#262626")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  >
                     <td style={{ padding: "16px", color: "#ffffff" }}>{scan.patient_anonymous_id}</td>
                     <td style={{ padding: "16px" }}>
                       <span style={{
@@ -193,14 +280,14 @@ export default function DashboardPage() {
                       {scan.predicted_vault ? `${scan.predicted_vault}µm` : "—"}
                     </td>
                     <td style={{ padding: "16px" }}>
-                      {scan.actual_lens_size || scan.actual_vault ? (
+                      {scan.actual_lens_size || scan.vault_1day != null ? (
                         <span style={{ color: "#4ade80" }}>
                           {scan.actual_lens_size && `${scan.actual_lens_size}mm`}
-                          {scan.actual_lens_size && scan.actual_vault && " / "}
-                          {scan.actual_vault && `${scan.actual_vault}µm`}
+                          {scan.actual_lens_size && scan.vault_1day != null && " / "}
+                          {scan.vault_1day != null && `${scan.vault_1day}µm`}
                         </span>
                       ) : (
-                        <span style={{ color: "#6b7280" }}>Not recorded</span>
+                        <span style={{ color: "#6b7280" }}>Click to record</span>
                       )}
                     </td>
                     <td style={{ padding: "16px", color: "#9ca3af" }}>{formatDate(scan.created_at)}</td>
@@ -211,6 +298,179 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Outcome Recording Modal */}
+      {selectedScan && (
+        <div
+          onClick={() => setSelectedScan(null)}
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)", display: "flex",
+            justifyContent: "center", alignItems: "center", zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#1a1a1a", borderRadius: "16px", padding: "32px",
+              width: "100%", maxWidth: "520px", maxHeight: "90vh", overflowY: "auto",
+              border: "1px solid #374151",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+              <h2 style={{ color: "#ffffff", fontSize: "20px", fontWeight: "600", margin: 0 }}>Record Outcome</h2>
+              <button
+                onClick={() => setSelectedScan(null)}
+                style={{ background: "none", border: "none", color: "#9ca3af", fontSize: "24px", cursor: "pointer", padding: "4px" }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Scan Info */}
+            <div style={{ background: "#262626", borderRadius: "8px", padding: "16px", marginBottom: "24px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <p style={{ color: "#9ca3af", fontSize: "12px", margin: "0 0 4px" }}>Patient</p>
+                  <p style={{ color: "#ffffff", fontSize: "14px", margin: 0 }}>{selectedScan.patient_anonymous_id}</p>
+                </div>
+                <div>
+                  <p style={{ color: "#9ca3af", fontSize: "12px", margin: "0 0 4px" }}>Eye</p>
+                  <p style={{ color: "#ffffff", fontSize: "14px", margin: 0 }}>{selectedScan.eye}</p>
+                </div>
+                <div>
+                  <p style={{ color: "#9ca3af", fontSize: "12px", margin: "0 0 4px" }}>Predicted Size</p>
+                  <p style={{ color: "#ffffff", fontSize: "14px", margin: 0 }}>{selectedScan.predicted_lens_size ? `${selectedScan.predicted_lens_size}mm` : "—"}</p>
+                </div>
+                <div>
+                  <p style={{ color: "#9ca3af", fontSize: "12px", margin: "0 0 4px" }}>Predicted Vault</p>
+                  <p style={{ color: "#ffffff", fontSize: "14px", margin: 0 }}>{selectedScan.predicted_vault ? `${selectedScan.predicted_vault}µm` : "—"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>Lens Size Implanted</label>
+                <select
+                  value={outcomeForm.actual_lens_size}
+                  onChange={(e) => setOutcomeForm({ ...outcomeForm, actual_lens_size: e.target.value })}
+                  style={{
+                    width: "100%", padding: "10px 12px", background: "#262626", border: "1px solid #374151",
+                    borderRadius: "8px", color: "#ffffff", fontSize: "14px", outline: "none",
+                  }}
+                >
+                  <option value="">Select size...</option>
+                  <option value="12.1">12.1mm</option>
+                  <option value="12.6">12.6mm</option>
+                  <option value="13.2">13.2mm</option>
+                  <option value="13.7">13.7mm</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>
+                  Vault at 1 Day (µm) <span style={{ color: "#f87171" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  value={outcomeForm.vault_1day}
+                  onChange={(e) => setOutcomeForm({ ...outcomeForm, vault_1day: e.target.value })}
+                  placeholder="e.g. 480"
+                  style={{
+                    width: "100%", padding: "10px 12px", background: "#262626", border: "1px solid #374151",
+                    borderRadius: "8px", color: "#ffffff", fontSize: "14px", outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>Vault at 1 Week (µm)</label>
+                <input
+                  type="number"
+                  value={outcomeForm.vault_1week}
+                  onChange={(e) => setOutcomeForm({ ...outcomeForm, vault_1week: e.target.value })}
+                  placeholder="Optional"
+                  style={{
+                    width: "100%", padding: "10px 12px", background: "#262626", border: "1px solid #374151",
+                    borderRadius: "8px", color: "#ffffff", fontSize: "14px", outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>Vault at 1 Month (µm)</label>
+                <input
+                  type="number"
+                  value={outcomeForm.vault_1month}
+                  onChange={(e) => setOutcomeForm({ ...outcomeForm, vault_1month: e.target.value })}
+                  placeholder="Optional"
+                  style={{
+                    width: "100%", padding: "10px 12px", background: "#262626", border: "1px solid #374151",
+                    borderRadius: "8px", color: "#ffffff", fontSize: "14px", outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>Surgery Date</label>
+                <input
+                  type="date"
+                  value={outcomeForm.surgery_date}
+                  onChange={(e) => setOutcomeForm({ ...outcomeForm, surgery_date: e.target.value })}
+                  style={{
+                    width: "100%", padding: "10px 12px", background: "#262626", border: "1px solid #374151",
+                    borderRadius: "8px", color: "#ffffff", fontSize: "14px", outline: "none",
+                    colorScheme: "dark",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ color: "#9ca3af", fontSize: "13px", display: "block", marginBottom: "6px" }}>Notes</label>
+                <textarea
+                  value={outcomeForm.notes}
+                  onChange={(e) => setOutcomeForm({ ...outcomeForm, notes: e.target.value })}
+                  placeholder="Optional notes..."
+                  rows={3}
+                  style={{
+                    width: "100%", padding: "10px 12px", background: "#262626", border: "1px solid #374151",
+                    borderRadius: "8px", color: "#ffffff", fontSize: "14px", outline: "none", resize: "vertical",
+                  }}
+                />
+              </div>
+            </div>
+
+            {submitError && (
+              <p style={{ color: "#f87171", fontSize: "13px", margin: "12px 0 0" }}>{submitError}</p>
+            )}
+
+            <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
+              <button
+                onClick={() => setSelectedScan(null)}
+                style={{
+                  flex: 1, padding: "12px", background: "transparent", border: "1px solid #374151",
+                  borderRadius: "8px", color: "#9ca3af", fontSize: "14px", cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitOutcome}
+                disabled={submitting}
+                className="calc-btn-primary"
+                style={{
+                  flex: 1, width: "auto", marginTop: 0, padding: "12px",
+                  opacity: submitting ? 0.6 : 1, cursor: submitting ? "not-allowed" : "pointer",
+                }}
+              >
+                {submitting ? "Submitting..." : "Save Outcome"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
