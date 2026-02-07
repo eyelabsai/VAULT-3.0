@@ -196,7 +196,13 @@ export default function Calculator() {
         const payload = await response.json();
         const features = payload.features || {};
 
-        const newForm = { ...form, ...features, ICL_Power: form.ICL_Power };
+        const newForm = {
+          ...form,
+          ...features,
+          ICL_Power: form.ICL_Power,
+          LastName: payload.patient_last_name || form.LastName,
+          FirstName: payload.patient_first_name || form.FirstName,
+        };
         setForm(newForm);
         setUploadedFileName(file.name);
 

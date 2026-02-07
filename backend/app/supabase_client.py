@@ -140,6 +140,8 @@ def parse_ini_strip_phi(ini_content: str) -> dict:
         "phi_hash": phi_hash,
         "eye": extracted.get("Eye", "UNKNOWN"),
         "initials": initials,
+        "first_name": phi_data.get("first_name", ""),
+        "last_name": phi_data.get("last_name", ""),
     }
 
 

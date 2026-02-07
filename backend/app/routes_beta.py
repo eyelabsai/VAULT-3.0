@@ -36,6 +36,8 @@ class UploadResponse(BaseModel):
     eye: str
     features: dict
     prediction: Optional[dict] = None
+    patient_first_name: Optional[str] = None
+    patient_last_name: Optional[str] = None
     message: str
 
 
@@ -152,6 +154,8 @@ async def upload_ini_file(
     features = parsed["features"]
     eye = parsed["eye"]
     initials = parsed.get("initials")
+    patient_first_name = parsed.get("first_name", "")
+    patient_last_name = parsed.get("last_name", "")
     
     if not features:
         raise HTTPException(status_code=400, detail="Could not extract features from INI file")
@@ -245,6 +249,8 @@ async def upload_ini_file(
         eye=eye,
         features=features,
         prediction=prediction_result,
+        patient_first_name=patient_first_name,
+        patient_last_name=patient_last_name,
         message=f"Scan uploaded successfully. Missing features for prediction: {missing_features}" if missing_features else "Scan uploaded and prediction generated.",
     )
 
