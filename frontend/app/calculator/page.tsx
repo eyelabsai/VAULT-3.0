@@ -9,15 +9,15 @@ import dynamic from "next/dynamic";
 const UserMenu = dynamic(() => import("@/components/UserMenu"), { ssr: false });
 
 type PredictionForm = {
-  Age: number;
-  WTW: number;
-  ACD_internal: number;
-  ICL_Power: number;
-  AC_shape_ratio: number;
-  SimK_steep: number;
-  ACV: number;
-  TCRP_Km: number;
-  TCRP_Astigmatism: number;
+  Age: number | null;
+  WTW: number | null;
+  ACD_internal: number | null;
+  ICL_Power: number | null;
+  AC_shape_ratio: number | null;
+  SimK_steep: number | null;
+  ACV: number | null;
+  TCRP_Km: number | null;
+  TCRP_Astigmatism: number | null;
   Eye?: string;
   LastName?: string;
   FirstName?: string;
@@ -38,15 +38,15 @@ type PredictionResponse = {
 };
 
 const defaultForm: PredictionForm = {
-  Age: 0,
-  WTW: 0,
-  ACD_internal: 0,
+  Age: null,
+  WTW: null,
+  ACD_internal: null,
   ICL_Power: -10.0,
-  AC_shape_ratio: 0,
-  SimK_steep: 0,
-  ACV: 0,
-  TCRP_Km: 0,
-  TCRP_Astigmatism: 0,
+  AC_shape_ratio: null,
+  SimK_steep: null,
+  ACV: null,
+  TCRP_Km: null,
+  TCRP_Astigmatism: null,
   LastName: "",
   FirstName: ""
 };
@@ -96,10 +96,13 @@ export default function Calculator() {
       return inputValues[key];
     }
     const val = form[key];
+    if (val === null || val === undefined) {
+      return "";
+    }
     if (typeof val === "number") {
       return val.toFixed(decimals);
     }
-    return String(val ?? "");
+    return String(val);
   };
 
   const onFieldChange = (key: keyof PredictionForm, value: string) => {
@@ -125,7 +128,7 @@ export default function Calculator() {
   const incrementField = (key: keyof PredictionForm, step: number) => {
     setForm((prev) => ({
       ...prev,
-      [key]: Number((Number(prev[key]) + step).toFixed(2))
+      [key]: Number(((Number(prev[key]) || 0) + step).toFixed(2))
     }));
   };
 
@@ -422,7 +425,7 @@ export default function Calculator() {
                 <button onClick={() => incrementField("WTW", -0.1)}>−</button>
                 <button onClick={() => incrementField("WTW", 0.1)}>+</button>
               </div>
-              {(form.WTW < 8 || form.WTW > 14) && (
+              {form.WTW != null && (form.WTW < 8 || form.WTW > 14) && (
                 <span className="field-warning">Check value (expected 8–14 mm)</span>
               )}
             </div>
@@ -440,7 +443,7 @@ export default function Calculator() {
                 <button onClick={() => incrementField("ACD_internal", -0.01)}>−</button>
                 <button onClick={() => incrementField("ACD_internal", 0.01)}>+</button>
               </div>
-              {(form.ACD_internal < 0 || form.ACD_internal > 6) && (
+              {form.ACD_internal != null && (form.ACD_internal < 0 || form.ACD_internal > 6) && (
                 <span className="field-warning">Check value (expected 0–6 mm)</span>
               )}
             </div>
