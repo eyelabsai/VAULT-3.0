@@ -255,6 +255,34 @@ async def upload_ini_file(
     )
 
 
+@router.post("/scans/{scan_id}/prediction")
+async def save_prediction(
+    scan_id: str,
+    body: dict,
+    user: dict = Depends(get_current_user),
+):
+    """Save/update prediction for an existing scan (e.g. after manual feature entry)."""
+    db = VaultDatabase()
+
+    scan = db.get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    if scan["user_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    result = db.create_prediction(
+        scan_id=scan_id,
+        predicted_lens_size=body.get("predicted_lens_size"),
+        lens_probabilities=body.get("lens_probabilities", {}),
+        predicted_vault=body.get("predicted_vault"),
+        vault_mae=body.get("vault_mae", 134),
+        model_version=body.get("model_version", "v1.0.0-beta"),
+        features_used=body.get("features_used", []),
+    )
+
+    return {"status": "ok", "prediction_id": result["id"] if result else None}
+
+
 @router.post("/scans/{scan_id}/outcome", response_model=OutcomeResponse)
 async def record_outcome(
     scan_id: str,

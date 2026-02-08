@@ -63,6 +63,7 @@ export default function Calculator() {
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [lastScanId, setLastScanId] = useState<string | null>(null);
   const router = useRouter();
 
   // Check if user is logged in
@@ -202,6 +203,9 @@ export default function Calculator() {
         const payload = await response.json();
         const features = payload.features || {};
 
+        // Track scan ID for later Calculate updates
+        setLastScanId(payload.scan_id || null);
+
         const newForm = {
           ...form,
           ...features,
@@ -259,6 +263,21 @@ export default function Calculator() {
 
   const handlePredict = async () => {
     setError(null);
+
+    // Check for empty required fields
+    const required: (keyof PredictionForm)[] = ["Age", "WTW", "ACD_internal", "ICL_Power", "AC_shape_ratio", "SimK_steep", "ACV", "TCRP_Km", "TCRP_Astigmatism"];
+    const fieldLabels: Record<string, string> = {
+      Age: "Age", WTW: "WTW", ACD_internal: "ACD Internal",
+      ICL_Power: "ICL Power", AC_shape_ratio: "AC Shape Ratio",
+      SimK_steep: "SimK Steep", ACV: "ACV", TCRP_Km: "TCRP Km",
+      TCRP_Astigmatism: "TCRP Astigmatism",
+    };
+    const missing = required.filter(f => form[f] == null || form[f] === 0);
+    if (missing.length > 0) {
+      setError(`Missing: ${missing.map(f => fieldLabels[f as string] || f).join(", ")}. Please fill in before calculating.`);
+      return;
+    }
+
     setStatus("loading");
 
     try {
@@ -275,6 +294,35 @@ export default function Calculator() {
 
       const payload: PredictionResponse = await response.json();
       setResult(payload);
+
+      // Save prediction to Supabase if we have a scan_id from INI upload
+      if (lastScanId) {
+        try {
+          const token = await getAccessToken();
+          const lens_probs: Record<string, number> = {};
+          payload.size_probabilities.forEach(sp => {
+            lens_probs[String(sp.size_mm)] = sp.probability;
+          });
+
+          await fetch(`${apiBase}/beta/scans/${lastScanId}/prediction`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              predicted_lens_size: String(payload.lens_size_mm),
+              lens_probabilities: lens_probs,
+              predicted_vault: payload.vault_pred_um,
+              vault_mae: 134,
+              model_version: "v1.0.0-beta",
+              features_used: required,
+            }),
+          });
+        } catch {
+          // Silently fail — prediction still shows to user
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Prediction failed.");
     } finally {
