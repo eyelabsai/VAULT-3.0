@@ -208,7 +208,14 @@ def load_models():
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    models = load_models()
+    return {
+        "status": "ok",
+        "feature_names": models["feature_names"],
+        "feature_count": len(models["feature_names"]),
+        "lens_model": type(models["lens_model"]).__name__,
+        "vault_model": type(models["vault_model"]).__name__,
+    }
 
 
 @app.post("/parse-ini")
