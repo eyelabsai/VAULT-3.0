@@ -371,6 +371,20 @@ export default function Calculator() {
             >
               {status === "loading" ? "Calculating..." : "Calculate"}
             </button>
+            {error && (
+              <div style={{
+                marginTop: "12px",
+                padding: "12px 16px",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: "8px",
+                color: "#f87171",
+                fontSize: "13px",
+                lineHeight: "1.5",
+              }}>
+                {error}
+              </div>
+            )}
           </div>
 
           <div className="sidebar-section">
@@ -507,7 +521,6 @@ export default function Calculator() {
             </div>
           </div>
 
-          {error && <p className="error">{error}</p>}
         </aside>
 
         {/* Main Results Area */}
