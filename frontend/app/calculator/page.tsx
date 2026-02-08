@@ -142,6 +142,9 @@ export default function Calculator() {
   const handleIniUpload = async (file: File | null) => {
     if (!file) return;
     setError(null);
+    setResult(null);
+    // Reset form to defaults so stale manual values don't carry over
+    setForm({ ...defaultForm });
     setStatus("loading");
 
     try {
