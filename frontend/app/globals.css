@@ -1604,6 +1604,10 @@ body {
   transition: background 0.15s;
 }
 
+.beta-tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.025);
+}
+
 .beta-tr:hover {
   background: #262626;
 }
