@@ -7,6 +7,10 @@ TRAINING_FEATURES = [
     "Age",
     "WTW",
     "ACD_internal",
-    "ACV",
+    "ICL_Power",
+    "AC_shape_ratio",
     "SimK_steep",
+    "ACV",
+    "TCRP_Km",
+    "TCRP_Astigmatism",
 ]
