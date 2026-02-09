@@ -275,6 +275,146 @@ def predict(payload: PredictionInput):
     )
 
 
+# =========================================================================
+# Multi-model comparison
+# =========================================================================
+
+PKL_FILES = [
+    "lens_size_model.pkl",
+    "lens_size_scaler.pkl",
+    "vault_model.pkl",
+    "vault_scaler.pkl",
+    "feature_names.pkl",
+]
+
+
+@lru_cache(maxsize=1)
+def load_all_models() -> dict:
+    """Load every complete model archive into memory."""
+    archives_dir = Path(__file__).resolve().parents[2] / "models" / "archives"
+    all_models: dict = {}
+
+    if not archives_dir.is_dir():
+        return all_models
+
+    for folder in sorted(archives_dir.iterdir()):
+        if not folder.is_dir():
+            continue
+        if not all((folder / f).exists() for f in PKL_FILES):
+            continue
+
+        def _load(f: str, p: Path = folder):
+            with (p / f).open("rb") as fh:
+                return pickle.load(fh)
+
+        tag = folder.name
+        feature_names = _load("feature_names.pkl")
+
+        # Read description from README if present
+        readme_path = folder / "README.md"
+        description = ""
+        if readme_path.exists():
+            for line in readme_path.read_text().splitlines():
+                if line.startswith("## Summary"):
+                    continue
+                if line.startswith("- **") or line.startswith("## "):
+                    break
+                if line.strip():
+                    description = line.strip()
+                    break
+
+        all_models[tag] = {
+            "lens_model": _load("lens_size_model.pkl"),
+            "lens_scaler": _load("lens_size_scaler.pkl"),
+            "vault_model": _load("vault_model.pkl"),
+            "vault_scaler": _load("vault_scaler.pkl"),
+            "feature_names": feature_names,
+            "feature_count": len(feature_names),
+            "description": description,
+        }
+
+    return all_models
+
+
+@app.get("/models")
+def list_models():
+    """Return available model tags with metadata."""
+    all_m = load_all_models()
+    return {
+        tag: {
+            "feature_count": info["feature_count"],
+            "features": info["feature_names"],
+            "lens_model": type(info["lens_model"]).__name__,
+            "vault_model": type(info["vault_model"]).__name__,
+            "description": info["description"],
+        }
+        for tag, info in all_m.items()
+    }
+
+
+@app.post("/predict-compare")
+def predict_compare(payload: PredictionInput, models: str = "all"):
+    """Run prediction across multiple archived models.
+
+    Query param ``models`` is a comma-separated list of tags or ``"all"``.
+    """
+    all_m = load_all_models()
+
+    if models == "all":
+        selected_tags = list(all_m.keys())
+    else:
+        selected_tags = [t.strip() for t in models.split(",") if t.strip() in all_m]
+
+    if not selected_tags:
+        raise HTTPException(status_code=400, detail="No valid model tags provided.")
+
+    df_eng = engineer_features(payload.model_dump())
+    results: dict = {}
+
+    for tag in selected_tags:
+        m = all_m[tag]
+        try:
+            feature_names = m["feature_names"]
+            X = df_eng[feature_names]
+
+            X_lens = m["lens_scaler"].transform(X)
+            lens_probs = m["lens_model"].predict_proba(X_lens)[0]
+            lens_classes = m["lens_model"].classes_
+
+            top_idx = int(np.argsort(lens_probs)[::-1][0])
+            best_size = float(lens_classes[top_idx])
+            best_prob = float(lens_probs[top_idx])
+
+            X_vault = m["vault_scaler"].transform(X)
+            pred_vault = int(m["vault_model"].predict(X_vault)[0])
+
+            if pred_vault < 250:
+                vault_flag = "low"
+            elif pred_vault > 900:
+                vault_flag = "high"
+            else:
+                vault_flag = "ok"
+
+            size_probs = {
+                str(float(s)): float(p) for s, p in zip(lens_classes, lens_probs)
+            }
+
+            results[tag] = {
+                "lens_size_mm": best_size,
+                "lens_probability": best_prob,
+                "vault_pred_um": pred_vault,
+                "vault_range_um": [pred_vault - 134, pred_vault + 134],
+                "vault_flag": vault_flag,
+                "size_probabilities": size_probs,
+                "feature_count": m["feature_count"],
+                "description": m["description"],
+            }
+        except Exception as exc:
+            results[tag] = {"error": str(exc)}
+
+    return {"predictions": results}
+
+
 # Include beta routes (at bottom to avoid circular import)
 from .routes_beta import router as beta_router
 app.include_router(beta_router)
