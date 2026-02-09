@@ -21,8 +21,8 @@ from .main import predict, PredictionInput, load_models
 router = APIRouter(prefix="/beta", tags=["beta"])
 
 
-MODEL_VERSION = "v1.0.0-beta"
-VAULT_MAE = 134.0
+MODEL_VERSION = "gestalt-24f-756c"
+VAULT_MAE = 128.0
 
 
 # =============================================================================
@@ -163,8 +163,15 @@ async def upload_ini_file(
     # Add ICL_Power from user input (not in INI file)
     features["ICL_Power"] = icl_power
     
-    # Use initials from INI if available, fall back to provided anonymous_id
-    patient_label = initials if initials else anonymous_id
+    # Use full name from INI if available, fall back to provided anonymous_id
+    full_name = ""
+    if patient_last_name and patient_first_name:
+        full_name = f"{patient_last_name}, {patient_first_name}"
+    elif patient_last_name:
+        full_name = patient_last_name
+    elif patient_first_name:
+        full_name = patient_first_name
+    patient_label = full_name if full_name else (initials if initials else anonymous_id)
     
     # Initialize database
     db = VaultDatabase()
