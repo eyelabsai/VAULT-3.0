@@ -30,6 +30,7 @@ type Scan = {
   prob_13_2: number;
   prob_13_7: number;
   model_version: string;
+  ini_filename: string | null;
   actual_lens_size: string | null;
   vault_1day: number | null;
   vault_1week: number | null;
@@ -279,6 +280,7 @@ export default function BetaTestPage() {
                   <SortHeader label="Date" field="scan_date" />
                   <SortHeader label="Doctor" field="doctor" />
                   <SortHeader label="Patient" field="patient_id" />
+                  <SortHeader label="INI File" field="ini_filename" />
                   <SortHeader label="Eye" field="eye" />
                   <SortHeader label="Pred Size" field="predicted_lens_size" />
                   <SortHeader label="Pred Vault" field="predicted_vault" />
@@ -298,6 +300,7 @@ export default function BetaTestPage() {
                       <td className="beta-td">{s.scan_date}</td>
                       <td className="beta-td">{s.doctor}</td>
                       <td className="beta-td">{s.patient_id}</td>
+                      <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>
                       <td className="beta-td">
                         <span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span>
                       </td>
@@ -319,7 +322,7 @@ export default function BetaTestPage() {
                     </tr>
                     {expandedRow === s.scan_id && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
-                        <td colSpan={13} className="beta-detail-td">
+                        <td colSpan={14} className="beta-detail-td">
                           <div className="detail-grid">
                             <div><span className="detail-label">Age</span><span className="detail-value">{fmt(s.age, 0)}</span></div>
                             <div><span className="detail-label">WTW</span><span className="detail-value">{fmt(s.wtw)}mm</span></div>
@@ -356,6 +359,7 @@ export default function BetaTestPage() {
               <thead>
                 <tr>
                   <SortHeader label="Patient" field="patient_id" />
+                  <SortHeader label="INI File" field="ini_filename" />
                   <SortHeader label="Eye" field="eye" />
                   <SortHeader label="Age" field="age" />
                   <SortHeader label="WTW" field="wtw" />
@@ -373,6 +377,7 @@ export default function BetaTestPage() {
                 {sorted.map((s) => (
                   <tr key={s.scan_id} className="beta-tr">
                     <td className="beta-td">{s.patient_id}</td>
+                    <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>
                     <td className="beta-td"><span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span></td>
                     <td className="beta-td">{fmt(s.age, 0)}</td>
                     <td className="beta-td">{fmt(s.wtw)}</td>
@@ -399,6 +404,7 @@ export default function BetaTestPage() {
                 <tr>
                   <SortHeader label="Doctor" field="doctor" />
                   <SortHeader label="Patient" field="patient_id" />
+                  <SortHeader label="INI File" field="ini_filename" />
                   <SortHeader label="Eye" field="eye" />
                   <SortHeader label="12.1mm" field="prob_12_1" />
                   <SortHeader label="12.6mm" field="prob_12_6" />
@@ -413,6 +419,7 @@ export default function BetaTestPage() {
                   <tr key={s.scan_id} className="beta-tr">
                     <td className="beta-td">{s.doctor}</td>
                     <td className="beta-td">{s.patient_id}</td>
+                    <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>
                     <td className="beta-td"><span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span></td>
                     <td className="beta-td">{pct(s.prob_12_1)}</td>
                     <td className="beta-td">{pct(s.prob_12_6)}</td>
@@ -436,6 +443,7 @@ export default function BetaTestPage() {
                   <SortHeader label="Date" field="scan_date" />
                   <SortHeader label="Doctor" field="doctor" />
                   <SortHeader label="Patient" field="patient_id" />
+                  <SortHeader label="INI File" field="ini_filename" />
                   <SortHeader label="Eye" field="eye" />
                   <SortHeader label="Pred Size" field="predicted_lens_size" />
                   <SortHeader label="Model" field="model_version" />
@@ -455,6 +463,7 @@ export default function BetaTestPage() {
                         <td className="beta-td">{s.scan_date}</td>
                         <td className="beta-td">{s.doctor}</td>
                         <td className="beta-td">{s.patient_id}</td>
+                        <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>
                         <td className="beta-td">
                           <span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span>
                         </td>
@@ -474,7 +483,7 @@ export default function BetaTestPage() {
                       </tr>
                       {isExpanded && (
                         <tr className="beta-detail-row">
-                          <td colSpan={7} className="beta-detail-td">
+                          <td colSpan={8} className="beta-detail-td">
                             {isLoading && (
                               <div style={{ textAlign: "center", padding: "24px", color: "#9ca3af" }}>
                                 Running predictions across all models...
