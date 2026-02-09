@@ -300,6 +300,8 @@ def load_all_models() -> dict:
     for folder in sorted(archives_dir.iterdir()):
         if not folder.is_dir():
             continue
+        if folder.name.startswith("."):
+            continue
         if not all((folder / f).exists() for f in PKL_FILES):
             continue
 
