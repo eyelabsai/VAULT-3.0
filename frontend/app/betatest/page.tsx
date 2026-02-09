@@ -41,8 +41,6 @@ type Summary = {
   total_scans: number;
   total_doctors: number;
   with_outcomes: number;
-  current_model?: string;
-  current_model_mae?: number;
 };
 
 type SortKey = keyof Scan;
@@ -150,22 +148,7 @@ export default function BetaTestPage() {
         <Link href="/">
           <Image src="/images/vault-dark-mode.svg" alt="Vault 3" width={200} height={65} priority className="vault-logo-link" />
         </Link>
-        <div style={{ textAlign: "right" }}>
-          <span style={{ color: "#6b7280", fontSize: "14px" }}>Beta Data Dashboard</span>
-          {summary?.current_model && (
-            <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end" }}>
-              <span style={{
-                padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600",
-                background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", border: "1px solid rgba(34, 197, 94, 0.3)"
-              }}>
-                LIVE: {summary.current_model}
-              </span>
-              {summary.current_model_mae && (
-                <span style={{ color: "#6b7280", fontSize: "11px" }}>MAE: {summary.current_model_mae}µm</span>
-              )}
-            </div>
-          )}
-        </div>
+        <span style={{ color: "#6b7280", fontSize: "14px" }}>Beta Data Dashboard</span>
       </header>
 
       <div className="beta-container">
