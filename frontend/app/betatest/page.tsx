@@ -148,6 +148,12 @@ export default function BetaTestPage() {
 
   const fmt = (v: number | null, d: number = 1) => v != null ? v.toFixed(d) : "—";
   const pct = (v: number) => v > 0 ? `${(v * 100).toFixed(1)}%` : "—";
+  const fmtDate = (d: string) => {
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return d;
+    return dt.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+  };
 
   const REQUIRED_FEATURES = ["age", "wtw", "acd_internal", "icl_power", "ac_shape_ratio", "simk_steep", "acv", "tcrp_km", "tcrp_astigmatism"] as const;
 
@@ -297,7 +303,7 @@ export default function BetaTestPage() {
                 {sorted.map((s) => (
                   <>
                     <tr key={s.scan_id} className="beta-tr">
-                      <td className="beta-td">{s.scan_date}</td>
+                      <td className="beta-td">{fmtDate(s.scan_date)}</td>
                       <td className="beta-td">{s.doctor}</td>
                       <td className="beta-td">{s.patient_id}</td>
                       <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>
@@ -460,7 +466,7 @@ export default function BetaTestPage() {
                   return (
                     <React.Fragment key={s.scan_id}>
                       <tr className="beta-tr">
-                        <td className="beta-td">{s.scan_date}</td>
+                        <td className="beta-td">{fmtDate(s.scan_date)}</td>
                         <td className="beta-td">{s.doctor}</td>
                         <td className="beta-td">{s.patient_id}</td>
                         <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>

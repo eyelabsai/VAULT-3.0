@@ -605,7 +605,7 @@ async def admin_export(key: str = ""):
             "patient_id": patient.get("anonymous_id", ""),
             "ini_filename": scan.get("original_filename", ""),
             "eye": scan.get("eye", ""),
-            "scan_date": (scan.get("created_at") or "")[:10],
+            "scan_date": (scan.get("created_at") or "")[:19],
             "age": features.get("Age"),
             "wtw": features.get("WTW"),
             "acd_internal": features.get("ACD_internal"),
