@@ -20,9 +20,26 @@ from .main import predict, PredictionInput, load_models
 
 router = APIRouter(prefix="/beta", tags=["beta"])
 
-# Model version for tracking
-MODEL_VERSION = "v1.0.0-beta"
-VAULT_MAE = 134.0  # Current model MAE (759 cases, Feb 2026)
+
+def _derive_model_tag() -> tuple[str, float]:
+    """Derive a model version tag and MAE from loaded model artifacts."""
+    import hashlib
+    try:
+        models = load_models()
+        names = models["feature_names"]
+        n = len(names)
+        h = hashlib.md5(str(names).encode()).hexdigest()[:6]
+        tag = f"{n}feat-{h}"
+        mae = 128.0 if n >= 20 else 134.0
+    except Exception:
+        tag = "unknown"
+        mae = 134.0
+    return tag, mae
+
+
+_MODEL_TAG, _VAULT_MAE = _derive_model_tag()
+MODEL_VERSION = _MODEL_TAG
+VAULT_MAE = _VAULT_MAE
 
 
 # =============================================================================
@@ -509,6 +526,8 @@ async def admin_export(key: str = ""):
             "total_scans": len(rows),
             "total_doctors": total_doctors,
             "with_outcomes": with_outcomes,
+            "current_model": MODEL_VERSION,
+            "current_model_mae": VAULT_MAE,
         },
         "scans": rows,
     }

@@ -41,6 +41,8 @@ type Summary = {
   total_scans: number;
   total_doctors: number;
   with_outcomes: number;
+  current_model?: string;
+  current_model_mae?: number;
 };
 
 type SortKey = keyof Scan;
@@ -148,7 +150,22 @@ export default function BetaTestPage() {
         <Link href="/">
           <Image src="/images/vault-dark-mode.svg" alt="Vault 3" width={200} height={65} priority className="vault-logo-link" />
         </Link>
-        <span style={{ color: "#6b7280", fontSize: "14px" }}>Beta Data Dashboard</span>
+        <div style={{ textAlign: "right" }}>
+          <span style={{ color: "#6b7280", fontSize: "14px" }}>Beta Data Dashboard</span>
+          {summary?.current_model && (
+            <div style={{ marginTop: "4px", display: "flex", alignItems: "center", gap: "8px", justifyContent: "flex-end" }}>
+              <span style={{
+                padding: "3px 10px", borderRadius: "4px", fontSize: "12px", fontWeight: "600",
+                background: "rgba(34, 197, 94, 0.15)", color: "#4ade80", border: "1px solid rgba(34, 197, 94, 0.3)"
+              }}>
+                LIVE: {summary.current_model}
+              </span>
+              {summary.current_model_mae && (
+                <span style={{ color: "#6b7280", fontSize: "11px" }}>MAE: {summary.current_model_mae}µm</span>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="beta-container">
@@ -218,6 +235,7 @@ export default function BetaTestPage() {
                   <SortHeader label="Vault 1d" field="vault_1day" />
                   <SortHeader label="Vault 1wk" field="vault_1week" />
                   <SortHeader label="Vault 1mo" field="vault_1month" />
+                  <SortHeader label="Model" field="model_version" />
                   <th className="beta-th">Details</th>
                 </tr>
               </thead>
@@ -239,6 +257,9 @@ export default function BetaTestPage() {
                       <td className="beta-td">{s.vault_1week != null ? <span className="actual">{s.vault_1week}µm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">{s.vault_1month != null ? <span className="actual">{s.vault_1month}µm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">
+                        <span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.model_version || "—"}</span>
+                      </td>
+                      <td className="beta-td">
                         <button className="expand-btn" onClick={() => setExpandedRow(expandedRow === s.scan_id ? null : s.scan_id)}>
                           {expandedRow === s.scan_id ? "▾" : "▸"}
                         </button>
@@ -246,7 +267,7 @@ export default function BetaTestPage() {
                     </tr>
                     {expandedRow === s.scan_id && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
-                        <td colSpan={12} className="beta-detail-td">
+                        <td colSpan={13} className="beta-detail-td">
                           <div className="detail-grid">
                             <div><span className="detail-label">Age</span><span className="detail-value">{fmt(s.age, 0)}</span></div>
                             <div><span className="detail-label">WTW</span><span className="detail-value">{fmt(s.wtw)}mm</span></div>
