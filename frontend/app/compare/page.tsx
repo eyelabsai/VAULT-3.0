@@ -50,6 +50,7 @@ export default function ComparePage() {
   const [predictions, setPredictions] = useState<Record<string, ModelPrediction>>({});
   const [features, setFeatures] = useState<ParsedFeatures>({});
   const [iclPower, setIclPower] = useState(-10.0);
+  const [iclPowerInput, setIclPowerInput] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -255,19 +256,24 @@ export default function ComparePage() {
                   onChange={(e) => handleIniUpload(e.target.files?.[0] ?? null)}
                 />
               </div>
-              <div style={{ marginTop: "12px" }}>
-                <label style={{ color: "#9ca3af", fontSize: "13px" }}>ICL Power (D)</label>
-                <input
-                  type="number"
-                  value={iclPower}
-                  onChange={(e) => setIclPower(parseFloat(e.target.value) || -10)}
-                  step={0.5}
-                  style={{
-                    width: "100%", marginTop: "4px", padding: "8px 12px",
-                    background: "#262626", border: "1px solid #374151", borderRadius: "6px",
-                    color: "#fff", fontSize: "14px",
-                  }}
-                />
+              <div className="bio-field" style={{ marginTop: "12px" }}>
+                <label>ICL Power (D)</label>
+                <div className="stepper-input">
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={iclPowerInput !== "" ? iclPowerInput : iclPower.toFixed(1)}
+                    onFocus={() => setIclPowerInput(iclPower.toFixed(1))}
+                    onChange={(e) => setIclPowerInput(e.target.value)}
+                    onBlur={() => {
+                      const num = parseFloat(iclPowerInput);
+                      if (!isNaN(num)) setIclPower(num);
+                      setIclPowerInput("");
+                    }}
+                  />
+                  <button onClick={() => setIclPower((p) => Number((p - 0.5).toFixed(1)))}>−</button>
+                  <button onClick={() => setIclPower((p) => Number((p + 0.5).toFixed(1)))}>+</button>
+                </div>
               </div>
               {uploadedFileName && features.Age != null && (
                 <button
