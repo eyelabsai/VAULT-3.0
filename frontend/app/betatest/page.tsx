@@ -73,9 +73,9 @@ export default function BetaTestPage() {
   const [filterLens, setFilterLens] = useState("all");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [tab, setTab] = useState<"scans" | "features" | "probabilities" | "comparison">("scans");
-  const [expandedCompareRow, setExpandedCompareRow] = useState<string | null>(null);
+  const [expandedCompareRows, setExpandedCompareRows] = useState<Set<string>>(new Set());
   const [comparisonCache, setComparisonCache] = useState<Record<string, Record<string, ModelPrediction>>>({});
-  const [comparisonLoading, setComparisonLoading] = useState<string | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState<Set<string>>(new Set());
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -157,7 +157,7 @@ export default function BetaTestPage() {
 
   const fetchComparison = async (s: Scan) => {
     if (comparisonCache[s.scan_id]) return;
-    setComparisonLoading(s.scan_id);
+    setComparisonLoading((prev) => new Set(prev).add(s.scan_id));
     try {
       const body = {
         Age: Math.round(Number(s.age)),
@@ -181,19 +181,23 @@ export default function BetaTestPage() {
     } catch {
       setComparisonCache((prev) => ({ ...prev, [s.scan_id]: {} }));
     } finally {
-      setComparisonLoading(null);
+      setComparisonLoading((prev) => { const next = new Set(prev); next.delete(s.scan_id); return next; });
     }
   };
 
   const handleCompareExpand = (s: Scan) => {
-    if (expandedCompareRow === s.scan_id) {
-      setExpandedCompareRow(null);
-      return;
-    }
-    setExpandedCompareRow(s.scan_id);
-    if (!comparisonCache[s.scan_id] && scanHasRequiredFeatures(s)) {
-      fetchComparison(s);
-    }
+    setExpandedCompareRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(s.scan_id)) {
+        next.delete(s.scan_id);
+      } else {
+        next.add(s.scan_id);
+        if (!comparisonCache[s.scan_id] && scanHasRequiredFeatures(s)) {
+          fetchComparison(s);
+        }
+      }
+      return next;
+    });
   };
 
   if (loading) {
@@ -440,10 +444,10 @@ export default function BetaTestPage() {
               </thead>
               <tbody>
                 {sorted.map((s) => {
-                  const isExpanded = expandedCompareRow === s.scan_id;
+                  const isExpanded = expandedCompareRows.has(s.scan_id);
                   const hasFeatures = scanHasRequiredFeatures(s);
                   const predictions = comparisonCache[s.scan_id];
-                  const isLoading = comparisonLoading === s.scan_id;
+                  const isLoading = comparisonLoading.has(s.scan_id);
 
                   return (
                     <React.Fragment key={s.scan_id}>
