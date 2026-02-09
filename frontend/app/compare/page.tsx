@@ -140,6 +140,8 @@ export default function ComparePage() {
 
       const payload = await res.json();
       const extracted = payload.features || {};
+      if (payload.patient_first_name) extracted.FirstName = payload.patient_first_name;
+      if (payload.patient_last_name) extracted.LastName = payload.patient_last_name;
       setFeatures(extracted);
       setUploadedFileName(file.name);
       setPredictions(payload.predictions || {});
