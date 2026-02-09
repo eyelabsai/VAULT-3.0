@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -43,10 +43,23 @@ type Summary = {
   with_outcomes: number;
 };
 
+type ModelPrediction = {
+  lens_size_mm: number;
+  lens_probability: number;
+  vault_pred_um: number;
+  vault_range_um: number[];
+  vault_flag: "ok" | "low" | "high";
+  size_probabilities: Record<string, number>;
+  feature_count: number;
+  description: string;
+  error?: string;
+};
+
 type SortKey = keyof Scan;
 type SortDir = "asc" | "desc";
 
 const ADMIN_KEY = "vaultbeta2026";
+const SIZES = [12.1, 12.6, 13.2, 13.7];
 
 export default function BetaTestPage() {
   const [scans, setScans] = useState<Scan[]>([]);
@@ -59,7 +72,10 @@ export default function BetaTestPage() {
   const [filterEye, setFilterEye] = useState("all");
   const [filterLens, setFilterLens] = useState("all");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-  const [tab, setTab] = useState<"scans" | "features" | "probabilities">("scans");
+  const [tab, setTab] = useState<"scans" | "features" | "probabilities" | "comparison">("scans");
+  const [expandedCompareRow, setExpandedCompareRow] = useState<string | null>(null);
+  const [comparisonCache, setComparisonCache] = useState<Record<string, Record<string, ModelPrediction>>>({});
+  const [comparisonLoading, setComparisonLoading] = useState<string | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -132,6 +148,54 @@ export default function BetaTestPage() {
   const fmt = (v: number | null, d: number = 1) => v != null ? v.toFixed(d) : "—";
   const pct = (v: number) => v > 0 ? `${(v * 100).toFixed(1)}%` : "—";
 
+  const REQUIRED_FEATURES = ["age", "wtw", "acd_internal", "icl_power", "ac_shape_ratio", "simk_steep", "acv", "tcrp_km", "tcrp_astigmatism"] as const;
+
+  const scanHasRequiredFeatures = (s: Scan) =>
+    s.age != null && s.wtw != null && s.acd_internal != null && s.icl_power != null &&
+    s.ac_shape_ratio != null && s.simk_steep != null && s.acv != null &&
+    s.tcrp_km != null && s.tcrp_astigmatism != null;
+
+  const fetchComparison = async (s: Scan) => {
+    if (comparisonCache[s.scan_id]) return;
+    setComparisonLoading(s.scan_id);
+    try {
+      const body = {
+        Age: Math.round(Number(s.age)),
+        WTW: Number(s.wtw),
+        ACD_internal: Number(s.acd_internal),
+        ICL_Power: Number(s.icl_power),
+        AC_shape_ratio: Number(s.ac_shape_ratio),
+        SimK_steep: Number(s.simk_steep),
+        ACV: Number(s.acv),
+        TCRP_Km: Number(s.tcrp_km),
+        TCRP_Astigmatism: Number(s.tcrp_astigmatism),
+      };
+      const res = await fetch(`${apiBase}/predict-compare?models=all`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Comparison failed");
+      const data = await res.json();
+      setComparisonCache((prev) => ({ ...prev, [s.scan_id]: data.predictions || {} }));
+    } catch {
+      setComparisonCache((prev) => ({ ...prev, [s.scan_id]: {} }));
+    } finally {
+      setComparisonLoading(null);
+    }
+  };
+
+  const handleCompareExpand = (s: Scan) => {
+    if (expandedCompareRow === s.scan_id) {
+      setExpandedCompareRow(null);
+      return;
+    }
+    setExpandedCompareRow(s.scan_id);
+    if (!comparisonCache[s.scan_id] && scanHasRequiredFeatures(s)) {
+      fetchComparison(s);
+    }
+  };
+
   if (loading) {
     return (
       <main className="calc-page">
@@ -199,6 +263,7 @@ export default function BetaTestPage() {
           <button className={`beta-tab ${tab === "scans" ? "active" : ""}`} onClick={() => setTab("scans")}>Scans & Predictions</button>
           <button className={`beta-tab ${tab === "features" ? "active" : ""}`} onClick={() => setTab("features")}>Biometric Features</button>
           <button className={`beta-tab ${tab === "probabilities" ? "active" : ""}`} onClick={() => setTab("probabilities")}>Lens Probabilities</button>
+          <button className={`beta-tab ${tab === "comparison" ? "active" : ""}`} onClick={() => setTab("comparison")}>Model Comparison</button>
         </div>
 
         {/* Scans Table */}
@@ -353,6 +418,164 @@ export default function BetaTestPage() {
                     <td className="beta-td">{s.predicted_vault ? `${s.predicted_vault}µm` : "—"}</td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Model Comparison Tab */}
+        {tab === "comparison" && (
+          <div className="beta-table-wrap">
+            <table className="beta-table">
+              <thead>
+                <tr>
+                  <SortHeader label="Date" field="scan_date" />
+                  <SortHeader label="Doctor" field="doctor" />
+                  <SortHeader label="Patient" field="patient_id" />
+                  <SortHeader label="Eye" field="eye" />
+                  <SortHeader label="Pred Size" field="predicted_lens_size" />
+                  <SortHeader label="Model" field="model_version" />
+                  <th className="beta-th">Compare</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((s) => {
+                  const isExpanded = expandedCompareRow === s.scan_id;
+                  const hasFeatures = scanHasRequiredFeatures(s);
+                  const predictions = comparisonCache[s.scan_id];
+                  const isLoading = comparisonLoading === s.scan_id;
+
+                  return (
+                    <React.Fragment key={s.scan_id}>
+                      <tr className="beta-tr">
+                        <td className="beta-td">{s.scan_date}</td>
+                        <td className="beta-td">{s.doctor}</td>
+                        <td className="beta-td">{s.patient_id}</td>
+                        <td className="beta-td">
+                          <span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span>
+                        </td>
+                        <td className="beta-td">{s.predicted_lens_size ? `${s.predicted_lens_size}mm` : "—"}</td>
+                        <td className="beta-td">
+                          <span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.model_version || "—"}</span>
+                        </td>
+                        <td className="beta-td">
+                          {hasFeatures ? (
+                            <button className="expand-btn" onClick={() => handleCompareExpand(s)}>
+                              {isExpanded ? "▾" : "▸"}
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: "11px", color: "#6b7280" }}>Missing data</span>
+                          )}
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr className="beta-detail-row">
+                          <td colSpan={7} className="beta-detail-td">
+                            {isLoading && (
+                              <div style={{ textAlign: "center", padding: "24px", color: "#9ca3af" }}>
+                                Running predictions across all models...
+                              </div>
+                            )}
+                            {!isLoading && predictions && Object.keys(predictions).length === 0 && (
+                              <div style={{ textAlign: "center", padding: "24px", color: "#f87171" }}>
+                                Comparison failed — no model results returned.
+                              </div>
+                            )}
+                            {!isLoading && predictions && Object.keys(predictions).length > 0 && (
+                              <div style={{
+                                display: "grid",
+                                gridTemplateColumns: `repeat(${Math.min(Object.keys(predictions).length, 3)}, 1fr)`,
+                                gap: "16px",
+                              }}>
+                                {Object.entries(predictions).map(([tag, pred]) => {
+                                  if (pred.error) {
+                                    return (
+                                      <div key={tag} style={{
+                                        background: "#1a1a1a", borderRadius: "12px", padding: "20px",
+                                        border: "1px solid #374151",
+                                      }}>
+                                        <h3 style={{ color: "#fff", fontSize: "15px", margin: "0 0 8px" }}>{tag}</h3>
+                                        <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
+                                      </div>
+                                    );
+                                  }
+
+                                  const sortedProbs = Object.entries(pred.size_probabilities)
+                                    .sort(([, a], [, b]) => b - a);
+                                  const bestSize = sortedProbs[0]?.[0];
+                                  const secondSize = sortedProbs[1]?.[0];
+
+                                  return (
+                                    <div key={tag} style={{
+                                      background: "#1a1a1a", borderRadius: "12px", padding: "20px",
+                                      border: "1px solid #374151",
+                                    }}>
+                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                                        <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                                        <span style={{
+                                          padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
+                                          background: "rgba(139, 92, 246, 0.15)", color: "#a78bfa",
+                                        }}>
+                                          {pred.feature_count}f
+                                        </span>
+                                      </div>
+                                      {pred.description && (
+                                        <p style={{ color: "#6b7280", fontSize: "11px", margin: "0 0 12px", lineHeight: 1.4 }}>{pred.description}</p>
+                                      )}
+                                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                                        {SIZES.map((size) => {
+                                          const sizeStr = String(size);
+                                          const prob = pred.size_probabilities[sizeStr] || 0;
+                                          const isBest = sizeStr === bestSize;
+                                          const isSecond = sizeStr === secondSize;
+
+                                          return (
+                                            <div key={size} style={{
+                                              textAlign: "center", padding: "10px 4px", borderRadius: "8px",
+                                              background: isBest ? "rgba(34, 197, 94, 0.1)" : isSecond ? "rgba(250, 204, 21, 0.1)" : "rgba(255,255,255,0.03)",
+                                              border: isBest ? "2px solid rgba(34, 197, 94, 0.5)" : isSecond ? "1px solid rgba(250, 204, 21, 0.3)" : "1px solid rgba(255,255,255,0.08)",
+                                            }}>
+                                              <div style={{
+                                                fontSize: "20px", fontWeight: 400,
+                                                color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#fff",
+                                              }}>{size}</div>
+                                              <div style={{
+                                                fontSize: "12px",
+                                                color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280",
+                                              }}>{(prob * 100).toFixed(0)}%</div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                      <div style={{
+                                        padding: "10px", borderRadius: "8px",
+                                        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                                        textAlign: "center",
+                                      }}>
+                                        <div style={{ color: "#9ca3af", fontSize: "10px", marginBottom: "3px" }}>VAULT RANGE</div>
+                                        <div style={{ color: "#fff", fontSize: "16px", fontWeight: 600 }}>
+                                          {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
+                                        </div>
+                                        {pred.vault_flag !== "ok" && (
+                                          <div style={{
+                                            marginTop: "4px", fontSize: "11px", fontWeight: 500,
+                                            color: pred.vault_flag === "low" ? "#f87171" : "#facc15",
+                                          }}>
+                                            ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
