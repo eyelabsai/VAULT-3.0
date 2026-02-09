@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type ModelInfo = {
   feature_count: number;
@@ -43,6 +44,7 @@ type ParsedFeatures = {
 const SIZES = [12.1, 12.6, 13.2, 13.7];
 
 export default function ComparePage() {
+  const [authChecked, setAuthChecked] = useState(false);
   const [availableModels, setAvailableModels] = useState<Record<string, ModelInfo>>({});
   const [enabledModels, setEnabledModels] = useState<Set<string>>(new Set());
   const [predictions, setPredictions] = useState<Record<string, ModelPrediction>>({});
@@ -54,11 +56,34 @@ export default function ComparePage() {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const apiBase = useMemo(
     () => process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000",
     []
   );
+
+  // Auth check
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { createClient } = await import("@/lib/supabase");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setAuthChecked(true);
+    };
+    checkAuth();
+  }, [router]);
+
+  const getAccessToken = async (): Promise<string | null> => {
+    const { createClient } = await import("@/lib/supabase");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token || null;
+  };
 
   // Load available models on mount
   useEffect(() => {
@@ -93,32 +118,30 @@ export default function ComparePage() {
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const token = await getAccessToken();
 
-      const res = await fetch(`${apiBase}/parse-ini`, {
+      const formData = new FormData();
+      const baseName = file.name.replace(/\.ini$/i, "");
+      formData.append("file", file);
+      formData.append("anonymous_id", baseName);
+      formData.append("icl_power", String(iclPower));
+
+      const res = await fetch(`${apiBase}/beta/compare-upload`, {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
 
       if (!res.ok) {
         const payload = await res.json();
-        throw new Error(payload.detail || "Failed to parse INI file.");
+        throw new Error(payload.detail || "Failed to upload INI file.");
       }
 
       const payload = await res.json();
-      const extracted = payload.extracted || {};
+      const extracted = payload.features || {};
       setFeatures(extracted);
       setUploadedFileName(file.name);
-
-      // Auto-run comparison if we have enough features
-      const required = ["Age", "WTW", "ACD_internal", "AC_shape_ratio", "SimK_steep", "ACV", "TCRP_Km", "TCRP_Astigmatism"];
-      const missing = required.filter((f) => extracted[f] == null);
-      if (missing.length > 0) {
-        setError(`Missing from INI: ${missing.join(", ")}. Cannot run comparison.`);
-      } else {
-        await runComparison({ ...extracted, ICL_Power: iclPower });
-      }
+      setPredictions(payload.predictions || {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed.");
       setUploadedFileName(null);
@@ -179,6 +202,16 @@ export default function ComparePage() {
   );
 
   const patientName = [features.LastName, features.FirstName].filter(Boolean).join(", ");
+
+  if (!authChecked) {
+    return (
+      <main className="calc-page">
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+          <p style={{ color: "#9ca3af" }}>Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="calc-page">

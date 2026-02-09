@@ -16,7 +16,7 @@ from .supabase_client import (
     parse_ini_strip_phi,
     get_supabase_client,
 )
-from .main import predict, PredictionInput, load_models
+from .main import predict, PredictionInput, load_models, predict_compare, load_all_models
 
 router = APIRouter(prefix="/beta", tags=["beta"])
 
@@ -288,6 +288,129 @@ async def save_prediction(
     )
 
     return {"status": "ok", "prediction_id": result["id"] if result else None}
+
+
+@router.post("/compare-upload")
+async def compare_upload(
+    file: UploadFile = File(...),
+    anonymous_id: str = "Patient-001",
+    icl_power: float = -10.0,
+    user: dict = Depends(get_current_user),
+):
+    """
+    Upload an INI file and run predictions across ALL archived models.
+    Saves patient + scan + one prediction row per model to Supabase.
+    """
+    filename = (file.filename or "").lower()
+    if not filename.endswith(".ini"):
+        raise HTTPException(status_code=400, detail="Only .ini files are supported")
+
+    try:
+        raw = await file.read()
+        content = raw.decode("utf-8", errors="ignore")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+
+    parsed = parse_ini_strip_phi(content)
+    features = parsed["features"]
+    eye = parsed["eye"]
+    patient_first_name = parsed.get("first_name", "")
+    patient_last_name = parsed.get("last_name", "")
+    initials = parsed.get("initials")
+
+    if not features:
+        raise HTTPException(status_code=400, detail="Could not extract features from INI file")
+
+    features["ICL_Power"] = icl_power
+
+    # Build full name for patient label
+    full_name = ""
+    if patient_last_name and patient_first_name:
+        full_name = f"{patient_last_name}, {patient_first_name}"
+    elif patient_last_name:
+        full_name = patient_last_name
+    elif patient_first_name:
+        full_name = patient_first_name
+    patient_label = full_name if full_name else (initials if initials else anonymous_id)
+
+    db = VaultDatabase()
+    storage = VaultStorage()
+    user_id = user["id"]
+
+    patient = db.get_or_create_patient(user_id, patient_label)
+
+    # Upload INI to storage
+    try:
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        storage_filename = f"{anonymous_id}_{eye}_{timestamp}.ini"
+        ini_path = storage.upload_ini(user_id, storage_filename, raw)
+    except Exception:
+        ini_path = None
+
+    scan = db.create_scan(
+        patient_id=patient["id"],
+        user_id=user_id,
+        eye=eye,
+        features=features,
+        ini_file_path=ini_path,
+        original_filename=file.filename,
+    )
+
+    # Run multi-model comparison
+    required_features = [
+        "Age", "WTW", "ACD_internal", "ICL_Power", "AC_shape_ratio",
+        "SimK_steep", "ACV", "TCRP_Km", "TCRP_Astigmatism",
+    ]
+    all_predictions = {}
+
+    if all(features.get(f) is not None for f in required_features):
+        try:
+            pred_input = PredictionInput(
+                Age=int(features["Age"]),
+                WTW=float(features["WTW"]),
+                ACD_internal=float(features["ACD_internal"]),
+                ICL_Power=float(features["ICL_Power"]),
+                AC_shape_ratio=float(features["AC_shape_ratio"]),
+                SimK_steep=float(features["SimK_steep"]),
+                ACV=float(features["ACV"]),
+                TCRP_Km=float(features["TCRP_Km"]),
+                TCRP_Astigmatism=float(features["TCRP_Astigmatism"]),
+            )
+
+            compare_result = predict_compare(pred_input, models="all")
+            all_predictions = compare_result.get("predictions", {})
+
+            # Save one prediction row per model
+            for tag, pred in all_predictions.items():
+                if "error" in pred:
+                    continue
+                try:
+                    db.create_prediction(
+                        scan_id=scan["id"],
+                        predicted_lens_size=str(pred["lens_size_mm"]),
+                        lens_probabilities=pred["size_probabilities"],
+                        predicted_vault=pred["vault_pred_um"],
+                        vault_mae=128.0,
+                        model_version=tag,
+                        features_used=required_features,
+                    )
+                except Exception:
+                    pass  # Don't fail the whole request if one model's save fails
+
+        except Exception as e:
+            print(f"Compare prediction failed: {str(e)}")
+
+    return {
+        "scan_id": scan["id"],
+        "patient_id": patient["id"],
+        "anonymous_id": patient_label,
+        "eye": eye,
+        "features": features,
+        "predictions": all_predictions,
+        "patient_first_name": patient_first_name,
+        "patient_last_name": patient_last_name,
+        "original_filename": file.filename,
+    }
 
 
 @router.post("/scans/{scan_id}/outcome", response_model=OutcomeResponse)
