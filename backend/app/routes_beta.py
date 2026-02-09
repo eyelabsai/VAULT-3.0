@@ -480,6 +480,7 @@ async def admin_export(key: str = ""):
             "doctor": profile.get("full_name") or profile.get("email", "Unknown"),
             "doctor_email": profile.get("email", ""),
             "patient_id": patient.get("anonymous_id", ""),
+            "ini_filename": scan.get("original_filename", ""),
             "eye": scan.get("eye", ""),
             "scan_date": (scan.get("created_at") or "")[:10],
             "age": features.get("Age"),

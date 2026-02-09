@@ -381,8 +381,11 @@ def predict_compare(payload: PredictionInput, models: str = "all"):
             lens_probs = m["lens_model"].predict_proba(X_lens)[0]
             lens_classes = m["lens_model"].classes_
 
+            # XGBoost stores integer-mapped classes; real labels on _vault_classes
+            real_classes = getattr(m["lens_model"], "_vault_classes", lens_classes)
+
             top_idx = int(np.argsort(lens_probs)[::-1][0])
-            best_size = float(lens_classes[top_idx])
+            best_size = float(real_classes[top_idx])
             best_prob = float(lens_probs[top_idx])
 
             X_vault = m["vault_scaler"].transform(X)
@@ -396,7 +399,7 @@ def predict_compare(payload: PredictionInput, models: str = "all"):
                 vault_flag = "ok"
 
             size_probs = {
-                str(float(s)): float(p) for s, p in zip(lens_classes, lens_probs)
+                str(float(s)): float(p) for s, p in zip(real_classes, lens_probs)
             }
 
             results[tag] = {
