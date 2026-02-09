@@ -27,4 +27,4 @@ watchfiles==1.0.4
 websockets==14.1
 # Supabase (PostgreSQL + Auth + Storage)
 supabase>=2.0.0
-python-dotenv>=1.0.0
+python-dotenv>=1.0.0lightgbm>=4.0.0
