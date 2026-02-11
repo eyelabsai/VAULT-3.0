@@ -643,3 +643,30 @@ async def admin_export(key: str = ""):
         },
         "scans": rows,
     }
+
+
+@router.delete("/admin/scan/{scan_id}")
+async def admin_delete_scan(scan_id: str, key: str = ""):
+    """
+    Admin-only: Delete a scan and its predictions/outcomes from the database.
+    Cascades to predictions and outcomes. Optionally removes INI from storage.
+    """
+    if key != ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+
+    client = get_supabase_client()
+    scan_result = client.table("scans").select("id, ini_file_path").eq("id", scan_id).execute()
+    if not scan_result.data:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    scan = scan_result.data[0]
+    ini_path = scan.get("ini_file_path")
+    if ini_path:
+        try:
+            storage = VaultStorage()
+            storage.delete_ini(ini_path)
+        except Exception:
+            pass  # Continue with DB delete even if storage delete fails
+
+    client.table("scans").delete().eq("id", scan_id).execute()
+    return {"ok": True, "message": "Scan deleted"}

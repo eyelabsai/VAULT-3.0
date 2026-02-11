@@ -77,25 +77,46 @@ export default function BetaTestPage() {
   const [expandedCompareRows, setExpandedCompareRows] = useState<Set<string>>(new Set());
   const [comparisonCache, setComparisonCache] = useState<Record<string, Record<string, ModelPrediction>>>({});
   const [comparisonLoading, setComparisonLoading] = useState<Set<string>>(new Set());
+  const [deleteConfirmScan, setDeleteConfirmScan] = useState<Scan | null>(null);
+  const [deletingScanId, setDeletingScanId] = useState<string | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
+  const fetchData = async () => {
+    try {
+      setError(null);
+      const res = await fetch(`${apiBase}/beta/admin/export?key=${ADMIN_KEY}`);
+      if (!res.ok) throw new Error("Failed to fetch data");
+      const data = await res.json();
+      setScans(data.scans || []);
+      setSummary(data.summary || null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${apiBase}/beta/admin/export?key=${ADMIN_KEY}`);
-        if (!res.ok) throw new Error("Failed to fetch data");
-        const data = await res.json();
-        setScans(data.scans || []);
-        setSummary(data.summary || null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, [apiBase]);
+
+  const handleDeleteScan = async (s: Scan) => {
+    setDeletingScanId(s.scan_id);
+    try {
+      const res = await fetch(`${apiBase}/beta/admin/scan/${s.scan_id}?key=${ADMIN_KEY}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Delete failed");
+      }
+      setDeleteConfirmScan(null);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete scan");
+    } finally {
+      setDeletingScanId(null);
+    }
+  };
 
   const doctors = useMemo(() => [...new Set(scans.map(s => s.doctor))].sort(), [scans]);
   const lensOptions = useMemo(() => [...new Set(scans.map(s => s.predicted_lens_size).filter(Boolean))].sort(), [scans]);
@@ -229,6 +250,41 @@ export default function BetaTestPage() {
       <div className="beta-container">
         {error && <p style={{ color: "#f87171", marginBottom: "16px" }}>{error}</p>}
 
+        {/* Delete confirmation dialog */}
+        {deleteConfirmScan && (
+          <div className="beta-delete-overlay" onClick={() => !deletingScanId && setDeleteConfirmScan(null)}>
+            <div className="beta-delete-modal" onClick={(e) => e.stopPropagation()}>
+              <h3 className="beta-delete-title">Delete scan?</h3>
+              <p className="beta-delete-text">
+                This will permanently delete the scan, prediction, and any outcome data for{" "}
+                <strong>{deleteConfirmScan.patient_id}</strong>
+                {deleteConfirmScan.ini_filename && (
+                  <> — <span style={{ fontFamily: "monospace", fontSize: "12px" }}>{deleteConfirmScan.ini_filename}</span></>
+                )}
+                . This cannot be undone.
+              </p>
+              <div className="beta-delete-actions">
+                <button
+                  type="button"
+                  className="beta-delete-cancel"
+                  onClick={() => setDeleteConfirmScan(null)}
+                  disabled={!!deletingScanId}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="beta-delete-confirm"
+                  onClick={() => handleDeleteScan(deleteConfirmScan)}
+                  disabled={!!deletingScanId}
+                >
+                  {deletingScanId === deleteConfirmScan.scan_id ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Summary Cards */}
         {summary && (
           <div className="beta-stats">
@@ -297,6 +353,7 @@ export default function BetaTestPage() {
                   <SortHeader label="Vault 1mo" field="vault_1month" />
                   <SortHeader label="Model" field="model_version" />
                   <th className="beta-th">Details</th>
+                  <th className="beta-th">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -325,10 +382,21 @@ export default function BetaTestPage() {
                           {expandedRow === s.scan_id ? "▾" : "▸"}
                         </button>
                       </td>
+                      <td className="beta-td">
+                        <button
+                          type="button"
+                          className="beta-delete-btn"
+                          onClick={() => setDeleteConfirmScan(s)}
+                          title="Delete scan"
+                          disabled={!!deletingScanId}
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                     {expandedRow === s.scan_id && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
-                        <td colSpan={14} className="beta-detail-td">
+                        <td colSpan={15} className="beta-detail-td">
                           <div className="detail-grid">
                             <div><span className="detail-label">Age</span><span className="detail-value">{fmt(s.age, 0)}</span></div>
                             <div><span className="detail-label">WTW</span><span className="detail-value">{fmt(s.wtw)}mm</span></div>
