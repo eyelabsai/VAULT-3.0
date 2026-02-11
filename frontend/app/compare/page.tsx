@@ -42,6 +42,8 @@ type ParsedFeatures = {
 };
 
 const SIZES = [12.1, 12.6, 13.2, 13.7];
+/** Model used on the calculator page — highlight it on compare */
+const LIVE_CALCULATOR_MODEL = "gestalt-24f-756c";
 
 export default function ComparePage() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -362,6 +364,7 @@ export default function ComparePage() {
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               {Object.entries(availableModels).map(([tag, info]) => {
                 const active = enabledModels.has(tag);
+                const isLive = tag === LIVE_CALCULATOR_MODEL;
                 return (
                   <button
                     key={tag}
@@ -369,15 +372,24 @@ export default function ComparePage() {
                     style={{
                       padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
                       cursor: "pointer", transition: "all 0.2s",
-                      background: active ? "rgba(59, 130, 246, 0.2)" : "#1a1a1a",
-                      border: active ? "1px solid rgba(59, 130, 246, 0.5)" : "1px solid #374151",
-                      color: active ? "#60a5fa" : "#6b7280",
+                      background: active
+                        ? (isLive ? "rgba(34, 197, 94, 0.2)" : "rgba(59, 130, 246, 0.2)")
+                        : (isLive ? "rgba(34, 197, 94, 0.08)" : "#1a1a1a"),
+                      border: active
+                        ? (isLive ? "1px solid rgba(34, 197, 94, 0.5)" : "1px solid rgba(59, 130, 246, 0.5)")
+                        : (isLive ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid #374151"),
+                      color: active ? (isLive ? "#4ade80" : "#60a5fa") : (isLive ? "#6b7280" : "#6b7280"),
                     }}
                   >
                     {tag}
                     <span style={{ marginLeft: "6px", fontSize: "11px", opacity: 0.7 }}>
                       {info.feature_count}f
                     </span>
+                    {isLive && (
+                      <span style={{ marginLeft: "6px", fontSize: "10px", color: "inherit", opacity: 0.8 }}>
+                        (live)
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -400,9 +412,14 @@ export default function ComparePage() {
             gap: "20px",
           }}>
             {visiblePredictions.map(([tag, pred]) => {
+              const isLiveModel = tag === LIVE_CALCULATOR_MODEL;
               if (pred.error) {
                 return (
-                  <div key={tag} style={{ background: "#1a1a1a", borderRadius: "12px", padding: "24px", border: "1px solid #374151" }}>
+                  <div key={tag} style={{
+                    background: isLiveModel ? "rgba(34, 197, 94, 0.06)" : "#1a1a1a",
+                    borderRadius: "12px", padding: "24px",
+                    border: isLiveModel ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid #374151",
+                  }}>
                     <h3 style={{ color: "#fff", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
                     <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
                   </div>
@@ -416,12 +433,24 @@ export default function ComparePage() {
 
               return (
                 <div key={tag} style={{
-                  background: "#1a1a1a", borderRadius: "12px", padding: "24px",
-                  border: "1px solid #374151",
+                  background: isLiveModel ? "rgba(34, 197, 94, 0.06)" : "#1a1a1a",
+                  borderRadius: "12px", padding: "24px",
+                  border: isLiveModel ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid #374151",
                 }}>
                   {/* Model header */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                      {isLiveModel && (
+                        <span style={{
+                          padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
+                          background: "rgba(34, 197, 94, 0.2)", color: "#4ade80",
+                          border: "1px solid rgba(34, 197, 94, 0.4)",
+                        }}>
+                          Live on Calculator
+                        </span>
+                      )}
+                    </div>
                     <span style={{
                       padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
                       background: "rgba(139, 92, 246, 0.15)", color: "#a78bfa",
