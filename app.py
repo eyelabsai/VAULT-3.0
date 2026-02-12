@@ -74,7 +74,19 @@ def engineer_features(data):
     df['Volume_Constraint'] = ((df['Nomogram_Size'] > 12.1) & (df['ACV'] < 170)).astype(int)
     df['Steep_Eye_Adjustment'] = ((df['Nomogram_Size'] > 12.1) & (df['SimK_steep'] > 46.0)).astype(int)
     df['Safety_Downsize_Flag'] = ((df['Nomogram_Size'] == 13.2) & (abs(df['ICL_Power']) < 10.0)).astype(int)
-    
+
+    # 7. Tight-chamber features (used by gestalt-27f-756c)
+    acd_z = ((3.07 - df['ACD_internal']) / 0.30).clip(lower=0)
+    acv_z = ((174.7 - df['ACV']) / 30.0).clip(lower=0)
+    wtw_z = ((11.6 - df['WTW']) / 0.35).clip(lower=0)
+    df['Tight_Chamber_Score'] = (acd_z + acv_z + wtw_z) / 3.0
+
+    df['Volume_Per_Depth'] = df['ACV'] / (df['ACD_internal'] ** 2)
+
+    nomogram_gap = df['Nomogram_Size'] - 12.1
+    chamber_adequacy = ((df['ACV'] / 170.0) * (df['ACD_internal'] / 3.1)).clip(lower=0.5)
+    df['Nomogram_Downsize_Pressure'] = nomogram_gap / chamber_adequacy
+
     return df
 
 # --- MODEL LOADING ---
