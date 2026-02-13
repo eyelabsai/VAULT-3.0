@@ -42,8 +42,49 @@ type ParsedFeatures = {
 };
 
 const SIZES = [12.1, 12.6, 13.2, 13.7];
-/** Model used on the calculator page — highlight it on compare */
-const LIVE_CALCULATOR_MODEL = "gestalt-24f-756c";
+
+/** Featured models — the two active routing models */
+const FEATURED_MODELS: Record<string, { label: string; color: string; notes: string }> = {
+  "gestalt-24f-756c": {
+    label: "Foundation Model",
+    color: "green",
+    notes: "Production default for normal/large chambers. Best overall accuracy (73.2%). Trained Feb 8, 2026.",
+  },
+  "lgb-27f-756c": {
+    label: "Tight Chamber Model",
+    color: "blue",
+    notes: "Auto-routes for tight chambers (ACD < 3.07 or ACV < 175 or WTW < 11.6). Strongest 12.1 detection. Trained Feb 13, 2026.",
+  },
+};
+
+const FEATURED_ORDER = ["gestalt-24f-756c", "lgb-27f-756c"];
+
+const getFeaturedStyle = (color: string) => {
+  if (color === "green") return {
+    bg: "rgba(34, 197, 94, 0.06)",
+    border: "rgba(34, 197, 94, 0.35)",
+    badgeBg: "rgba(34, 197, 94, 0.2)",
+    badgeBorder: "rgba(34, 197, 94, 0.4)",
+    badgeText: "#4ade80",
+    chipActiveBg: "rgba(34, 197, 94, 0.2)",
+    chipInactiveBg: "rgba(34, 197, 94, 0.08)",
+    chipActiveBorder: "1px solid rgba(34, 197, 94, 0.5)",
+    chipInactiveBorder: "1px solid rgba(34, 197, 94, 0.3)",
+    chipActiveText: "#4ade80",
+  };
+  return {
+    bg: "rgba(59, 130, 246, 0.06)",
+    border: "rgba(59, 130, 246, 0.35)",
+    badgeBg: "rgba(59, 130, 246, 0.2)",
+    badgeBorder: "rgba(59, 130, 246, 0.4)",
+    badgeText: "#60a5fa",
+    chipActiveBg: "rgba(59, 130, 246, 0.2)",
+    chipInactiveBg: "rgba(59, 130, 246, 0.08)",
+    chipActiveBorder: "1px solid rgba(59, 130, 246, 0.5)",
+    chipInactiveBorder: "1px solid rgba(59, 130, 246, 0.3)",
+    chipActiveText: "#60a5fa",
+  };
+};
 
 export default function ComparePage() {
   const [authChecked, setAuthChecked] = useState(false);
@@ -202,9 +243,16 @@ export default function ComparePage() {
     }
   };
 
-  const visiblePredictions = Object.entries(predictions).filter(([tag]) =>
-    enabledModels.has(tag)
-  );
+  const visiblePredictions = Object.entries(predictions)
+    .filter(([tag]) => enabledModels.has(tag))
+    .sort(([a], [b]) => {
+      const aIdx = FEATURED_ORDER.indexOf(a);
+      const bIdx = FEATURED_ORDER.indexOf(b);
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.localeCompare(b);
+    });
 
   const patientName = [features.LastName, features.FirstName].filter(Boolean).join(", ");
 
@@ -362,9 +410,14 @@ export default function ComparePage() {
               >All Off</button>
             </div>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {Object.entries(availableModels).map(([tag, info]) => {
+              {[
+                ...FEATURED_ORDER.filter((t) => t in availableModels),
+                ...Object.keys(availableModels).filter((t) => !FEATURED_MODELS[t]).sort(),
+              ].map((tag) => {
+                const info = availableModels[tag];
                 const active = enabledModels.has(tag);
-                const isLive = tag === LIVE_CALCULATOR_MODEL;
+                const featured = FEATURED_MODELS[tag];
+                const style = featured ? getFeaturedStyle(featured.color) : null;
                 return (
                   <button
                     key={tag}
@@ -373,21 +426,21 @@ export default function ComparePage() {
                       padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
                       cursor: "pointer", transition: "all 0.2s",
                       background: active
-                        ? (isLive ? "rgba(34, 197, 94, 0.2)" : "rgba(59, 130, 246, 0.2)")
-                        : (isLive ? "rgba(34, 197, 94, 0.08)" : "#1a1a1a"),
+                        ? (style ? style.chipActiveBg : "rgba(59, 130, 246, 0.2)")
+                        : (style ? style.chipInactiveBg : "#1a1a1a"),
                       border: active
-                        ? (isLive ? "1px solid rgba(34, 197, 94, 0.5)" : "1px solid rgba(59, 130, 246, 0.5)")
-                        : (isLive ? "1px solid rgba(34, 197, 94, 0.3)" : "1px solid #374151"),
-                      color: active ? (isLive ? "#4ade80" : "#60a5fa") : (isLive ? "#6b7280" : "#6b7280"),
+                        ? (style ? style.chipActiveBorder : "1px solid rgba(59, 130, 246, 0.5)")
+                        : (style ? style.chipInactiveBorder : "1px solid #374151"),
+                      color: active ? (style ? style.chipActiveText : "#60a5fa") : "#6b7280",
                     }}
                   >
                     {tag}
                     <span style={{ marginLeft: "6px", fontSize: "11px", opacity: 0.7 }}>
                       {info.feature_count}f
                     </span>
-                    {isLive && (
+                    {featured && (
                       <span style={{ marginLeft: "6px", fontSize: "10px", color: "inherit", opacity: 0.8 }}>
-                        (live)
+                        ({featured.label})
                       </span>
                     )}
                   </button>
@@ -412,13 +465,14 @@ export default function ComparePage() {
             gap: "20px",
           }}>
             {visiblePredictions.map(([tag, pred]) => {
-              const isLiveModel = tag === LIVE_CALCULATOR_MODEL;
+              const featured = FEATURED_MODELS[tag];
+              const style = featured ? getFeaturedStyle(featured.color) : null;
               if (pred.error) {
                 return (
                   <div key={tag} style={{
-                    background: isLiveModel ? "rgba(34, 197, 94, 0.06)" : "#1a1a1a",
+                    background: style ? style.bg : "#1a1a1a",
                     borderRadius: "12px", padding: "24px",
-                    border: isLiveModel ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid #374151",
+                    border: style ? `1px solid ${style.border}` : "1px solid #374151",
                   }}>
                     <h3 style={{ color: "#fff", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
                     <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
@@ -433,21 +487,21 @@ export default function ComparePage() {
 
               return (
                 <div key={tag} style={{
-                  background: isLiveModel ? "rgba(34, 197, 94, 0.06)" : "#1a1a1a",
+                  background: style ? style.bg : "#1a1a1a",
                   borderRadius: "12px", padding: "24px",
-                  border: isLiveModel ? "1px solid rgba(34, 197, 94, 0.35)" : "1px solid #374151",
+                  border: style ? `1px solid ${style.border}` : "1px solid #374151",
                 }}>
                   {/* Model header */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
-                      {isLiveModel && (
+                      {featured && style && (
                         <span style={{
                           padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
-                          background: "rgba(34, 197, 94, 0.2)", color: "#4ade80",
-                          border: "1px solid rgba(34, 197, 94, 0.4)",
+                          background: style.badgeBg, color: style.badgeText,
+                          border: `1px solid ${style.badgeBorder}`,
                         }}>
-                          Live on Calculator
+                          {featured.label}
                         </span>
                       )}
                     </div>
@@ -459,7 +513,12 @@ export default function ComparePage() {
                     </span>
                   </div>
                   {pred.description && (
-                    <p style={{ color: "#6b7280", fontSize: "12px", margin: "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
+                    <p style={{ color: "#6b7280", fontSize: "12px", margin: featured ? "0 0 8px" : "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
+                  )}
+                  {featured && (
+                    <p style={{ color: "#9ca3af", fontSize: "11px", margin: "0 0 16px", lineHeight: 1.4, fontStyle: "italic" }}>
+                      {featured.notes}
+                    </p>
                   )}
 
                   {/* Lens size cards */}

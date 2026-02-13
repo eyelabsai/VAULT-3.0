@@ -1,6 +1,6 @@
 # lgb-27f-756c
 
-LightGBM with balanced class weights + 3 tight-chamber features. Regularized for real probability outputs.
+Tight chamber model. LightGBM on 27 features with balanced class weights. Auto-routes for patients with small ACD/ACV/WTW. Strongest 12.1 detection.
 
 - **Algorithm:** LightGBM (lens classifier) + GradientBoosting (vault regressor)
 - **Hyperparams:** n_estimators=150, max_depth=4, num_leaves=15, min_child_samples=20, lr=0.05

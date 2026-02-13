@@ -2,7 +2,7 @@
 
 ## Summary
 
-**Current production model.** Full retrain of the gestalt GradientBoosting model on all available data (756 cases). Uses 9 base Pentacam features plus 15 engineered gestalt features (clinical flags, buckets, interaction terms, nomogram logic). This is the model served by the `/predict` endpoint.
+Foundation model. GradientBoosting on 24 gestalt features (73.2% accuracy, 128.3µm vault MAE). Default for normal/large chamber patients.
 
 ## Performance
 
