@@ -59,6 +59,9 @@ const FEATURED_MODELS: Record<string, { label: string; color: string; notes: str
 
 const FEATURED_ORDER = ["gestalt-24f-756c", "lgb-27f-756c"];
 
+/** Legacy models — collapsed by default, ablation baselines */
+const LEGACY_MODELS = new Set(["gestalt-5f-756c", "gestalt-10f-756c"]);
+
 const getFeaturedStyle = (color: string) => {
   if (color === "green") return {
     bg: "rgba(34, 197, 94, 0.12)",
@@ -103,6 +106,7 @@ export default function ComparePage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [showLegacy, setShowLegacy] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -247,7 +251,7 @@ export default function ComparePage() {
     }
   };
 
-  const visiblePredictions = Object.entries(predictions)
+  const allVisible = Object.entries(predictions)
     .filter(([tag]) => enabledModels.has(tag))
     .sort(([a], [b]) => {
       const aIdx = FEATURED_ORDER.indexOf(a);
@@ -257,6 +261,9 @@ export default function ComparePage() {
       if (bIdx !== -1) return 1;
       return a.localeCompare(b);
     });
+
+  const mainPredictions = allVisible.filter(([tag]) => !LEGACY_MODELS.has(tag));
+  const legacyPredictions = allVisible.filter(([tag]) => LEGACY_MODELS.has(tag));
 
   const patientName = [features.LastName, features.FirstName].filter(Boolean).join(", ");
 
@@ -413,10 +420,10 @@ export default function ComparePage() {
                 }}
               >All Off</button>
             </div>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
               {[
                 ...FEATURED_ORDER.filter((t) => t in availableModels),
-                ...Object.keys(availableModels).filter((t) => !FEATURED_MODELS[t]).sort(),
+                ...Object.keys(availableModels).filter((t) => !FEATURED_MODELS[t] && !LEGACY_MODELS.has(t)).sort(),
               ].map((tag) => {
                 const info = availableModels[tag];
                 const active = enabledModels.has(tag);
@@ -450,6 +457,36 @@ export default function ComparePage() {
                   </button>
                 );
               })}
+              {Object.keys(availableModels).some((t) => LEGACY_MODELS.has(t)) && (
+                <>
+                  <span style={{ color: "#374151", fontSize: "16px", margin: "0 2px" }}>|</span>
+                  {Object.keys(availableModels).filter((t) => LEGACY_MODELS.has(t)).sort().map((tag) => {
+                    const info = availableModels[tag];
+                    const active = enabledModels.has(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => toggleModel(tag)}
+                        style={{
+                          padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: 500,
+                          cursor: "pointer", transition: "all 0.2s", opacity: 0.6,
+                          background: active ? "rgba(107, 114, 128, 0.2)" : "#1a1a1a",
+                          border: active ? "1px solid rgba(107, 114, 128, 0.5)" : "1px solid #2a2a2a",
+                          color: active ? "#9ca3af" : "#4b5563",
+                        }}
+                      >
+                        {tag}
+                        <span style={{ marginLeft: "6px", fontSize: "11px", opacity: 0.7 }}>
+                          {info.feature_count}f
+                        </span>
+                        <span style={{ marginLeft: "6px", fontSize: "10px", color: "inherit", opacity: 0.8 }}>
+                          (legacy)
+                        </span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -462,13 +499,13 @@ export default function ComparePage() {
         )}
 
         {/* Results */}
-        {!loading && !uploading && visiblePredictions.length > 0 && (
+        {!loading && !uploading && mainPredictions.length > 0 && (
           <div style={{
             display: "grid",
-            gridTemplateColumns: visiblePredictions.length === 1 ? "1fr" : `repeat(${Math.min(visiblePredictions.length, 3)}, 1fr)`,
+            gridTemplateColumns: mainPredictions.length === 1 ? "1fr" : `repeat(${Math.min(mainPredictions.length, 3)}, 1fr)`,
             gap: "20px",
           }}>
-            {visiblePredictions.map(([tag, pred]) => {
+            {mainPredictions.map(([tag, pred]) => {
               const featured = FEATURED_MODELS[tag];
               const style = featured ? getFeaturedStyle(featured.color) : null;
               if (pred.error) {
@@ -582,6 +619,121 @@ export default function ComparePage() {
           </div>
         )}
 
+        {/* Legacy Models — collapsible */}
+        {!loading && !uploading && legacyPredictions.length > 0 && (
+          <div style={{ marginTop: "24px" }}>
+            <button
+              onClick={() => setShowLegacy((v) => !v)}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: "#6b7280", fontSize: "13px", fontWeight: 600,
+                padding: "8px 0", display: "flex", alignItems: "center", gap: "6px",
+              }}
+            >
+              <span style={{
+                display: "inline-block", transition: "transform 0.2s",
+                transform: showLegacy ? "rotate(90deg)" : "rotate(0deg)",
+              }}>
+                ▸
+              </span>
+              Legacy Models ({legacyPredictions.length})
+              <span style={{ fontWeight: 400, marginLeft: "4px", fontSize: "12px", color: "#4b5563" }}>
+                — ablation baselines
+              </span>
+            </button>
+            {showLegacy && (
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: legacyPredictions.length === 1 ? "1fr" : `repeat(${Math.min(legacyPredictions.length, 3)}, 1fr)`,
+                gap: "20px", marginTop: "12px",
+              }}>
+                {legacyPredictions.map(([tag, pred]) => {
+                  if (pred.error) {
+                    return (
+                      <div key={tag} style={{
+                        background: "#161616", borderRadius: "12px", padding: "24px",
+                        border: "1px solid #2a2a2a", opacity: 0.75,
+                      }}>
+                        <h3 style={{ color: "#9ca3af", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
+                        <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
+                      </div>
+                    );
+                  }
+
+                  const sortedProbs = Object.entries(pred.size_probabilities)
+                    .sort(([, a], [, b]) => b - a);
+                  const bestSize = sortedProbs[0]?.[0];
+                  const secondSize = sortedProbs[1]?.[0];
+
+                  return (
+                    <div key={tag} style={{
+                      background: "#161616", borderRadius: "12px", padding: "24px",
+                      border: "1px solid #2a2a2a", opacity: 0.75,
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <h3 style={{ color: "#9ca3af", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                          <span style={{
+                            padding: "3px 8px", borderRadius: "4px", fontSize: "10px", fontWeight: 600,
+                            background: "rgba(107, 114, 128, 0.15)", color: "#6b7280",
+                            border: "1px solid rgba(107, 114, 128, 0.3)",
+                          }}>
+                            Legacy
+                          </span>
+                        </div>
+                        <span style={{
+                          padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
+                          background: "rgba(139, 92, 246, 0.1)", color: "#8b7fc7",
+                        }}>
+                          {pred.feature_count} features
+                        </span>
+                      </div>
+                      {pred.description && (
+                        <p style={{ color: "#4b5563", fontSize: "12px", margin: "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
+                      )}
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
+                        {SIZES.map((size) => {
+                          const sizeStr = String(size);
+                          const prob = pred.size_probabilities[sizeStr] || 0;
+                          const isBest = sizeStr === bestSize;
+                          const isSecond = sizeStr === secondSize;
+                          return (
+                            <div key={size} style={{
+                              textAlign: "center", padding: "12px 4px", borderRadius: "8px",
+                              background: isBest ? "rgba(34, 197, 94, 0.08)" : isSecond ? "rgba(250, 204, 21, 0.08)" : "rgba(255,255,255,0.02)",
+                              border: isBest ? "2px solid rgba(34, 197, 94, 0.4)" : isSecond ? "1px solid rgba(250, 204, 21, 0.25)" : "1px solid rgba(255,255,255,0.06)",
+                            }}>
+                              <div style={{ fontSize: "24px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#d1d5db" }}>{size}</div>
+                              <div style={{ fontSize: "13px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#4b5563" }}>{(prob * 100).toFixed(0)}%</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div style={{
+                        padding: "12px", borderRadius: "8px",
+                        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                        textAlign: "center",
+                      }}>
+                        <div style={{ color: "#6b7280", fontSize: "11px", marginBottom: "4px" }}>VAULT RANGE</div>
+                        <div style={{ color: "#d1d5db", fontSize: "18px", fontWeight: 600 }}>
+                          {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
+                        </div>
+                        {pred.vault_flag !== "ok" && (
+                          <div style={{ marginTop: "6px", fontSize: "12px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
+                            ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Empty state */}
         {!loading && !uploading && Object.keys(predictions).length === 0 && (
           <div style={{
@@ -598,7 +750,7 @@ export default function ComparePage() {
         )}
 
         {/* No models selected */}
-        {!loading && !uploading && Object.keys(predictions).length > 0 && visiblePredictions.length === 0 && (
+        {!loading && !uploading && Object.keys(predictions).length > 0 && mainPredictions.length === 0 && legacyPredictions.length === 0 && (
           <div style={{
             textAlign: "center", padding: "40px",
             background: "#1a1a1a", borderRadius: "12px", border: "1px solid #374151",
