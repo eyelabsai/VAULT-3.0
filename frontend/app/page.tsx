@@ -1,42 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
 
-  useEffect(() => {
-    const checkAuth = async () => {
+  const handleEnterClick = async () => {
+    try {
       const { createClient } = await import("@/lib/supabase");
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session) {
         const hasAccepted = session.user?.user_metadata?.disclaimer_accepted === true;
-        router.push(hasAccepted ? "/calculator" : "/welcome");
+        if (hasAccepted) {
+          router.push("/calculator");
+        } else {
+          router.push("/welcome");
+        }
       } else {
-        setChecking(false);
+        router.push("/login");
       }
-    };
-    checkAuth();
-  }, [router]);
-
-  const handleEnterClick = () => {
-    router.push("/login");
+    } catch (error) {
+      console.error("Auth check failed:", error);
+      router.push("/login");
+    }
   };
-
-  if (checking) {
-    return (
-      <main className="landing-page">
-        <div className="landing-container">
-          <div className="landing-content" />
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="landing-page">
