@@ -230,7 +230,7 @@ async def upload_ini_file(
                 lens_probabilities=lens_probs,
                 predicted_vault=pred_response.vault_pred_um,
                 vault_mae=VAULT_MAE,
-                model_version=MODEL_VERSION,
+                model_version=pred_response.model_used,
                 features_used=required_features,
             )
             
