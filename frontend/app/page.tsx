@@ -24,7 +24,7 @@ export default function Home() {
     checkAuth();
   }, [router]);
 
-  const handleStartClick = () => {
+  const handleEnterClick = () => {
     router.push("/login");
   };
 
@@ -42,21 +42,23 @@ export default function Home() {
     <main className="landing-page">
       <div className="landing-container">
         <div className="landing-content">
-          <Image
-            src="/images/vault-dark-mode.svg"
-            alt="Vault 3"
-            width={600}
-            height={200}
-            className="landing-logo"
-            priority
-          />
+          <div className="logo-container">
+            <Image
+              src="/images/vault-dark-mode.svg"
+              alt="ICL Vault"
+              width={800}
+              height={280}
+              className="landing-logo"
+              priority
+            />
+          </div>
           
           <p className="landing-tagline">
             Pentacam-Based, AI-Driven ICL Sizing Nomogram
           </p>
           
-          <button onClick={handleStartClick} className="landing-button">
-            LOGIN
+          <button onClick={handleEnterClick} className="landing-button">
+            Enter
           </button>
         </div>
         
@@ -64,9 +66,9 @@ export default function Home() {
           <a href="https://biminiai.com/" target="_blank" rel="noopener noreferrer">
             <Image
               src="/images/bimini-darkmode.svg"
-              alt="Bimini"
-              width={120}
-              height={40}
+              alt="Bimini AI"
+              width={140}
+              height={48}
               className="footer-logo"
             />
           </a>
