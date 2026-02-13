@@ -61,10 +61,12 @@ const FEATURED_ORDER = ["gestalt-24f-756c", "lgb-27f-756c"];
 
 const getFeaturedStyle = (color: string) => {
   if (color === "green") return {
-    bg: "rgba(34, 197, 94, 0.06)",
-    border: "rgba(34, 197, 94, 0.35)",
-    badgeBg: "rgba(34, 197, 94, 0.2)",
-    badgeBorder: "rgba(34, 197, 94, 0.4)",
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.5)",
+    topBorder: "#22c55e",
+    shadow: "0 0 20px rgba(34, 197, 94, 0.15), 0 0 40px rgba(34, 197, 94, 0.05)",
+    badgeBg: "rgba(34, 197, 94, 0.25)",
+    badgeBorder: "rgba(34, 197, 94, 0.5)",
     badgeText: "#4ade80",
     chipActiveBg: "rgba(34, 197, 94, 0.2)",
     chipInactiveBg: "rgba(34, 197, 94, 0.08)",
@@ -73,10 +75,12 @@ const getFeaturedStyle = (color: string) => {
     chipActiveText: "#4ade80",
   };
   return {
-    bg: "rgba(59, 130, 246, 0.06)",
-    border: "rgba(59, 130, 246, 0.35)",
-    badgeBg: "rgba(59, 130, 246, 0.2)",
-    badgeBorder: "rgba(59, 130, 246, 0.4)",
+    bg: "rgba(59, 130, 246, 0.12)",
+    border: "rgba(59, 130, 246, 0.5)",
+    topBorder: "#3b82f6",
+    shadow: "0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.05)",
+    badgeBg: "rgba(59, 130, 246, 0.25)",
+    badgeBorder: "rgba(59, 130, 246, 0.5)",
     badgeText: "#60a5fa",
     chipActiveBg: "rgba(59, 130, 246, 0.2)",
     chipInactiveBg: "rgba(59, 130, 246, 0.08)",
@@ -473,6 +477,8 @@ export default function ComparePage() {
                     background: style ? style.bg : "#1a1a1a",
                     borderRadius: "12px", padding: "24px",
                     border: style ? `1px solid ${style.border}` : "1px solid #374151",
+                    borderTop: style ? `3px solid ${style.topBorder}` : undefined,
+                    boxShadow: style ? style.shadow : undefined,
                   }}>
                     <h3 style={{ color: "#fff", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
                     <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
@@ -490,6 +496,8 @@ export default function ComparePage() {
                   background: style ? style.bg : "#1a1a1a",
                   borderRadius: "12px", padding: "24px",
                   border: style ? `1px solid ${style.border}` : "1px solid #374151",
+                  borderTop: style ? `3px solid ${style.topBorder}` : undefined,
+                  boxShadow: style ? style.shadow : undefined,
                 }}>
                   {/* Model header */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
@@ -497,9 +505,10 @@ export default function ComparePage() {
                       <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
                       {featured && style && (
                         <span style={{
-                          padding: "3px 8px", borderRadius: "4px", fontSize: "11px", fontWeight: 600,
+                          padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 700,
                           background: style.badgeBg, color: style.badgeText,
                           border: `1px solid ${style.badgeBorder}`,
+                          letterSpacing: "0.02em",
                         }}>
                           {featured.label}
                         </span>
