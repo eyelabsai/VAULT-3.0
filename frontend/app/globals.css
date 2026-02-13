@@ -1704,6 +1704,18 @@ body {
 }
 
 /* Sticky Actions column so Delete stays visible when table scrolls horizontally */
+.beta-select-col {
+  position: sticky;
+  right: 80px;
+  background: #1a1a1a;
+  z-index: 1;
+  border-left: 1px solid #374151;
+}
+.beta-table thead .beta-select-col {
+  z-index: 2;
+  border-bottom: 1px solid #374151;
+}
+
 .beta-actions-col {
   position: sticky;
   right: 0;

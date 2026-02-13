@@ -493,16 +493,6 @@ export default function BetaTestPage() {
             <table className="beta-table">
               <thead>
                 <tr>
-                  <th className="beta-th" style={{ width: "44px", textAlign: "center" }}>
-                    <input
-                      type="checkbox"
-                      checked={sorted.length > 0 && selectedIds.size === sorted.length}
-                      ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < sorted.length; }}
-                      onChange={selectAllScans}
-                      title="Select all"
-                      style={{ cursor: "pointer", width: "18px", height: "18px" }}
-                    />
-                  </th>
                   <SortHeader label="Date" field="scan_date" />
                   <SortHeader label="Doctor" field="doctor" />
                   <SortHeader label="Patient" field="patient_id" />
@@ -517,6 +507,16 @@ export default function BetaTestPage() {
                   <SortHeader label="Vault 1mo" field="vault_1month" />
                   <SortHeader label="Model" field="model_version" />
                   <th className="beta-th">Details</th>
+                  <th className="beta-th beta-select-col" style={{ width: "44px", textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={sorted.length > 0 && selectedIds.size === sorted.length}
+                      ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < sorted.length; }}
+                      onChange={selectAllScans}
+                      title="Select all"
+                      style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                    />
+                  </th>
                   <th className="beta-th beta-actions-col">Actions</th>
                 </tr>
               </thead>
@@ -524,14 +524,6 @@ export default function BetaTestPage() {
                 {sorted.map((s) => (
                   <>
                     <tr key={s.scan_id} className="beta-tr">
-                      <td className="beta-td" style={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.has(s.scan_id)}
-                          onChange={() => toggleSelect(s.scan_id)}
-                          style={{ cursor: "pointer", width: "18px", height: "18px" }}
-                        />
-                      </td>
                       <td className="beta-td">{fmtDate(s.scan_date)}</td>
                       <td className="beta-td">{s.doctor}</td>
                       <td className="beta-td">{s.patient_id}</td>
@@ -553,6 +545,14 @@ export default function BetaTestPage() {
                         <button className="expand-btn" onClick={() => setExpandedRow(expandedRow === s.scan_id ? null : s.scan_id)}>
                           {expandedRow === s.scan_id ? "▾" : "▸"}
                         </button>
+                      </td>
+                      <td className="beta-td beta-select-col" style={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(s.scan_id)}
+                          onChange={() => toggleSelect(s.scan_id)}
+                          style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                        />
                       </td>
                       <td className="beta-td beta-actions-col">
                         <button

@@ -523,6 +523,12 @@ export default function DashboardPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #374151" }}>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Patient</th>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Eye</th>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Predicted Size</th>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Predicted Vault</th>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Actual</th>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Date</th>
                   <th style={{ padding: "16px", width: "44px", textAlign: "center", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>
                     <input
                       type="checkbox"
@@ -535,12 +541,6 @@ export default function DashboardPage() {
                       style={{ cursor: "pointer", width: "18px", height: "18px" }}
                     />
                   </th>
-                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Patient</th>
-                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Eye</th>
-                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Predicted Size</th>
-                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Predicted Vault</th>
-                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Actual</th>
-                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Date</th>
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Actions</th>
                 </tr>
               </thead>
@@ -553,14 +553,6 @@ export default function DashboardPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#262626")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <td style={{ padding: "16px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(scan.id)}
-                        onChange={() => toggleSelect(scan.id)}
-                        style={{ cursor: "pointer", width: "18px", height: "18px" }}
-                      />
-                    </td>
                     <td style={{ padding: "16px", color: "#ffffff" }}>{scan.patient_anonymous_id}</td>
                     <td style={{ padding: "16px" }}>
                       <span style={{
@@ -592,6 +584,14 @@ export default function DashboardPage() {
                       )}
                     </td>
                     <td style={{ padding: "16px", color: "#9ca3af" }}>{formatDate(scan.created_at)}</td>
+                    <td style={{ padding: "16px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(scan.id)}
+                        onChange={() => toggleSelect(scan.id)}
+                        style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                      />
+                    </td>
                     <td style={{ padding: "16px" }}>
                       <button
                         type="button"
