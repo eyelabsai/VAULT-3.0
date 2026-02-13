@@ -62,6 +62,64 @@ type SortDir = "asc" | "desc";
 const ADMIN_KEY = "vaultbeta2026";
 const SIZES = [12.1, 12.6, 13.2, 13.7];
 
+const FEATURED_MODELS: Record<string, { label: string; color: string; notes: string }> = {
+  "gestalt-24f-756c": {
+    label: "Foundation Model",
+    color: "green",
+    notes: "Production default for normal/large chambers. Best overall accuracy (73.2%). Trained Feb 8, 2026.",
+  },
+  "lgb-27f-756c": {
+    label: "Tight Chamber Model",
+    color: "blue",
+    notes: "Auto-routes for tight chambers (ACD < 3.07 or ACV < 175 or WTW < 11.6). Strongest 12.1 detection. Trained Feb 13, 2026.",
+  },
+};
+
+const FEATURED_ORDER = ["gestalt-24f-756c", "lgb-27f-756c"];
+const LEGACY_MODELS = new Set(["gestalt-5f-756c", "gestalt-10f-756c"]);
+
+const getFeaturedStyle = (color: string) => {
+  if (color === "green") return {
+    bg: "rgba(34, 197, 94, 0.12)",
+    border: "rgba(34, 197, 94, 0.5)",
+    topBorder: "#22c55e",
+    shadow: "0 0 20px rgba(34, 197, 94, 0.15), 0 0 40px rgba(34, 197, 94, 0.05)",
+    badgeBg: "rgba(34, 197, 94, 0.25)",
+    badgeBorder: "rgba(34, 197, 94, 0.5)",
+    badgeText: "#4ade80",
+  };
+  return {
+    bg: "rgba(59, 130, 246, 0.12)",
+    border: "rgba(59, 130, 246, 0.5)",
+    topBorder: "#3b82f6",
+    shadow: "0 0 20px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.05)",
+    badgeBg: "rgba(59, 130, 246, 0.25)",
+    badgeBorder: "rgba(59, 130, 246, 0.5)",
+    badgeText: "#60a5fa",
+  };
+};
+
+const sortModels = (entries: [string, ModelPrediction][]) => {
+  const main: [string, ModelPrediction][] = [];
+  const legacy: [string, ModelPrediction][] = [];
+
+  // Sort all entries: featured first, then alpha, separate legacy
+  const sorted = [...entries].sort(([a], [b]) => {
+    const aIdx = FEATURED_ORDER.indexOf(a);
+    const bIdx = FEATURED_ORDER.indexOf(b);
+    if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+    if (aIdx !== -1) return -1;
+    if (bIdx !== -1) return 1;
+    return a.localeCompare(b);
+  });
+
+  for (const entry of sorted) {
+    if (LEGACY_MODELS.has(entry[0])) legacy.push(entry);
+    else main.push(entry);
+  }
+  return { main, legacy };
+};
+
 export default function BetaTestPage() {
   const [scans, setScans] = useState<Scan[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -79,6 +137,7 @@ export default function BetaTestPage() {
   const [comparisonLoading, setComparisonLoading] = useState<Set<string>>(new Set());
   const [deleteConfirmScan, setDeleteConfirmScan] = useState<Scan | null>(null);
   const [deletingScanId, setDeletingScanId] = useState<string | null>(null);
+  const [legacyOpen, setLegacyOpen] = useState<Set<string>>(new Set());
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -568,95 +627,238 @@ export default function BetaTestPage() {
                                 Comparison failed — no model results returned.
                               </div>
                             )}
-                            {!isLoading && predictions && Object.keys(predictions).length > 0 && (
-                              <div style={{
-                                display: "grid",
-                                gridTemplateColumns: `repeat(${Math.min(Object.keys(predictions).length, 3)}, 1fr)`,
-                                gap: "16px",
-                              }}>
-                                {Object.entries(predictions).map(([tag, pred]) => {
-                                  if (pred.error) {
-                                    return (
-                                      <div key={tag} style={{
-                                        background: "#1a1a1a", borderRadius: "12px", padding: "20px",
-                                        border: "1px solid #374151",
-                                      }}>
-                                        <h3 style={{ color: "#fff", fontSize: "15px", margin: "0 0 8px" }}>{tag}</h3>
-                                        <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
-                                      </div>
-                                    );
-                                  }
+                            {!isLoading && predictions && Object.keys(predictions).length > 0 && (() => {
+                              const { main: mainModels, legacy: legacyModels } = sortModels(Object.entries(predictions));
+                              const scanLegacyOpen = legacyOpen.has(s.scan_id);
+                              return (
+                                <>
+                                  {/* Main models grid */}
+                                  <div style={{
+                                    display: "grid",
+                                    gridTemplateColumns: mainModels.length === 1 ? "1fr" : `repeat(${Math.min(mainModels.length, 3)}, 1fr)`,
+                                    gap: "16px",
+                                  }}>
+                                    {mainModels.map(([tag, pred]) => {
+                                      const featured = FEATURED_MODELS[tag];
+                                      const fStyle = featured ? getFeaturedStyle(featured.color) : null;
 
-                                  const sortedProbs = Object.entries(pred.size_probabilities)
-                                    .sort(([, a], [, b]) => b - a);
-                                  const bestSize = sortedProbs[0]?.[0];
-                                  const secondSize = sortedProbs[1]?.[0];
-
-                                  return (
-                                    <div key={tag} style={{
-                                      background: "#1a1a1a", borderRadius: "12px", padding: "20px",
-                                      border: "1px solid #374151",
-                                    }}>
-                                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                                        <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: 600, margin: 0 }}>{tag}</h3>
-                                        <span style={{
-                                          padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
-                                          background: "rgba(139, 92, 246, 0.15)", color: "#a78bfa",
-                                        }}>
-                                          {pred.feature_count}f
-                                        </span>
-                                      </div>
-                                      {pred.description && (
-                                        <p style={{ color: "#6b7280", fontSize: "11px", margin: "0 0 12px", lineHeight: 1.4 }}>{pred.description}</p>
-                                      )}
-                                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
-                                        {SIZES.map((size) => {
-                                          const sizeStr = String(size);
-                                          const prob = pred.size_probabilities[sizeStr] || 0;
-                                          const isBest = sizeStr === bestSize;
-                                          const isSecond = sizeStr === secondSize;
-
-                                          return (
-                                            <div key={size} style={{
-                                              textAlign: "center", padding: "10px 4px", borderRadius: "8px",
-                                              background: isBest ? "rgba(34, 197, 94, 0.1)" : isSecond ? "rgba(250, 204, 21, 0.1)" : "rgba(255,255,255,0.03)",
-                                              border: isBest ? "2px solid rgba(34, 197, 94, 0.5)" : isSecond ? "1px solid rgba(250, 204, 21, 0.3)" : "1px solid rgba(255,255,255,0.08)",
-                                            }}>
-                                              <div style={{
-                                                fontSize: "20px", fontWeight: 400,
-                                                color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#fff",
-                                              }}>{size}</div>
-                                              <div style={{
-                                                fontSize: "12px",
-                                                color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280",
-                                              }}>{(prob * 100).toFixed(0)}%</div>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                      <div style={{
-                                        padding: "10px", borderRadius: "8px",
-                                        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                                        textAlign: "center",
-                                      }}>
-                                        <div style={{ color: "#9ca3af", fontSize: "10px", marginBottom: "3px" }}>VAULT RANGE</div>
-                                        <div style={{ color: "#fff", fontSize: "16px", fontWeight: 600 }}>
-                                          {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
-                                        </div>
-                                        {pred.vault_flag !== "ok" && (
-                                          <div style={{
-                                            marginTop: "4px", fontSize: "11px", fontWeight: 500,
-                                            color: pred.vault_flag === "low" ? "#f87171" : "#facc15",
+                                      if (pred.error) {
+                                        return (
+                                          <div key={tag} style={{
+                                            background: fStyle ? fStyle.bg : "#1a1a1a",
+                                            borderRadius: "12px", padding: "20px",
+                                            border: fStyle ? `1px solid ${fStyle.border}` : "1px solid #374151",
+                                            borderTop: fStyle ? `3px solid ${fStyle.topBorder}` : undefined,
+                                            boxShadow: fStyle ? fStyle.shadow : undefined,
                                           }}>
-                                            ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
+                                            <h3 style={{ color: "#fff", fontSize: "15px", margin: "0 0 8px" }}>{tag}</h3>
+                                            <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
                                           </div>
-                                        )}
+                                        );
+                                      }
+
+                                      const sortedProbs = Object.entries(pred.size_probabilities)
+                                        .sort(([, a], [, b]) => b - a);
+                                      const bestSize = sortedProbs[0]?.[0];
+                                      const secondSize = sortedProbs[1]?.[0];
+
+                                      return (
+                                        <div key={tag} style={{
+                                          background: fStyle ? fStyle.bg : "#1a1a1a",
+                                          borderRadius: "12px", padding: "20px",
+                                          border: fStyle ? `1px solid ${fStyle.border}` : "1px solid #374151",
+                                          borderTop: fStyle ? `3px solid ${fStyle.topBorder}` : undefined,
+                                          boxShadow: fStyle ? fStyle.shadow : undefined,
+                                        }}>
+                                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                                              <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                                              {featured && fStyle && (
+                                                <span style={{
+                                                  padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700,
+                                                  background: fStyle.badgeBg, color: fStyle.badgeText,
+                                                  border: `1px solid ${fStyle.badgeBorder}`,
+                                                  letterSpacing: "0.02em",
+                                                }}>
+                                                  {featured.label}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <span style={{
+                                              padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
+                                              background: "rgba(139, 92, 246, 0.15)", color: "#a78bfa",
+                                            }}>
+                                              {pred.feature_count}f
+                                            </span>
+                                          </div>
+                                          {pred.description && (
+                                            <p style={{ color: "#6b7280", fontSize: "11px", margin: featured ? "0 0 6px" : "0 0 12px", lineHeight: 1.4 }}>{pred.description}</p>
+                                          )}
+                                          {featured && (
+                                            <p style={{ color: "#9ca3af", fontSize: "10px", margin: "0 0 12px", lineHeight: 1.4, fontStyle: "italic" }}>
+                                              {featured.notes}
+                                            </p>
+                                          )}
+                                          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                                            {SIZES.map((size) => {
+                                              const sizeStr = String(size);
+                                              const prob = pred.size_probabilities[sizeStr] || 0;
+                                              const isBest = sizeStr === bestSize;
+                                              const isSecond = sizeStr === secondSize;
+                                              return (
+                                                <div key={size} style={{
+                                                  textAlign: "center", padding: "10px 4px", borderRadius: "8px",
+                                                  background: isBest ? "rgba(34, 197, 94, 0.1)" : isSecond ? "rgba(250, 204, 21, 0.1)" : "rgba(255,255,255,0.03)",
+                                                  border: isBest ? "2px solid rgba(34, 197, 94, 0.5)" : isSecond ? "1px solid rgba(250, 204, 21, 0.3)" : "1px solid rgba(255,255,255,0.08)",
+                                                }}>
+                                                  <div style={{ fontSize: "20px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#fff" }}>{size}</div>
+                                                  <div style={{ fontSize: "12px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                          <div style={{
+                                            padding: "10px", borderRadius: "8px",
+                                            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                                            textAlign: "center",
+                                          }}>
+                                            <div style={{ color: "#9ca3af", fontSize: "10px", marginBottom: "3px" }}>VAULT RANGE</div>
+                                            <div style={{ color: "#fff", fontSize: "16px", fontWeight: 600 }}>
+                                              {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
+                                            </div>
+                                            {pred.vault_flag !== "ok" && (
+                                              <div style={{ marginTop: "4px", fontSize: "11px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
+                                                ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {/* Legacy models — collapsible */}
+                                  {legacyModels.length > 0 && (
+                                    <div style={{ marginTop: "16px" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                        <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
+                                        <button
+                                          onClick={() => setLegacyOpen((prev) => {
+                                            const next = new Set(prev);
+                                            if (next.has(s.scan_id)) next.delete(s.scan_id);
+                                            else next.add(s.scan_id);
+                                            return next;
+                                          })}
+                                          style={{
+                                            background: "#1a1a1a", border: "1px solid #374151",
+                                            borderRadius: "20px", cursor: "pointer", color: "#9ca3af",
+                                            fontSize: "12px", fontWeight: 500, padding: "6px 16px",
+                                            display: "flex", alignItems: "center", gap: "6px",
+                                            whiteSpace: "nowrap",
+                                          }}
+                                        >
+                                          <span style={{
+                                            display: "inline-block", transition: "transform 0.2s",
+                                            transform: scanLegacyOpen ? "rotate(90deg)" : "rotate(0deg)",
+                                            fontSize: "9px",
+                                          }}>▶</span>
+                                          Legacy
+                                          <span style={{
+                                            background: "#374151", color: "#9ca3af", fontSize: "10px",
+                                            fontWeight: 600, padding: "1px 6px", borderRadius: "10px",
+                                          }}>{legacyModels.length}</span>
+                                        </button>
+                                        <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
                                       </div>
+                                      {scanLegacyOpen && (
+                                        <div style={{
+                                          display: "grid",
+                                          gridTemplateColumns: legacyModels.length === 1 ? "1fr" : `repeat(${Math.min(legacyModels.length, 3)}, 1fr)`,
+                                          gap: "16px", marginTop: "12px",
+                                        }}>
+                                          {legacyModels.map(([tag, pred]) => {
+                                            if (pred.error) {
+                                              return (
+                                                <div key={tag} style={{
+                                                  background: "#141414", borderRadius: "12px", padding: "20px",
+                                                  border: "1px solid #262626",
+                                                }}>
+                                                  <h3 style={{ color: "#9ca3af", fontSize: "15px", margin: "0 0 8px" }}>{tag}</h3>
+                                                  <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
+                                                </div>
+                                              );
+                                            }
+
+                                            const sortedProbs = Object.entries(pred.size_probabilities)
+                                              .sort(([, a], [, b]) => b - a);
+                                            const bestSize = sortedProbs[0]?.[0];
+                                            const secondSize = sortedProbs[1]?.[0];
+
+                                            return (
+                                              <div key={tag} style={{
+                                                background: "#141414", borderRadius: "12px", padding: "20px",
+                                                border: "1px solid #262626", borderTop: "2px solid #374151",
+                                              }}>
+                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                                                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                                    <h3 style={{ color: "#d1d5db", fontSize: "15px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                                                    <span style={{
+                                                      padding: "3px 10px", borderRadius: "10px", fontSize: "9px", fontWeight: 600,
+                                                      background: "rgba(107, 114, 128, 0.2)", color: "#9ca3af",
+                                                      textTransform: "uppercase" as const, letterSpacing: "0.05em",
+                                                    }}>Legacy</span>
+                                                  </div>
+                                                  <span style={{
+                                                    padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
+                                                    background: "rgba(139, 92, 246, 0.1)", color: "#8b7fc7",
+                                                  }}>{pred.feature_count}f</span>
+                                                </div>
+                                                {pred.description && (
+                                                  <p style={{ color: "#6b7280", fontSize: "11px", margin: "0 0 12px", lineHeight: 1.4 }}>{pred.description}</p>
+                                                )}
+                                                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                                                  {SIZES.map((size) => {
+                                                    const sizeStr = String(size);
+                                                    const prob = pred.size_probabilities[sizeStr] || 0;
+                                                    const isBest = sizeStr === bestSize;
+                                                    const isSecond = sizeStr === secondSize;
+                                                    return (
+                                                      <div key={size} style={{
+                                                        textAlign: "center", padding: "10px 4px", borderRadius: "8px",
+                                                        background: isBest ? "rgba(34, 197, 94, 0.08)" : isSecond ? "rgba(250, 204, 21, 0.08)" : "rgba(255,255,255,0.02)",
+                                                        border: isBest ? "2px solid rgba(34, 197, 94, 0.4)" : isSecond ? "1px solid rgba(250, 204, 21, 0.25)" : "1px solid rgba(255,255,255,0.06)",
+                                                      }}>
+                                                        <div style={{ fontSize: "20px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#d1d5db" }}>{size}</div>
+                                                        <div style={{ fontSize: "12px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
+                                                      </div>
+                                                    );
+                                                  })}
+                                                </div>
+                                                <div style={{
+                                                  padding: "10px", borderRadius: "8px",
+                                                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                                                  textAlign: "center",
+                                                }}>
+                                                  <div style={{ color: "#6b7280", fontSize: "10px", marginBottom: "3px" }}>VAULT RANGE</div>
+                                                  <div style={{ color: "#d1d5db", fontSize: "16px", fontWeight: 600 }}>
+                                                    {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
+                                                  </div>
+                                                  {pred.vault_flag !== "ok" && (
+                                                    <div style={{ marginTop: "4px", fontSize: "11px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
+                                                      ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
                                     </div>
-                                  );
-                                })}
-                              </div>
-                            )}
+                                  )}
+                                </>
+                              );
+                            })()}
                           </td>
                         </tr>
                       )}
