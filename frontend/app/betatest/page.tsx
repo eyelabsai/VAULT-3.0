@@ -419,7 +419,7 @@ export default function BetaTestPage() {
                   <SortHeader label="Vault 1mo" field="vault_1month" />
                   <SortHeader label="Model" field="model_version" />
                   <th className="beta-th">Details</th>
-                  <th className="beta-th">Actions</th>
+                  <th className="beta-th beta-actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -448,7 +448,7 @@ export default function BetaTestPage() {
                           {expandedRow === s.scan_id ? "▾" : "▸"}
                         </button>
                       </td>
-                      <td className="beta-td">
+                      <td className="beta-td beta-actions-col">
                         <button
                           type="button"
                           className="beta-delete-btn"

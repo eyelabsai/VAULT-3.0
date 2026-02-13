@@ -203,6 +203,7 @@ export default function DashboardPage() {
       year: "numeric",
       hour: "numeric",
       minute: "2-digit",
+      timeZone: "America/New_York",
     });
   };
 
@@ -416,7 +417,7 @@ export default function DashboardPage() {
                           borderRadius: "6px",
                           cursor: "pointer",
                         }}
-                        onClick={() => setDeleteConfirmScan(scan)}
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirmScan(scan); }}
                         title="Delete scan"
                         disabled={!!deletingScanId}
                       >
