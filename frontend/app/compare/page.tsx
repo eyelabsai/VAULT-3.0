@@ -621,38 +621,62 @@ export default function ComparePage() {
 
         {/* Legacy Models — collapsible */}
         {!loading && !uploading && legacyPredictions.length > 0 && (
-          <div style={{ marginTop: "24px" }}>
-            <button
-              onClick={() => setShowLegacy((v) => !v)}
-              style={{
-                background: "none", border: "none", cursor: "pointer",
-                color: "#6b7280", fontSize: "13px", fontWeight: 600,
-                padding: "8px 0", display: "flex", alignItems: "center", gap: "6px",
-              }}
-            >
-              <span style={{
-                display: "inline-block", transition: "transform 0.2s",
-                transform: showLegacy ? "rotate(90deg)" : "rotate(0deg)",
-              }}>
-                ▸
-              </span>
-              Legacy Models ({legacyPredictions.length})
-              <span style={{ fontWeight: 400, marginLeft: "4px", fontSize: "12px", color: "#4b5563" }}>
-                — ablation baselines
-              </span>
-            </button>
+          <div style={{ marginTop: "32px" }}>
+            {/* Divider with toggle */}
+            <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
+              <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
+              <button
+                onClick={() => setShowLegacy((v) => !v)}
+                style={{
+                  background: "#1a1a1a",
+                  border: "1px solid #374151",
+                  borderRadius: "20px",
+                  cursor: "pointer",
+                  color: "#9ca3af",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  padding: "8px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span style={{
+                  display: "inline-block", transition: "transform 0.2s",
+                  transform: showLegacy ? "rotate(90deg)" : "rotate(0deg)",
+                  fontSize: "10px",
+                }}>
+                  ▶
+                </span>
+                Legacy Models
+                <span style={{
+                  background: "#374151",
+                  color: "#9ca3af",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  padding: "1px 7px",
+                  borderRadius: "10px",
+                }}>
+                  {legacyPredictions.length}
+                </span>
+              </button>
+              <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
+            </div>
+
             {showLegacy && (
               <div style={{
                 display: "grid",
                 gridTemplateColumns: legacyPredictions.length === 1 ? "1fr" : `repeat(${Math.min(legacyPredictions.length, 3)}, 1fr)`,
-                gap: "20px", marginTop: "12px",
+                gap: "20px",
               }}>
                 {legacyPredictions.map(([tag, pred]) => {
                   if (pred.error) {
                     return (
                       <div key={tag} style={{
-                        background: "#161616", borderRadius: "12px", padding: "24px",
-                        border: "1px solid #2a2a2a", opacity: 0.75,
+                        background: "#141414", borderRadius: "12px", padding: "24px",
+                        border: "1px solid #262626",
                       }}>
                         <h3 style={{ color: "#9ca3af", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
                         <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
@@ -667,16 +691,17 @@ export default function ComparePage() {
 
                   return (
                     <div key={tag} style={{
-                      background: "#161616", borderRadius: "12px", padding: "24px",
-                      border: "1px solid #2a2a2a", opacity: 0.75,
+                      background: "#141414", borderRadius: "12px", padding: "24px",
+                      border: "1px solid #262626",
+                      borderTop: "2px solid #374151",
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <h3 style={{ color: "#9ca3af", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                          <h3 style={{ color: "#d1d5db", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
                           <span style={{
-                            padding: "3px 8px", borderRadius: "4px", fontSize: "10px", fontWeight: 600,
-                            background: "rgba(107, 114, 128, 0.15)", color: "#6b7280",
-                            border: "1px solid rgba(107, 114, 128, 0.3)",
+                            padding: "3px 10px", borderRadius: "10px", fontSize: "10px", fontWeight: 600,
+                            background: "rgba(107, 114, 128, 0.2)", color: "#9ca3af",
+                            textTransform: "uppercase" as const, letterSpacing: "0.05em",
                           }}>
                             Legacy
                           </span>
@@ -689,7 +714,7 @@ export default function ComparePage() {
                         </span>
                       </div>
                       {pred.description && (
-                        <p style={{ color: "#4b5563", fontSize: "12px", margin: "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
+                        <p style={{ color: "#6b7280", fontSize: "12px", margin: "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
                       )}
 
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
@@ -705,7 +730,7 @@ export default function ComparePage() {
                               border: isBest ? "2px solid rgba(34, 197, 94, 0.4)" : isSecond ? "1px solid rgba(250, 204, 21, 0.25)" : "1px solid rgba(255,255,255,0.06)",
                             }}>
                               <div style={{ fontSize: "24px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#d1d5db" }}>{size}</div>
-                              <div style={{ fontSize: "13px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#4b5563" }}>{(prob * 100).toFixed(0)}%</div>
+                              <div style={{ fontSize: "13px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
                             </div>
                           );
                         })}
