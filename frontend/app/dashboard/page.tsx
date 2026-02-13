@@ -45,6 +45,9 @@ export default function DashboardPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [deleteConfirmScan, setDeleteConfirmScan] = useState<Scan | null>(null);
   const [deletingScanId, setDeletingScanId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const router = useRouter();
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -207,6 +210,61 @@ export default function DashboardPage() {
     });
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    if (selectedIds.size === scans.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(scans.map((s) => s.id)));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    const { createClient } = await import("@/lib/supabase");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push("/login");
+      setBulkDeleting(false);
+      return;
+    }
+    const ids = Array.from(selectedIds);
+    let hadError = false;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`${apiBase}/beta/admin/scan/${id}?key=${process.env.NEXT_PUBLIC_ADMIN_KEY || "vaultbeta2026"}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null);
+          setError(errData?.detail || "Delete failed");
+          hadError = true;
+          break;
+        }
+        setScans((prev) => prev.filter((scan) => scan.id !== id));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to delete scan");
+        hadError = true;
+        break;
+      }
+    }
+    if (!hadError) setBulkDeleteConfirm(false);
+    setBulkDeleting(false);
+  };
+
   if (loading) {
     return (
       <main className="calc-page">
@@ -293,6 +351,75 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Bulk delete confirmation */}
+      {bulkDeleteConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !bulkDeleting && setBulkDeleteConfirm(false)}
+        >
+          <div
+            style={{
+              background: "#1a1a1a",
+              border: "1px solid #374151",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "420px",
+              width: "90%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: "0 0 12px", fontSize: "18px", color: "#fff" }}>
+              Delete {selectedIds.size} scan{selectedIds.size !== 1 ? "s" : ""}?
+            </h3>
+            <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#9ca3af", lineHeight: "1.5" }}>
+              This will permanently delete the selected scan(s) and cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "14px",
+                  color: "#9ca3af",
+                  background: "transparent",
+                  border: "1px solid #4b5563",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setBulkDeleteConfirm(false)}
+                disabled={!!bulkDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "14px",
+                  color: "#fff",
+                  background: "#dc2626",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onClick={handleBulkDelete}
+                disabled={!!bulkDeleting}
+              >
+                {bulkDeleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="calc-page">
       {/* Header */}
       <header className="calc-header" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -341,6 +468,46 @@ export default function DashboardPage() {
           <p style={{ color: "#f87171", marginBottom: "16px" }}>{error}</p>
         )}
 
+        {/* Bulk actions bar */}
+        {scans.length > 0 && selectedIds.size > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px", flexWrap: "wrap" }}>
+            <span style={{ color: "#9ca3af", fontSize: "14px" }}>
+              {selectedIds.size} selected
+            </span>
+            <button
+              type="button"
+              style={{
+                padding: "8px 16px",
+                fontSize: "14px",
+                color: "#f87171",
+                background: "rgba(248, 113, 113, 0.1)",
+                border: "1px solid rgba(248, 113, 113, 0.3)",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              onClick={() => setBulkDeleteConfirm(true)}
+              disabled={!!deletingScanId || !!bulkDeleting}
+            >
+              Delete selected
+            </button>
+            <button
+              type="button"
+              style={{
+                padding: "8px 16px",
+                fontSize: "14px",
+                color: "#9ca3af",
+                background: "transparent",
+                border: "1px solid #4b5563",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear selection
+            </button>
+          </div>
+        )}
+
         {/* Scans Table */}
         {scans.length === 0 ? (
           <div style={{ background: "#1a1a1a", borderRadius: "12px", padding: "48px", textAlign: "center" }}>
@@ -356,6 +523,18 @@ export default function DashboardPage() {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ borderBottom: "1px solid #374151" }}>
+                  <th style={{ padding: "16px", width: "44px", textAlign: "center", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>
+                    <input
+                      type="checkbox"
+                      checked={scans.length > 0 && selectedIds.size === scans.length}
+                      ref={(el) => {
+                        if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < scans.length;
+                      }}
+                      onChange={selectAll}
+                      title="Select all"
+                      style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                    />
+                  </th>
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Patient</th>
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Eye</th>
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Predicted Size</th>
@@ -374,6 +553,14 @@ export default function DashboardPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#262626")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
+                    <td style={{ padding: "16px", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(scan.id)}
+                        onChange={() => toggleSelect(scan.id)}
+                        style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                      />
+                    </td>
                     <td style={{ padding: "16px", color: "#ffffff" }}>{scan.patient_anonymous_id}</td>
                     <td style={{ padding: "16px" }}>
                       <span style={{

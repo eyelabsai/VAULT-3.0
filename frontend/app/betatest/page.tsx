@@ -137,6 +137,9 @@ export default function BetaTestPage() {
   const [comparisonLoading, setComparisonLoading] = useState<Set<string>>(new Set());
   const [deleteConfirmScan, setDeleteConfirmScan] = useState<Scan | null>(null);
   const [deletingScanId, setDeletingScanId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [legacyOpen, setLegacyOpen] = useState<Set<string>>(new Set());
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -175,6 +178,54 @@ export default function BetaTestPage() {
     } finally {
       setDeletingScanId(null);
     }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const selectAllScans = () => {
+    if (tab !== "scans") return;
+    const visibleIds = sorted.map((s) => s.scan_id);
+    if (selectedIds.size === visibleIds.length) setSelectedIds(new Set());
+    else setSelectedIds(new Set(visibleIds));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    let hadError = false;
+    for (const id of ids) {
+      try {
+        const res = await fetch(`${apiBase}/beta/admin/scan/${id}?key=${ADMIN_KEY}`, { method: "DELETE" });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setError(err?.detail || "Delete failed");
+          hadError = true;
+          break;
+        }
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to delete scan");
+        hadError = true;
+        break;
+      }
+    }
+    if (!hadError) {
+      setBulkDeleteConfirm(false);
+      await fetchData();
+    }
+    setBulkDeleting(false);
   };
 
   const doctors = useMemo(() => [...new Set(scans.map(s => s.doctor))].sort(), [scans]);
@@ -351,6 +402,26 @@ export default function BetaTestPage() {
           </div>
         )}
 
+        {/* Bulk delete confirmation */}
+        {bulkDeleteConfirm && (
+          <div className="beta-delete-overlay" onClick={() => !bulkDeleting && setBulkDeleteConfirm(false)}>
+            <div className="beta-delete-modal" onClick={(e) => e.stopPropagation()}>
+              <h3 className="beta-delete-title">Delete {selectedIds.size} scan{selectedIds.size !== 1 ? "s" : ""}?</h3>
+              <p className="beta-delete-text">
+                This will permanently delete the selected scan(s) and cannot be undone.
+              </p>
+              <div className="beta-delete-actions">
+                <button type="button" className="beta-delete-cancel" onClick={() => setBulkDeleteConfirm(false)} disabled={!!bulkDeleting}>
+                  Cancel
+                </button>
+                <button type="button" className="beta-delete-confirm" onClick={handleBulkDelete} disabled={!!bulkDeleting}>
+                  {bulkDeleting ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Summary Cards */}
         {summary && (
           <div className="beta-stats">
@@ -399,12 +470,39 @@ export default function BetaTestPage() {
           <button className={`beta-tab ${tab === "comparison" ? "active" : ""}`} onClick={() => setTab("comparison")}>Model Comparison</button>
         </div>
 
+        {/* Bulk actions bar (Scans tab) */}
+        {tab === "scans" && selectedIds.size > 0 && (
+          <div className="beta-filters" style={{ marginBottom: "12px" }}>
+            <span className="beta-count">{selectedIds.size} selected</span>
+            <button type="button" className="beta-delete-btn" onClick={() => setBulkDeleteConfirm(true)} disabled={!!deletingScanId || !!bulkDeleting}>
+              Delete selected
+            </button>
+            <button
+              type="button"
+              style={{ padding: "6px 12px", fontSize: "12px", color: "#9ca3af", background: "transparent", border: "1px solid #4b5563", borderRadius: "6px", cursor: "pointer" }}
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear selection
+            </button>
+          </div>
+        )}
+
         {/* Scans Table */}
         {tab === "scans" && (
           <div className="beta-table-wrap">
             <table className="beta-table">
               <thead>
                 <tr>
+                  <th className="beta-th" style={{ width: "44px", textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={sorted.length > 0 && selectedIds.size === sorted.length}
+                      ref={(el) => { if (el) el.indeterminate = selectedIds.size > 0 && selectedIds.size < sorted.length; }}
+                      onChange={selectAllScans}
+                      title="Select all"
+                      style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                    />
+                  </th>
                   <SortHeader label="Date" field="scan_date" />
                   <SortHeader label="Doctor" field="doctor" />
                   <SortHeader label="Patient" field="patient_id" />
@@ -426,6 +524,14 @@ export default function BetaTestPage() {
                 {sorted.map((s) => (
                   <>
                     <tr key={s.scan_id} className="beta-tr">
+                      <td className="beta-td" style={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(s.scan_id)}
+                          onChange={() => toggleSelect(s.scan_id)}
+                          style={{ cursor: "pointer", width: "18px", height: "18px" }}
+                        />
+                      </td>
                       <td className="beta-td">{fmtDate(s.scan_date)}</td>
                       <td className="beta-td">{s.doctor}</td>
                       <td className="beta-td">{s.patient_id}</td>
@@ -462,7 +568,7 @@ export default function BetaTestPage() {
                     </tr>
                     {expandedRow === s.scan_id && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
-                        <td colSpan={15} className="beta-detail-td">
+                        <td colSpan={16} className="beta-detail-td">
                           <div className="detail-grid">
                             <div><span className="detail-label">Age</span><span className="detail-value">{fmt(s.age, 0)}</span></div>
                             <div><span className="detail-label">WTW</span><span className="detail-value">{fmt(s.wtw)}mm</span></div>
