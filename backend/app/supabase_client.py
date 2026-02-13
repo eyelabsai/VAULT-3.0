@@ -357,10 +357,17 @@ class VaultDatabase:
     # -------------------------------------------------------------------------
     
     def get_user_stats(self, user_id: str) -> dict:
-        """Get statistics for a user."""
-        patients = self.client.table("patients").select("id", count="exact").eq("user_id", user_id).execute()
-        scans = self.client.table("scans").select("id", count="exact").eq("user_id", user_id).execute()
-        
+        """Get statistics for a user. Total patients = distinct patients that have at least one scan."""
+        scans = (
+            self.client.table("scans")
+            .select("id, patient_id")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        data = scans.data or []
+        total_scans = len(data)
+        total_patients = len(set(s["patient_id"] for s in data))
+
         # Get scans with outcomes
         scans_with_outcomes = (
             self.client.table("scans")
@@ -369,10 +376,10 @@ class VaultDatabase:
             .execute()
         )
         outcomes_count = sum(1 for s in (scans_with_outcomes.data or []) if s.get("outcomes"))
-        
+
         return {
-            "total_patients": patients.count or 0,
-            "total_scans": scans.count or 0,
+            "total_patients": total_patients,
+            "total_scans": total_scans,
             "scans_with_outcomes": outcomes_count,
         }
     
