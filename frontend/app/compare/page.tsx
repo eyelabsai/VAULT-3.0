@@ -48,7 +48,7 @@ const FEATURED_MODELS: Record<string, { label: string; color: string; notes: str
   "gestalt-24f-756c": {
     label: "Foundation Model",
     color: "green",
-    notes: "Production default for normal/large chambers. Best overall accuracy (73.2%). Trained Feb 8, 2026.",
+    notes: "Production default for normal/large chambers. Trained Feb 8, 2026.",
   },
   "lgb-27f-756c": {
     label: "Tight Chamber Model",
