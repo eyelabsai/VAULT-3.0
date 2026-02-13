@@ -66,7 +66,7 @@ const FEATURED_MODELS: Record<string, { label: string; color: string; notes: str
   "gestalt-24f-756c": {
     label: "Foundation Model",
     color: "green",
-    notes: "Production default for normal/large chambers. Best overall accuracy (73.2%). Trained Feb 8, 2026.",
+    notes: "Production default for normal/large chambers. Trained Feb 8, 2026.",
   },
   "lgb-27f-756c": {
     label: "Tight Chamber Model",
@@ -232,7 +232,14 @@ export default function BetaTestPage() {
     if (!d) return "—";
     const dt = new Date(d);
     if (isNaN(dt.getTime())) return d;
-    return dt.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+    return dt.toLocaleString("en-US", { 
+      month: "short", 
+      day: "numeric", 
+      year: "numeric", 
+      hour: "numeric", 
+      minute: "2-digit",
+      timeZone: "America/New_York"
+    });
   };
 
   const REQUIRED_FEATURES = ["age", "wtw", "acd_internal", "icl_power", "ac_shape_ratio", "simk_steep", "acv", "tcrp_km", "tcrp_astigmatism"] as const;
