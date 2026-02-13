@@ -43,6 +43,8 @@ export default function DashboardPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deleteConfirmScan, setDeleteConfirmScan] = useState<Scan | null>(null);
+  const [deletingScanId, setDeletingScanId] = useState<string | null>(null);
   const router = useRouter();
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -161,6 +163,39 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteScan = async (s: Scan) => {
+    setDeletingScanId(s.id);
+    try {
+      const { createClient } = await import("@/lib/supabase");
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`${apiBase}/beta/admin/scan/${s.id}?key=${process.env.NEXT_PUBLIC_ADMIN_KEY || "vaultbeta2026"}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.detail || "Delete failed");
+      }
+
+      setDeleteConfirmScan(null);
+      setScans((prev) => prev.filter((scan) => scan.id !== s.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete scan");
+    } finally {
+      setDeletingScanId(null);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString("en-US", {
       month: "short",
@@ -182,7 +217,82 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="calc-page">
+    <>
+      {/* Delete confirmation dialog */}
+      {deleteConfirmScan && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => !deletingScanId && setDeleteConfirmScan(null)}
+        >
+          <div
+            style={{
+              background: "#1a1a1a",
+              border: "1px solid #374151",
+              borderRadius: "12px",
+              padding: "24px",
+              maxWidth: "420px",
+              width: "90%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: "0 0 12px", fontSize: "18px", color: "#fff" }}>
+              Delete scan?
+            </h3>
+            <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#9ca3af", lineHeight: "1.5" }}>
+              This will permanently delete the scan, prediction, and any outcome data for{" "}
+              <strong>{deleteConfirmScan.patient_anonymous_id}</strong>
+              . This cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "14px",
+                  color: "#9ca3af",
+                  background: "transparent",
+                  border: "1px solid #4b5563",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setDeleteConfirmScan(null)}
+                disabled={!!deletingScanId}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                style={{
+                  padding: "8px 16px",
+                  fontSize: "14px",
+                  color: "#fff",
+                  background: "#dc2626",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onClick={() => handleDeleteScan(deleteConfirmScan)}
+                disabled={!!deletingScanId}
+              >
+                {deletingScanId === deleteConfirmScan.id ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="calc-page">
       {/* Header */}
       <header className="calc-header" style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Link href="/">
@@ -251,6 +361,7 @@ export default function DashboardPage() {
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Predicted Vault</th>
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Actual</th>
                   <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Date</th>
+                  <th style={{ padding: "16px", textAlign: "left", color: "#9ca3af", fontWeight: "500", fontSize: "14px" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -293,6 +404,25 @@ export default function DashboardPage() {
                       )}
                     </td>
                     <td style={{ padding: "16px", color: "#9ca3af" }}>{formatDate(scan.created_at)}</td>
+                    <td style={{ padding: "16px" }}>
+                      <button
+                        type="button"
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: "12px",
+                          color: "#f87171",
+                          background: "rgba(248, 113, 113, 0.1)",
+                          border: "1px solid rgba(248, 113, 113, 0.3)",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => setDeleteConfirmScan(scan)}
+                        title="Delete scan"
+                        disabled={!!deletingScanId}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -473,6 +603,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
