@@ -43,12 +43,15 @@ class SizeProbability(BaseModel):
 
 
 class PredictionResponse(BaseModel):
+    model_config = {"protected_namespaces": ()}
+
     lens_size_mm: float
     lens_probability: float
     vault_pred_um: int
     vault_range_um: List[int]
     vault_flag: str
     size_probabilities: List[SizeProbability]
+    model_used: str = "gestalt-24f-756c"
 
 
 def get_nomogram_size(wtw: float, acd: float) -> float:
@@ -250,22 +253,42 @@ async def parse_ini(file: UploadFile = File(...)):
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(payload: PredictionInput):
-    models = load_models()
     df_eng = engineer_features(payload.model_dump())
+    tight_score = float(df_eng["Tight_Chamber_Score"].iloc[0])
 
-    feature_names = models["feature_names"]
+    if tight_score > 0:
+        all_m = load_all_models()
+        m = all_m.get("lgb-27f-756c")
+        if m is None:
+            m_default = load_models()
+            model_tag = "gestalt-24f-756c"
+            feature_names = m_default["feature_names"]
+            lens_model, lens_scaler = m_default["lens_model"], m_default["lens_scaler"]
+            vault_model, vault_scaler = m_default["vault_model"], m_default["vault_scaler"]
+        else:
+            model_tag = "lgb-27f-756c"
+            feature_names = m["feature_names"]
+            lens_model, lens_scaler = m["lens_model"], m["lens_scaler"]
+            vault_model, vault_scaler = m["vault_model"], m["vault_scaler"]
+    else:
+        models = load_models()
+        model_tag = "gestalt-24f-756c"
+        feature_names = models["feature_names"]
+        lens_model, lens_scaler = models["lens_model"], models["lens_scaler"]
+        vault_model, vault_scaler = models["vault_model"], models["vault_scaler"]
+
     X = df_eng[feature_names]
-    X_scaled = models["lens_scaler"].transform(X)
+    X_scaled = lens_scaler.transform(X)
 
-    lens_probs = models["lens_model"].predict_proba(X_scaled)[0]
-    lens_classes = models["lens_model"].classes_
+    lens_probs = lens_model.predict_proba(X_scaled)[0]
+    lens_classes = lens_model.classes_
 
     top_idx = int(np.argsort(lens_probs)[::-1][0])
     best_size = float(lens_classes[top_idx])
     best_prob = float(lens_probs[top_idx])
 
-    vault_scaled = models["vault_scaler"].transform(X)
-    pred_vault = int(models["vault_model"].predict(vault_scaled)[0])
+    vault_scaled = vault_scaler.transform(X)
+    pred_vault = int(vault_model.predict(vault_scaled)[0])
 
     if pred_vault < 250:
         vault_flag = "low"
@@ -286,6 +309,7 @@ def predict(payload: PredictionInput):
         vault_range_um=[pred_vault - 134, pred_vault + 134],
         vault_flag=vault_flag,
         size_probabilities=size_probs,
+        model_used=model_tag,
     )
 
 
