@@ -749,7 +749,10 @@ export default function BetaTestPage() {
                                   <div style={{
                                     display: "grid",
                                     gridTemplateColumns: mainModels.length === 1 ? "1fr" : `repeat(${Math.min(mainModels.length, 3)}, 1fr)`,
-                                    gap: "16px",
+                                    gap: "20px",
+                                    padding: "20px",
+                                    maxWidth: "1400px",
+                                    margin: "0 auto",
                                   }}>
                                     {mainModels.map(([tag, pred]) => {
                                       const featured = FEATURED_MODELS[tag];
@@ -759,12 +762,12 @@ export default function BetaTestPage() {
                                         return (
                                           <div key={tag} style={{
                                             background: fStyle ? fStyle.bg : "#1a1a1a",
-                                            borderRadius: "12px", padding: "20px",
+                                            borderRadius: "12px", padding: "24px",
                                             border: fStyle ? `1px solid ${fStyle.border}` : "1px solid #374151",
                                             borderTop: fStyle ? `3px solid ${fStyle.topBorder}` : undefined,
                                             boxShadow: fStyle ? fStyle.shadow : undefined,
                                           }}>
-                                            <h3 style={{ color: "#fff", fontSize: "15px", margin: "0 0 8px" }}>{tag}</h3>
+                                            <h3 style={{ color: "#fff", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
                                             <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
                                           </div>
                                         );
@@ -778,17 +781,17 @@ export default function BetaTestPage() {
                                       return (
                                         <div key={tag} style={{
                                           background: fStyle ? fStyle.bg : "#1a1a1a",
-                                          borderRadius: "12px", padding: "20px",
+                                          borderRadius: "12px", padding: "24px",
                                           border: fStyle ? `1px solid ${fStyle.border}` : "1px solid #374151",
                                           borderTop: fStyle ? `3px solid ${fStyle.topBorder}` : undefined,
                                           boxShadow: fStyle ? fStyle.shadow : undefined,
                                         }}>
-                                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                                              <h3 style={{ color: "#fff", fontSize: "15px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                                              <h3 style={{ color: "#fff", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
                                               {featured && fStyle && (
                                                 <span style={{
-                                                  padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 700,
+                                                  padding: "4px 10px", borderRadius: "6px", fontSize: "12px", fontWeight: 700,
                                                   background: fStyle.badgeBg, color: fStyle.badgeText,
                                                   border: `1px solid ${fStyle.badgeBorder}`,
                                                   letterSpacing: "0.02em",
@@ -801,18 +804,18 @@ export default function BetaTestPage() {
                                               padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
                                               background: "rgba(139, 92, 246, 0.15)", color: "#a78bfa",
                                             }}>
-                                              {pred.feature_count}f
+                                              {pred.feature_count} features
                                             </span>
                                           </div>
                                           {pred.description && (
-                                            <p style={{ color: "#6b7280", fontSize: "11px", margin: featured ? "0 0 6px" : "0 0 12px", lineHeight: 1.4 }}>{pred.description}</p>
+                                            <p style={{ color: "#6b7280", fontSize: "12px", margin: featured ? "0 0 8px" : "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
                                           )}
                                           {featured && (
-                                            <p style={{ color: "#9ca3af", fontSize: "10px", margin: "0 0 12px", lineHeight: 1.4, fontStyle: "italic" }}>
+                                            <p style={{ color: "#9ca3af", fontSize: "11px", margin: "0 0 16px", lineHeight: 1.4, fontStyle: "italic" }}>
                                               {featured.notes}
                                             </p>
                                           )}
-                                          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                                          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
                                             {SIZES.map((size) => {
                                               const sizeStr = String(size);
                                               const prob = pred.size_probabilities[sizeStr] || 0;
@@ -820,27 +823,27 @@ export default function BetaTestPage() {
                                               const isSecond = sizeStr === secondSize;
                                               return (
                                                 <div key={size} style={{
-                                                  textAlign: "center", padding: "10px 4px", borderRadius: "8px",
+                                                  textAlign: "center", padding: "12px 4px", borderRadius: "8px",
                                                   background: isBest ? "rgba(34, 197, 94, 0.1)" : isSecond ? "rgba(250, 204, 21, 0.1)" : "rgba(255,255,255,0.03)",
                                                   border: isBest ? "2px solid rgba(34, 197, 94, 0.5)" : isSecond ? "1px solid rgba(250, 204, 21, 0.3)" : "1px solid rgba(255,255,255,0.08)",
                                                 }}>
-                                                  <div style={{ fontSize: "20px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#fff" }}>{size}</div>
-                                                  <div style={{ fontSize: "12px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
+                                                  <div style={{ fontSize: "24px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#fff" }}>{size}</div>
+                                                  <div style={{ fontSize: "13px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
                                                 </div>
                                               );
                                             })}
                                           </div>
                                           <div style={{
-                                            padding: "10px", borderRadius: "8px",
+                                            padding: "12px", borderRadius: "8px",
                                             background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
                                             textAlign: "center",
                                           }}>
-                                            <div style={{ color: "#9ca3af", fontSize: "10px", marginBottom: "3px" }}>VAULT RANGE</div>
-                                            <div style={{ color: "#fff", fontSize: "16px", fontWeight: 600 }}>
+                                            <div style={{ color: "#9ca3af", fontSize: "11px", marginBottom: "4px" }}>VAULT RANGE</div>
+                                            <div style={{ color: "#fff", fontSize: "18px", fontWeight: 600 }}>
                                               {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
                                             </div>
                                             {pred.vault_flag !== "ok" && (
-                                              <div style={{ marginTop: "4px", fontSize: "11px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
+                                              <div style={{ marginTop: "6px", fontSize: "12px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
                                                 ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
                                               </div>
                                             )}
@@ -852,8 +855,8 @@ export default function BetaTestPage() {
 
                                   {/* Legacy models — collapsible */}
                                   {legacyModels.length > 0 && (
-                                    <div style={{ marginTop: "16px" }}>
-                                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                    <div style={{ marginTop: "32px", padding: "0 20px", maxWidth: "1400px", margin: "16px auto 0" }}>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
                                         <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
                                         <button
                                           onClick={() => setLegacyOpen((prev) => {
@@ -865,20 +868,20 @@ export default function BetaTestPage() {
                                           style={{
                                             background: "#1a1a1a", border: "1px solid #374151",
                                             borderRadius: "20px", cursor: "pointer", color: "#9ca3af",
-                                            fontSize: "12px", fontWeight: 500, padding: "6px 16px",
-                                            display: "flex", alignItems: "center", gap: "6px",
+                                            fontSize: "13px", fontWeight: 500, padding: "8px 20px",
+                                            display: "flex", alignItems: "center", gap: "8px",
                                             whiteSpace: "nowrap",
                                           }}
                                         >
                                           <span style={{
                                             display: "inline-block", transition: "transform 0.2s",
                                             transform: scanLegacyOpen ? "rotate(90deg)" : "rotate(0deg)",
-                                            fontSize: "9px",
+                                            fontSize: "10px",
                                           }}>▶</span>
-                                          Legacy
+                                          Legacy Models
                                           <span style={{
-                                            background: "#374151", color: "#9ca3af", fontSize: "10px",
-                                            fontWeight: 600, padding: "1px 6px", borderRadius: "10px",
+                                            background: "#374151", color: "#9ca3af", fontSize: "11px",
+                                            fontWeight: 600, padding: "1px 7px", borderRadius: "10px",
                                           }}>{legacyModels.length}</span>
                                         </button>
                                         <div style={{ flex: 1, height: "1px", background: "#2a2a2a" }} />
@@ -887,16 +890,16 @@ export default function BetaTestPage() {
                                         <div style={{
                                           display: "grid",
                                           gridTemplateColumns: legacyModels.length === 1 ? "1fr" : `repeat(${Math.min(legacyModels.length, 3)}, 1fr)`,
-                                          gap: "16px", marginTop: "12px",
+                                          gap: "20px",
                                         }}>
                                           {legacyModels.map(([tag, pred]) => {
                                             if (pred.error) {
                                               return (
                                                 <div key={tag} style={{
-                                                  background: "#141414", borderRadius: "12px", padding: "20px",
+                                                  background: "#141414", borderRadius: "12px", padding: "24px",
                                                   border: "1px solid #262626",
                                                 }}>
-                                                  <h3 style={{ color: "#9ca3af", fontSize: "15px", margin: "0 0 8px" }}>{tag}</h3>
+                                                  <h3 style={{ color: "#9ca3af", fontSize: "16px", margin: "0 0 8px" }}>{tag}</h3>
                                                   <p style={{ color: "#f87171", fontSize: "13px", margin: 0 }}>Error: {pred.error}</p>
                                                 </div>
                                               );
@@ -909,14 +912,14 @@ export default function BetaTestPage() {
 
                                             return (
                                               <div key={tag} style={{
-                                                background: "#141414", borderRadius: "12px", padding: "20px",
+                                                background: "#141414", borderRadius: "12px", padding: "24px",
                                                 border: "1px solid #262626", borderTop: "2px solid #374151",
                                               }}>
-                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "6px" }}>
+                                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
                                                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                                    <h3 style={{ color: "#d1d5db", fontSize: "15px", fontWeight: 600, margin: 0 }}>{tag}</h3>
+                                                    <h3 style={{ color: "#d1d5db", fontSize: "16px", fontWeight: 600, margin: 0 }}>{tag}</h3>
                                                     <span style={{
-                                                      padding: "3px 10px", borderRadius: "10px", fontSize: "9px", fontWeight: 600,
+                                                      padding: "3px 10px", borderRadius: "10px", fontSize: "10px", fontWeight: 600,
                                                       background: "rgba(107, 114, 128, 0.2)", color: "#9ca3af",
                                                       textTransform: "uppercase" as const, letterSpacing: "0.05em",
                                                     }}>Legacy</span>
@@ -924,12 +927,12 @@ export default function BetaTestPage() {
                                                   <span style={{
                                                     padding: "3px 8px", borderRadius: "4px", fontSize: "11px",
                                                     background: "rgba(139, 92, 246, 0.1)", color: "#8b7fc7",
-                                                  }}>{pred.feature_count}f</span>
+                                                  }}>{pred.feature_count} features</span>
                                                 </div>
                                                 {pred.description && (
-                                                  <p style={{ color: "#6b7280", fontSize: "11px", margin: "0 0 12px", lineHeight: 1.4 }}>{pred.description}</p>
+                                                  <p style={{ color: "#6b7280", fontSize: "12px", margin: "0 0 16px", lineHeight: 1.4 }}>{pred.description}</p>
                                                 )}
-                                                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", marginBottom: "12px" }}>
+                                                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "16px" }}>
                                                   {SIZES.map((size) => {
                                                     const sizeStr = String(size);
                                                     const prob = pred.size_probabilities[sizeStr] || 0;
@@ -937,27 +940,27 @@ export default function BetaTestPage() {
                                                     const isSecond = sizeStr === secondSize;
                                                     return (
                                                       <div key={size} style={{
-                                                        textAlign: "center", padding: "10px 4px", borderRadius: "8px",
+                                                        textAlign: "center", padding: "12px 4px", borderRadius: "8px",
                                                         background: isBest ? "rgba(34, 197, 94, 0.08)" : isSecond ? "rgba(250, 204, 21, 0.08)" : "rgba(255,255,255,0.02)",
                                                         border: isBest ? "2px solid rgba(34, 197, 94, 0.4)" : isSecond ? "1px solid rgba(250, 204, 21, 0.25)" : "1px solid rgba(255,255,255,0.06)",
                                                       }}>
-                                                        <div style={{ fontSize: "20px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#d1d5db" }}>{size}</div>
-                                                        <div style={{ fontSize: "12px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
+                                                        <div style={{ fontSize: "24px", fontWeight: 400, color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#d1d5db" }}>{size}</div>
+                                                        <div style={{ fontSize: "13px", color: isBest ? "#4ade80" : isSecond ? "#facc15" : "#6b7280" }}>{(prob * 100).toFixed(0)}%</div>
                                                       </div>
                                                     );
                                                   })}
                                                 </div>
                                                 <div style={{
-                                                  padding: "10px", borderRadius: "8px",
+                                                  padding: "12px", borderRadius: "8px",
                                                   background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
                                                   textAlign: "center",
                                                 }}>
-                                                  <div style={{ color: "#6b7280", fontSize: "10px", marginBottom: "3px" }}>VAULT RANGE</div>
-                                                  <div style={{ color: "#d1d5db", fontSize: "16px", fontWeight: 600 }}>
+                                                  <div style={{ color: "#6b7280", fontSize: "11px", marginBottom: "4px" }}>VAULT RANGE</div>
+                                                  <div style={{ color: "#d1d5db", fontSize: "18px", fontWeight: 600 }}>
                                                     {pred.vault_range_um[0]} – {pred.vault_range_um[1]} µm
                                                   </div>
                                                   {pred.vault_flag !== "ok" && (
-                                                    <div style={{ marginTop: "4px", fontSize: "11px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
+                                                    <div style={{ marginTop: "6px", fontSize: "12px", fontWeight: 500, color: pred.vault_flag === "low" ? "#f87171" : "#facc15" }}>
                                                       ⚠ {pred.vault_flag === "low" ? "Low vault risk" : "High vault risk"}
                                                     </div>
                                                   )}

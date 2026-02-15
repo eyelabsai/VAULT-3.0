@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -9,8 +9,15 @@ const STEPS: Step[] = ["intro", "name", "email", "practice", "thank-you"];
 const FORM_STEPS = STEPS.filter((s) => s !== "intro" && s !== "thank-you");
 const TOTAL_FORM_STEPS = FORM_STEPS.length;
 
+const ROTATING_LINES = [
+  "Faster sizing. More confidence.",
+  "A new layer of certainty for ICL sizing.",
+];
+
 export default function WaitlistPage() {
   const [step, setStep] = useState<Step>("intro");
+  const [lineIndex, setLineIndex] = useState(0);
+  const [fade, setFade] = useState(true);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -21,6 +28,18 @@ export default function WaitlistPage() {
 
   const currentIndex = STEPS.indexOf(step);
   const progress = step === "intro" ? 0 : step === "thank-you" ? 100 : (currentIndex / TOTAL_FORM_STEPS) * 100;
+
+  useEffect(() => {
+    if (step !== "intro") return;
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setLineIndex((prev) => (prev + 1) % ROTATING_LINES.length);
+        setFade(true);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [step]);
 
   const validateStep = useCallback((s: Step): boolean => {
     if (s === "name") {
@@ -112,6 +131,9 @@ export default function WaitlistPage() {
             <>
               <p className="landing-tagline">
                 Pentacam-Based, AI-Driven ICL Sizing Nomogram
+              </p>
+              <p className={`rotating-line ${fade ? "fade-in" : "fade-out"}`}>
+                {ROTATING_LINES[lineIndex]}
               </p>
               <div className="waitlist-intro">
                 <button onClick={handleNext} className="landing-button">

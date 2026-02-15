@@ -1990,3 +1990,21 @@ body {
     gap: 24px;
   }
 }
+
+.rotating-line {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  min-height: 24px;
+  color: #6b7280;
+  font-size: 15px;
+  margin: 8px 0 0;
+}
+
+.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-out {
+  opacity: 0;
+  transform: translateY(-4px);
+}
