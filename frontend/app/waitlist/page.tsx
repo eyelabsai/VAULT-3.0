@@ -31,13 +31,14 @@ export default function WaitlistPage() {
 
   useEffect(() => {
     if (step !== "intro") return;
+    const FADE_MS = 500;
     const interval = setInterval(() => {
       setFade(false);
       setTimeout(() => {
         setLineIndex((prev) => (prev + 1) % ROTATING_LINES.length);
         setFade(true);
-      }, 300);
-    }, 3000);
+      }, FADE_MS);
+    }, 5500);
     return () => clearInterval(interval);
   }, [step]);
 
