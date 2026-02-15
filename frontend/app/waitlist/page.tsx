@@ -12,6 +12,8 @@ const TOTAL_FORM_STEPS = FORM_STEPS.length;
 const ROTATING_LINES = [
   "Faster sizing. More confidence.",
   "A new layer of certainty for ICL sizing.",
+  "Data-driven sizing.",
+  "Intelligence for ICL sizing.",
 ];
 
 export default function WaitlistPage() {
