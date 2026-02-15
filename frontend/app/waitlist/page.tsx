@@ -31,7 +31,7 @@ export default function WaitlistPage() {
 
   useEffect(() => {
     if (step !== "intro") return;
-    const FADE_MS = 500;
+    const FADE_MS = 900;
     const interval = setInterval(() => {
       setFade(false);
       setTimeout(() => {

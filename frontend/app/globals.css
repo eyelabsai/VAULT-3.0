@@ -1992,7 +1992,7 @@ body {
 }
 
 .rotating-line {
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.9s ease, transform 0.9s ease;
   min-height: 24px;
   color: #94a3b8;
   font-size: 15px;
