@@ -193,7 +193,7 @@ export default function WaitlistPage() {
                 value={form.practiceInfo}
                 onChange={(e) => setForm((f) => ({ ...f, practiceInfo: e.target.value }))}
                 onKeyDown={handleKeyDown}
-                placeholder="e.g. Smith Eye Care, Austin TX"
+                placeholder="e.g. Parkhurst NuVision, San Antonio, TX"
                 className="waitlist-input"
                 autoFocus
                 autoComplete="organization"
