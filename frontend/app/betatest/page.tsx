@@ -531,15 +531,15 @@ export default function BetaTestPage() {
                       <td className="beta-td">
                         <span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span>
                       </td>
-                      <td className="beta-td">{s.predicted_lens_size ? `${s.predicted_lens_size}mm` : "—"}</td>
-                      <td className="beta-td">{s.predicted_vault ? `${s.predicted_vault}µm` : "—"}</td>
+                      <td className="beta-td">{s.predicted_lens_size ? `${s.predicted_lens_size}mm` : (!scanHasRequiredFeatures(s) ? <span style={{ color: "#f59e0b", fontSize: "11px" }} title={`Missing: ${REQUIRED_FEATURES.filter(f => s[f] == null).join(", ")}`}>Incomplete</span> : <span className="dim">—</span>)}</td>
+                      <td className="beta-td">{s.predicted_vault ? `${s.predicted_vault}µm` : (!scanHasRequiredFeatures(s) ? <span style={{ color: "#f59e0b", fontSize: "11px" }}>—</span> : <span className="dim">—</span>)}</td>
                       <td className="beta-td dim">{s.vault_range_low && s.vault_range_high ? `${s.vault_range_low}–${s.vault_range_high}` : "—"}</td>
                       <td className="beta-td">{s.actual_lens_size ? <span className="actual">{s.actual_lens_size}mm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">{s.vault_1day != null ? <span className="actual">{s.vault_1day}µm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">{s.vault_1week != null ? <span className="actual">{s.vault_1week}µm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">{s.vault_1month != null ? <span className="actual">{s.vault_1month}µm</span> : <span className="dim">—</span>}</td>
                       <td className="beta-td">
-                        <span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.model_version || "—"}</span>
+                        <span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.model_version || (!scanHasRequiredFeatures(s) ? "no model" : "—")}</span>
                       </td>
                       <td className="beta-td">
                         <button className="expand-btn" onClick={() => setExpandedRow(expandedRow === s.scan_id ? null : s.scan_id)}>
@@ -569,16 +569,21 @@ export default function BetaTestPage() {
                     {expandedRow === s.scan_id && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
                         <td colSpan={16} className="beta-detail-td">
+                          {!scanHasRequiredFeatures(s) && (
+                            <div style={{ gridColumn: "1 / -1", padding: "6px 10px", marginBottom: "8px", background: "rgba(245, 158, 11, 0.1)", border: "1px solid rgba(245, 158, 11, 0.3)", borderRadius: "6px", color: "#f59e0b", fontSize: "12px" }}>
+                              Missing: {REQUIRED_FEATURES.filter(f => s[f] == null).join(", ")} — prediction blocked
+                            </div>
+                          )}
                           <div className="detail-grid">
-                            <div><span className="detail-label">Age</span><span className="detail-value">{fmt(s.age, 0)}</span></div>
-                            <div><span className="detail-label">WTW</span><span className="detail-value">{fmt(s.wtw)}mm</span></div>
-                            <div><span className="detail-label">ACD</span><span className="detail-value">{fmt(s.acd_internal, 2)}mm</span></div>
-                            <div><span className="detail-label">ACV</span><span className="detail-value">{fmt(s.acv)}mm³</span></div>
-                            <div><span className="detail-label">Shape Ratio</span><span className="detail-value">{fmt(s.ac_shape_ratio)}</span></div>
-                            <div><span className="detail-label">SimK Steep</span><span className="detail-value">{fmt(s.simk_steep)}D</span></div>
-                            <div><span className="detail-label">TCRP Km</span><span className="detail-value">{fmt(s.tcrp_km)}D</span></div>
-                            <div><span className="detail-label">Astigmatism</span><span className="detail-value">{fmt(s.tcrp_astigmatism, 2)}D</span></div>
-                            <div><span className="detail-label">ICL Power</span><span className="detail-value">{fmt(s.icl_power)}D</span></div>
+                            <div><span className="detail-label">Age</span><span className="detail-value" style={s.age == null ? { color: "#f59e0b" } : undefined}>{fmt(s.age, 0)}</span></div>
+                            <div><span className="detail-label">WTW</span><span className="detail-value" style={s.wtw == null ? { color: "#f59e0b" } : undefined}>{s.wtw != null ? `${fmt(s.wtw)}mm` : "—"}</span></div>
+                            <div><span className="detail-label">ACD</span><span className="detail-value" style={s.acd_internal == null ? { color: "#f59e0b" } : undefined}>{s.acd_internal != null ? `${fmt(s.acd_internal, 2)}mm` : "—"}</span></div>
+                            <div><span className="detail-label">ACV</span><span className="detail-value" style={s.acv == null ? { color: "#f59e0b" } : undefined}>{s.acv != null ? `${fmt(s.acv)}mm³` : "—"}</span></div>
+                            <div><span className="detail-label">Shape Ratio</span><span className="detail-value" style={s.ac_shape_ratio == null ? { color: "#f59e0b" } : undefined}>{s.ac_shape_ratio != null ? fmt(s.ac_shape_ratio) : "—"}</span></div>
+                            <div><span className="detail-label">SimK Steep</span><span className="detail-value" style={s.simk_steep == null ? { color: "#f59e0b" } : undefined}>{s.simk_steep != null ? `${fmt(s.simk_steep)}D` : "—"}</span></div>
+                            <div><span className="detail-label">TCRP Km</span><span className="detail-value" style={s.tcrp_km == null ? { color: "#f59e0b" } : undefined}>{s.tcrp_km != null ? `${fmt(s.tcrp_km)}D` : "—"}</span></div>
+                            <div><span className="detail-label">Astigmatism</span><span className="detail-value" style={s.tcrp_astigmatism == null ? { color: "#f59e0b" } : undefined}>{s.tcrp_astigmatism != null ? `${fmt(s.tcrp_astigmatism, 2)}D` : "—"}</span></div>
+                            <div><span className="detail-label">ICL Power</span><span className="detail-value" style={s.icl_power == null ? { color: "#f59e0b" } : undefined}>{s.icl_power != null ? `${fmt(s.icl_power)}D` : "—"}</span></div>
                             <div><span className="detail-label">CCT</span><span className="detail-value">{fmt(s.cct, 0)}µm</span></div>
                             <div><span className="detail-label">Vault 1 Day</span><span className="detail-value">{s.vault_1day != null ? `${s.vault_1day}µm` : "—"}</span></div>
                             <div><span className="detail-label">Vault 1 Week</span><span className="detail-value">{s.vault_1week != null ? `${s.vault_1week}µm` : "—"}</span></div>

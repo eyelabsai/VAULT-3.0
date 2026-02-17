@@ -283,7 +283,7 @@ async def save_prediction(
         lens_probabilities=body.get("lens_probabilities", {}),
         predicted_vault=body.get("predicted_vault"),
         vault_mae=body.get("vault_mae", 134),
-        model_version=body.get("model_version", "v1.0.0-beta"),
+        model_version=body.get("model_version", "unknown"),
         features_used=body.get("features_used", []),
     )
 

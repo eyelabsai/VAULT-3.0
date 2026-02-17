@@ -35,6 +35,7 @@ type PredictionResponse = {
   vault_range_um: number[];
   vault_flag: "ok" | "low" | "high";
   size_probabilities: SizeProbability[];
+  model_used?: string;
 };
 
 const defaultForm: PredictionForm = {
@@ -166,7 +167,7 @@ export default function Calculator() {
       });
 
       if (!response.ok) {
-        // Fallback to original parse-ini if beta endpoint fails
+        // Fallback to parse-ini only (no auto-predict — user must fill missing fields first)
         const fallbackFormData = new FormData();
         fallbackFormData.append("file", file);
         const fallbackResponse = await fetch(`${apiBase}/parse-ini`, {
@@ -185,18 +186,17 @@ export default function Calculator() {
         setForm(newForm);
         setUploadedFileName(file.name);
 
-        // Auto-run prediction
-        try {
-          const predictResponse = await fetch(`${apiBase}/predict`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newForm)
-          });
-          if (predictResponse.ok) {
-            setResult(await predictResponse.json());
-          }
-        } catch {
-          // Silently fail prediction
+        // Check for missing required features
+        const required = ["Age", "WTW", "ACD_internal", "ICL_Power", "AC_shape_ratio", "SimK_steep", "ACV", "TCRP_Km", "TCRP_Astigmatism"];
+        const fieldLabels: Record<string, string> = {
+          Age: "Age", WTW: "WTW", ACD_internal: "ACD Internal",
+          ICL_Power: "ICL Power", AC_shape_ratio: "AC Shape Ratio",
+          SimK_steep: "SimK Steep", ACV: "ACV", TCRP_Km: "TCRP Km",
+          TCRP_Astigmatism: "TCRP Astigmatism",
+        };
+        const missing = required.filter(f => extracted[f] == null && f !== "ICL_Power");
+        if (missing.length > 0) {
+          setError(`Incomplete Pentacam data — missing: ${missing.map(f => fieldLabels[f] || f).join(", ")}. Enter values manually and click Calculate, or ask the surgeon to re-export with updated Pentacam software.`);
         }
       } else {
         // Beta endpoint succeeded — extract features + prediction from response
@@ -239,7 +239,11 @@ export default function Calculator() {
           };
           const missing = required.filter(f => features[f] == null);
           if (missing.length > 0) {
-            setError(`Missing from INI: ${missing.map(f => fieldLabels[f] || f).join(", ")}. Please enter manually and click Calculate.`);
+            const missingLabels = missing.map(f => fieldLabels[f] || f).join(", ");
+            const acvNote = missing.includes("ACV")
+              ? " ACV is often missing from older Pentacam software (v1.30 and earlier). The surgeon can read it from the Pentacam screen or update their export settings."
+              : "";
+            setError(`Incomplete Pentacam data — missing: ${missingLabels}. Scan saved but prediction requires all 9 metrics. Enter values manually and click Calculate.${acvNote}`);
           }
         }
       }
@@ -315,7 +319,7 @@ export default function Calculator() {
               lens_probabilities: lens_probs,
               predicted_vault: payload.vault_pred_um,
               vault_mae: 134,
-              model_version: "v1.0.0-beta",
+              model_version: payload.model_used || "unknown",
               features_used: required,
             }),
           });
