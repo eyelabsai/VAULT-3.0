@@ -141,6 +141,7 @@ export default function BetaTestPage() {
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [legacyOpen, setLegacyOpen] = useState<Set<string>>(new Set());
+  const [downloadingScanId, setDownloadingScanId] = useState<string | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
@@ -156,6 +157,28 @@ export default function BetaTestPage() {
       setError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadIni = async (s: Scan) => {
+    setDownloadingScanId(s.scan_id);
+    try {
+      const res = await fetch(`${apiBase}/beta/admin/scan/${s.scan_id}/ini-url?key=${ADMIN_KEY}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Download failed");
+      }
+      const data = await res.json();
+      const link = document.createElement("a");
+      link.href = data.url;
+      link.download = data.filename || "scan.ini";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download INI");
+    } finally {
+      setDownloadingScanId(null);
     }
   };
 
@@ -527,7 +550,27 @@ export default function BetaTestPage() {
                       <td className="beta-td">{fmtDate(s.scan_date)}</td>
                       <td className="beta-td">{s.doctor}</td>
                       <td className="beta-td">{s.patient_id}</td>
-                      <td className="beta-td"><span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span></td>
+                      <td className="beta-td">
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.ini_filename || "—"}</span>
+                          {s.ini_filename && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDownloadIni(s); }}
+                              disabled={downloadingScanId === s.scan_id}
+                              title="Download INI"
+                              style={{
+                                background: "transparent", border: "1px solid #374151", borderRadius: "4px",
+                                color: "#9ca3af", fontSize: "10px", padding: "2px 6px", cursor: "pointer",
+                                opacity: downloadingScanId === s.scan_id ? 0.5 : 1,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {downloadingScanId === s.scan_id ? "…" : "DL"}
+                            </button>
+                          )}
+                        </div>
+                      </td>
                       <td className="beta-td">
                         <span className={`eye-pill ${s.eye === "OD" ? "od" : "os"}`}>{s.eye}</span>
                       </td>

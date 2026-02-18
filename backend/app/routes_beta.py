@@ -645,6 +645,33 @@ async def admin_export(key: str = ""):
     }
 
 
+@router.get("/admin/scan/{scan_id}/ini-url")
+async def get_ini_download_url(scan_id: str, key: str = ""):
+    """Admin-only: Get a signed download URL for a scan's INI file."""
+    if key != ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+
+    client = get_supabase_client()
+    scan_result = client.table("scans").select("id, ini_file_path, original_filename").eq("id", scan_id).execute()
+    if not scan_result.data:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    scan = scan_result.data[0]
+    ini_path = scan.get("ini_file_path")
+    if not ini_path:
+        raise HTTPException(status_code=404, detail="No INI file stored for this scan")
+
+    storage = VaultStorage()
+    signed = storage.get_signed_url(ini_path, expires_in=300)
+    if not signed:
+        raise HTTPException(status_code=500, detail="Failed to generate download URL")
+
+    return {
+        "url": signed,
+        "filename": scan.get("original_filename") or "scan.ini",
+    }
+
+
 @router.delete("/admin/scan/{scan_id}")
 async def admin_delete_scan(scan_id: str, key: str = ""):
     """

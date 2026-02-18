@@ -452,4 +452,4 @@ class VaultStorage:
     def get_signed_url(self, path: str, expires_in: int = 3600) -> str:
         """Get a signed URL for temporary access."""
         response = self.client.storage.from_(self.BUCKET).create_signed_url(path, expires_in)
-        return response.get("signedURL", "")
+        return response.get("signedURL") or response.get("signedUrl") or ""
