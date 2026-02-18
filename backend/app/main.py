@@ -37,6 +37,19 @@ class PredictionInput(BaseModel):
     TCRP_Astigmatism: float = Field(..., ge=0.0, le=10.0)
 
 
+class CompareInput(BaseModel):
+    """Like PredictionInput but ACV/AC_shape_ratio are optional (for no-ACV models)."""
+    Age: int = Field(..., ge=18, le=90)
+    WTW: float = Field(..., ge=10.0, le=15.0)
+    ACD_internal: float = Field(..., ge=2.0, le=5.0)
+    ICL_Power: float = Field(..., ge=-30.0, le=0.0)
+    AC_shape_ratio: float | None = Field(None, ge=0.0, le=100.0)
+    SimK_steep: float = Field(..., ge=35.0, le=60.0)
+    ACV: float | None = Field(None, ge=50.0, le=400.0)
+    TCRP_Km: float = Field(..., ge=35.0, le=60.0)
+    TCRP_Astigmatism: float = Field(..., ge=0.0, le=10.0)
+
+
 class SizeProbability(BaseModel):
     size_mm: float
     probability: float
@@ -80,6 +93,8 @@ def get_nomogram_size(wtw: float, acd: float) -> float:
 
 def engineer_features(data: dict) -> pd.DataFrame:
     df = pd.DataFrame([data])
+    has_acv = pd.notna(df["ACV"].iloc[0]) if "ACV" in df.columns else False
+    has_shape = pd.notna(df["AC_shape_ratio"].iloc[0]) if "AC_shape_ratio" in df.columns else False
 
     df["WTW_Bucket"] = pd.cut(
         df["WTW"], bins=[0, 11.6, 11.9, 12.4, 20], labels=[0, 1, 2, 3]
@@ -87,18 +102,22 @@ def engineer_features(data: dict) -> pd.DataFrame:
     df["ACD_Bucket"] = pd.cut(
         df["ACD_internal"], bins=[0, 3.1, 3.3, 10], labels=[0, 1, 2]
     ).astype(int)
-    df["Shape_Bucket"] = pd.cut(
-        df["AC_shape_ratio"], bins=[0, 58, 62.5, 68, 300], labels=[0, 1, 2, 3]
-    ).astype(int)
+
+    if has_shape:
+        df["Shape_Bucket"] = pd.cut(
+            df["AC_shape_ratio"], bins=[0, 58, 62.5, 68, 300], labels=[0, 1, 2, 3]
+        ).astype(int)
+    else:
+        df["Shape_Bucket"] = np.nan
 
     df["Space_Volume"] = df["WTW"] * df["ACD_internal"]
     df["Aspect_Ratio"] = df["WTW"] / df["ACD_internal"]
-    df["Power_Density"] = abs(df["ICL_Power"]) / df["ACV"]
+    df["Power_Density"] = abs(df["ICL_Power"]) / df["ACV"] if has_acv else np.nan
 
     df["High_Power_Deep_ACD"] = (
         (abs(df["ICL_Power"]) > 14) & (df["ACD_internal"] > 3.3)
     ).astype(int)
-    df["Chamber_Tightness"] = df["ACV"] / df["WTW"]
+    df["Chamber_Tightness"] = (df["ACV"] / df["WTW"]) if has_acv else np.nan
     df["Curvature_Depth_Ratio"] = df["SimK_steep"] / df["ACD_internal"]
 
     df["Stability_Risk"] = (
@@ -110,9 +129,12 @@ def engineer_features(data: dict) -> pd.DataFrame:
         lambda row: get_nomogram_size(row["WTW"], row["ACD_internal"]), axis=1
     )
 
-    df["Volume_Constraint"] = (
-        (df["Nomogram_Size"] > 12.1) & (df["ACV"] < 170)
-    ).astype(int)
+    if has_acv:
+        df["Volume_Constraint"] = (
+            (df["Nomogram_Size"] > 12.1) & (df["ACV"] < 170)
+        ).astype(int)
+    else:
+        df["Volume_Constraint"] = np.nan
     df["Steep_Eye_Adjustment"] = (
         (df["Nomogram_Size"] > 12.1) & (df["SimK_steep"] > 46.0)
     ).astype(int)
@@ -122,16 +144,22 @@ def engineer_features(data: dict) -> pd.DataFrame:
 
     # ── Tight-chamber features (used by gestalt-27f-756c) ────────────
     acd_z = ((3.07 - df["ACD_internal"]) / 0.30).clip(lower=0)
-    acv_z = ((174.7 - df["ACV"]) / 30.0).clip(lower=0)
+    if has_acv:
+        acv_z = ((174.7 - df["ACV"]) / 30.0).clip(lower=0)
+    else:
+        acv_z = 0.0
     wtw_z = ((11.6 - df["WTW"]) / 0.35).clip(lower=0)
     df["Tight_Chamber_Score"] = (acd_z + acv_z + wtw_z) / 3.0
 
-    df["Volume_Per_Depth"] = df["ACV"] / (df["ACD_internal"] ** 2)
+    df["Volume_Per_Depth"] = (df["ACV"] / (df["ACD_internal"] ** 2)) if has_acv else np.nan
 
     nomogram_gap = df["Nomogram_Size"] - 12.1
-    chamber_adequacy = (
-        (df["ACV"] / 170.0) * (df["ACD_internal"] / 3.1)
-    ).clip(lower=0.5)
+    if has_acv:
+        chamber_adequacy = (
+            (df["ACV"] / 170.0) * (df["ACD_internal"] / 3.1)
+        ).clip(lower=0.5)
+    else:
+        chamber_adequacy = (df["ACD_internal"] / 3.1).clip(lower=0.5)
     df["Nomogram_Downsize_Pressure"] = nomogram_gap / chamber_adequacy
 
     return df
@@ -393,7 +421,7 @@ def list_models():
 
 
 @app.post("/predict-compare")
-def predict_compare(payload: PredictionInput, models: str = "all"):
+def predict_compare(payload: CompareInput, models: str = "all"):
     """Run prediction across multiple archived models.
 
     Query param ``models`` is a comma-separated list of tags or ``"all"``.
@@ -411,11 +439,26 @@ def predict_compare(payload: PredictionInput, models: str = "all"):
     df_eng = engineer_features(payload.model_dump())
     results: dict = {}
 
+    acv_dependent_features = {
+        "ACV", "AC_shape_ratio", "Shape_Bucket",
+        "Power_Density", "Chamber_Tightness", "Volume_Constraint",
+    }
+
     for tag in selected_tags:
         m = all_m[tag]
         try:
             feature_names = m["feature_names"]
+
+            needs_acv = bool(set(feature_names) & acv_dependent_features)
+            if needs_acv and payload.ACV is None:
+                results[tag] = {"error": "Requires ACV (missing from input)"}
+                continue
+
             X = df_eng[feature_names]
+            if X.isna().any().any():
+                missing = [c for c in X.columns if X[c].isna().any()]
+                results[tag] = {"error": f"Missing features: {', '.join(missing)}"}
+                continue
 
             X_lens = m["lens_scaler"].transform(X)
             lens_probs = m["lens_model"].predict_proba(X_lens)[0]
