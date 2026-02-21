@@ -96,14 +96,24 @@ export default function WaitlistPage() {
     else if (step === "practice") setStep("email");
   }, [step]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
-    // Frontend-only for now — no backend; show thank you
-    setTimeout(() => {
+    try {
+      const { createClient } = await import("@/lib/supabase");
+      const supabase = createClient();
+      const { error: insertError } = await supabase.from("waitlist").insert({
+        full_name: form.fullName.trim(),
+        email: form.email.trim(),
+        practice_info: form.practiceInfo.trim(),
+      });
+      if (insertError) throw insertError;
       setStep("thank-you");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
       setSubmitting(false);
-    }, 300);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

@@ -275,6 +275,15 @@ python scripts/create_beta_users.py
 # Edit the BETA_USERS list in the script and re-run
 ```
 
+### Waitlist (/waitlist form)
+
+Signups from the public waitlist form are stored in `public.waitlist`. To create the table (one-time):
+
+1. Open [Supabase SQL Editor](https://supabase.com/dashboard/project/awdzlhqzubllaidhqsnw/sql/new).
+2. Copy the contents of `supabase/migrations/003_waitlist.sql` and run it.
+
+To view signups: Table Editor → `waitlist`, or run `select * from public.waitlist order by created_at desc;` in the SQL Editor (uses service role, so you can read despite RLS).
+
 ---
 
 ## Useful Links

@@ -16,6 +16,7 @@ BETA_USERS = [
     {"email": "gregory.parkhurst@gmail.com", "first_name": "Greg", "last_name": "Parkhurst"},
     {"email": "sbarnes@staar.com", "first_name": "Scott", "last_name": "Barnes"},
     {"email": "tajnassermd@gmail.com", "first_name": "Taj", "last_name": "Nasser"},
+    {"email": "b.cummings@wellingtoneyeclinic.com", "first_name": "Brendan", "last_name": "Cummings"},
 ]
 
 PASSWORD = "ICLVaultBeta"
