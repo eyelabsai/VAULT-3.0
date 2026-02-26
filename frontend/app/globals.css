@@ -785,12 +785,11 @@ body {
   font-weight: 500;
 }
 
-/* Print Styles */
+/* Print Styles - light theme to save ink */
 @media print {
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
   @page {
@@ -799,13 +798,14 @@ body {
   }
 
   body {
-    background: #000000 !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
   .calc-page {
-    background: #000000 !important;
+    background: #ffffff !important;
     min-height: auto !important;
     height: auto !important;
   }
@@ -826,6 +826,7 @@ body {
   .calc-header img {
     width: 200px !important;
     height: auto !important;
+    filter: brightness(0) !important; /* dark logo on white for print */
   }
 
   .calc-tagline {
@@ -842,6 +843,7 @@ body {
   .bimini-logo-topright img {
     width: 80px !important;
     height: auto !important;
+    filter: brightness(0) !important;
   }
   
   .calc-layout {
@@ -859,26 +861,28 @@ body {
   }
 
   .patient-name {
-    color: #9ca3af !important;
+    color: #1f2937 !important;
     font-size: 22px !important;
   }
 
   .eye-badge {
-    color: #ffffff !important;
+    color: #1e40af !important;
     font-size: 16px !important;
     padding: 8px 20px !important;
+    background: rgba(59, 130, 246, 0.1) !important;
+    border: 1px solid rgba(59, 130, 246, 0.3) !important;
   }
 
   .eye-badge.eye-right {
-    background: rgba(59, 130, 246, 0.25) !important;
-    border: 1px solid rgba(59, 130, 246, 0.5) !important;
-    color: #60a5fa !important;
+    background: rgba(59, 130, 246, 0.12) !important;
+    border: 1px solid rgba(59, 130, 246, 0.4) !important;
+    color: #2563eb !important;
   }
 
   .eye-badge.eye-left {
-    background: rgba(168, 85, 247, 0.25) !important;
-    border: 1px solid rgba(168, 85, 247, 0.5) !important;
-    color: #c084fc !important;
+    background: rgba(168, 85, 247, 0.12) !important;
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
+    color: #7c3aed !important;
   }
 
   .size-section {
@@ -886,13 +890,13 @@ body {
   }
 
   .size-section-wrapper {
-    background: rgba(255, 255, 255, 0.03) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
     padding: 15px 25px !important;
   }
 
   .size-title {
-    color: #9ca3af !important;
+    color: #4b5563 !important;
     font-size: 14px !important;
     margin-bottom: 12px !important;
   }
@@ -904,34 +908,34 @@ body {
   }
 
   .size-card {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
     padding: 15px 20px !important;
   }
 
   .size-card.best {
-    background: rgba(34, 197, 94, 0.15) !important;
-    border-color: rgba(34, 197, 94, 0.4) !important;
+    background: rgba(34, 197, 94, 0.08) !important;
+    border-color: rgba(34, 197, 94, 0.5) !important;
   }
 
   .size-card.second {
-    background: rgba(250, 204, 21, 0.15) !important;
-    border-color: rgba(250, 204, 21, 0.4) !important;
+    background: rgba(250, 204, 21, 0.08) !important;
+    border-color: rgba(250, 204, 21, 0.5) !important;
   }
 
   .size-value {
-    color: #ffffff !important;
+    color: #1f2937 !important;
     font-size: 26px !important;
   }
 
   .size-card.best .size-value,
   .size-card.best .size-prob {
-    color: #4ade80 !important;
+    color: #16a34a !important;
   }
 
   .size-card.second .size-value,
   .size-card.second .size-prob {
-    color: #facc15 !important;
+    color: #ca8a04 !important;
   }
 
   .size-prob {
@@ -944,12 +948,12 @@ body {
   }
 
   .vault-title {
-    color: #9ca3af !important;
+    color: #4b5563 !important;
     font-size: 14px !important;
   }
 
   .vault-value {
-    color: #ffffff !important;
+    color: #1f2937 !important;
     font-size: 28px !important;
     margin-bottom: 4px !important;
   }
@@ -958,6 +962,37 @@ body {
     color: #6b7280 !important;
     font-size: 14px !important;
     margin: 0 !important;
+  }
+
+  .results-disclaimer {
+    background: #f9fafb !important;
+    border-left-color: #3b82f6 !important;
+  }
+
+  .results-disclaimer p,
+  .results-disclaimer strong {
+    color: #374151 !important;
+  }
+
+  .disclaimer-warning {
+    color: #dc2626 !important;
+  }
+
+  .color-legend {
+    border-top-color: #e5e7eb !important;
+  }
+
+  .legend-green {
+    color: #16a34a !important;
+  }
+
+  .legend-yellow {
+    color: #ca8a04 !important;
+  }
+
+  .calc-header,
+  .calc-tagline {
+    color: #1f2937 !important;
   }
 }
 
