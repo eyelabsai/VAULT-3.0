@@ -908,11 +908,15 @@ body {
   .size-card.best {
     background: #ffffff !important;
     border: 2px solid #16a34a !important;
+    animation: none !important;
+    box-shadow: none !important;
   }
 
   .size-card.second {
     background: #ffffff !important;
     border: 1px solid #ca8a04 !important;
+    animation: none !important;
+    box-shadow: none !important;
   }
 
   .size-value {
