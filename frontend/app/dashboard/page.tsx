@@ -8,6 +8,15 @@ import dynamic from "next/dynamic";
 
 const UserMenu = dynamic(() => import("@/components/UserMenu"), { ssr: false });
 
+// Helper to extract initials from patient name
+function getInitials(name: string): string {
+  if (!name) return "";
+  // Handle "Last, First" format
+  const parts = name.split(/[,\s]+/).filter(p => p.length > 0);
+  const initials = parts.map(p => p[0]?.toUpperCase() || "").join("");
+  return initials || name; // Fallback to full name if no initials extracted
+}
+
 type Scan = {
   id: string;
   patient_anonymous_id: string;
@@ -310,7 +319,7 @@ export default function DashboardPage() {
             </h3>
             <p style={{ margin: "0 0 20px", fontSize: "14px", color: "#9ca3af", lineHeight: "1.5" }}>
               This will permanently delete the scan, prediction, and any outcome data for{" "}
-              <strong>{deleteConfirmScan.patient_anonymous_id}</strong>
+              <strong>{getInitials(deleteConfirmScan.patient_anonymous_id)}</strong>
               . This cannot be undone.
             </p>
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
@@ -553,7 +562,7 @@ export default function DashboardPage() {
                     onMouseEnter={(e) => (e.currentTarget.style.background = "#262626")}
                     onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <td style={{ padding: "16px", color: "#ffffff" }}>{scan.patient_anonymous_id}</td>
+                    <td style={{ padding: "16px", color: "#ffffff" }}>{getInitials(scan.patient_anonymous_id)}</td>
                     <td style={{ padding: "16px" }}>
                       <span style={{
                         padding: "4px 12px",
@@ -652,7 +661,7 @@ export default function DashboardPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <p style={{ color: "#9ca3af", fontSize: "12px", margin: "0 0 4px" }}>Patient</p>
-                  <p style={{ color: "#ffffff", fontSize: "14px", margin: 0 }}>{selectedScan.patient_anonymous_id}</p>
+                  <p style={{ color: "#ffffff", fontSize: "14px", margin: 0 }}>{getInitials(selectedScan.patient_anonymous_id)}</p>
                 </div>
                 <div>
                   <p style={{ color: "#9ca3af", fontSize: "12px", margin: "0 0 4px" }}>Eye</p>
