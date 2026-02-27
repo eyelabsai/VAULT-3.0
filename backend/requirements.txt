@@ -29,3 +29,6 @@ websockets==14.1
 # Supabase (PostgreSQL + Auth + Storage)
 supabase>=2.0.0
 python-dotenv>=1.0.0
+
+# PHI Encryption for HIPAA compliance
+cryptography>=42.0.0

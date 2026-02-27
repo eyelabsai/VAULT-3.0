@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Header
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Header, Request
 from pydantic import BaseModel, Field
 
 from .supabase_client import (
@@ -18,11 +18,22 @@ from .supabase_client import (
 )
 from .main import predict, PredictionInput, load_models, predict_compare, load_all_models
 
+# HIPAA Compliance: Import encryption module (when enabled)
+try:
+    from .phi_encryption import encrypt_phi, decrypt_phi, mask_phi
+    PHI_ENCRYPTION_AVAILABLE = True
+except ImportError:
+    PHI_ENCRYPTION_AVAILABLE = False
+
 router = APIRouter(prefix="/beta", tags=["beta"])
 
 
 MODEL_VERSION = "gestalt-24f-756c"
 VAULT_MAE = 128.0
+
+# HIPAA Compliance Mode
+# Set HIPPA_ENABLED=true in environment when upgraded to HIPAA plan
+HIPAA_ENABLED = os.getenv("HIPAA_ENABLED", "false").lower() == "true"
 
 
 # =============================================================================
@@ -156,6 +167,7 @@ async def upload_ini_file(
     initials = parsed.get("initials")
     patient_first_name = parsed.get("first_name", "")
     patient_last_name = parsed.get("last_name", "")
+    patient_dob = parsed.get("dob", "")  # Extract DOB for HIPAA mode
     
     if not features:
         raise HTTPException(status_code=400, detail="Could not extract features from INI file")
@@ -163,15 +175,9 @@ async def upload_ini_file(
     # Add ICL_Power from user input (not in INI file)
     features["ICL_Power"] = icl_power
     
-    # Use full name from INI if available, fall back to provided anonymous_id
-    full_name = ""
-    if patient_last_name and patient_first_name:
-        full_name = f"{patient_last_name}, {patient_first_name}"
-    elif patient_last_name:
-        full_name = patient_last_name
-    elif patient_first_name:
-        full_name = patient_first_name
-    patient_label = full_name if full_name else (initials if initials else anonymous_id)
+    # HIPAA Compliance: Use initials only for display label
+    # Store encrypted PHI separately when HIPAA is enabled
+    patient_label = initials if initials else anonymous_id
     
     # Initialize database
     db = VaultDatabase()
@@ -180,6 +186,26 @@ async def upload_ini_file(
     
     # Get or create patient
     patient = db.get_or_create_patient(user_id, patient_label)
+    
+    # HIPAA Compliance: Store encrypted PHI if enabled
+    if HIPAA_ENABLED and PHI_ENCRYPTION_AVAILABLE and patient_first_name and patient_last_name:
+        try:
+            # Encrypt PHI before storing
+            encrypted_first_name = encrypt_phi(patient_first_name)
+            encrypted_last_name = encrypt_phi(patient_last_name)
+            encrypted_dob = encrypt_phi(patient_dob) if patient_dob else None
+            
+            # Update patient with encrypted PHI
+            client = get_supabase_client()
+            client.table("patients").update({
+                "first_name": patient_first_name,  # Plain text for search (Supabase HIPAA encrypts at rest)
+                "last_name": patient_last_name,
+                "dob": patient_dob if patient_dob else None,
+                "encrypted_name": encrypted_last_name + b":" + encrypted_first_name if encrypted_first_name and encrypted_last_name else None,
+            }).eq("id", patient["id"]).execute()
+        except Exception as e:
+            # Log but don't fail - still saved the scan
+            print(f"PHI encryption failed: {type(e).__name__}")
     
     # Upload INI file to storage (optional - for audit trail)
     try:
