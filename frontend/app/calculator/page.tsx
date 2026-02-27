@@ -334,14 +334,20 @@ export default function Calculator() {
     }
   };
 
+  // Helper to get initials from first and last name
+  const getInitials = (firstName: string, lastName: string): string => {
+    const firstInitial = firstName?.charAt(0)?.toUpperCase() || "";
+    const lastInitial = lastName?.charAt(0)?.toUpperCase() || "";
+    return `${lastInitial}${firstInitial}`;
+  };
+
   const handlePrint = () => {
     const lastName = form.LastName || "";
     const firstName = form.FirstName || "";
     const eye = form.Eye || "";
-    const namePart = `${lastName}${firstName ? "_" + firstName : ""}`.trim();
-    const fileName = namePart 
-      ? `${namePart}_${eye}_ICL_Vault`.replace(/\s+/g, "_")
-      : "ICL_Vault_Report";
+    const initials = getInitials(firstName, lastName);
+    const namePart = initials || "Patient";
+    const fileName = `${namePart}_${eye}_ICL_Vault`;
     
     document.title = fileName;
     window.print();
@@ -587,9 +593,7 @@ export default function Calculator() {
             <div className="results-header">
               {(form.FirstName || form.LastName) && (
                 <span className="patient-name">
-                  {form.LastName && form.FirstName 
-                    ? `${form.LastName}, ${form.FirstName}` 
-                    : form.LastName || form.FirstName || "Patient"}
+                  {getInitials(form.FirstName || "", form.LastName || "") || "Patient"}
                 </span>
               )}
               {form.Eye && (
