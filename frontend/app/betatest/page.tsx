@@ -130,7 +130,7 @@ export default function BetaTestPage() {
   const [filterDoctor, setFilterDoctor] = useState("all");
   const [filterEye, setFilterEye] = useState("all");
   const [filterLens, setFilterLens] = useState("all");
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<"scans" | "features" | "probabilities" | "comparison">("scans");
   const [expandedCompareRows, setExpandedCompareRows] = useState<Set<string>>(new Set());
   const [comparisonCache, setComparisonCache] = useState<Record<string, Record<string, ModelPrediction>>>({});
@@ -585,8 +585,15 @@ export default function BetaTestPage() {
                         <span style={{ fontSize: "11px", color: "#6b7280", fontFamily: "monospace" }}>{s.model_version || (!scanHasRequiredFeatures(s) ? "no model" : "—")}</span>
                       </td>
                       <td className="beta-td">
-                        <button className="expand-btn" onClick={() => setExpandedRow(expandedRow === s.scan_id ? null : s.scan_id)}>
-                          {expandedRow === s.scan_id ? "▾" : "▸"}
+                        <button className="expand-btn" onClick={() => {
+                          setExpandedRows(prev => {
+                            const next = new Set(prev);
+                            if (next.has(s.scan_id)) next.delete(s.scan_id);
+                            else next.add(s.scan_id);
+                            return next;
+                          });
+                        }}>
+                          {expandedRows.has(s.scan_id) ? "▾" : "▸"}
                         </button>
                       </td>
                       <td className="beta-td beta-select-col" style={{ textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
@@ -609,7 +616,7 @@ export default function BetaTestPage() {
                         </button>
                       </td>
                     </tr>
-                    {expandedRow === s.scan_id && (
+                    {expandedRows.has(s.scan_id) && (
                       <tr key={`${s.scan_id}-detail`} className="beta-detail-row">
                         <td colSpan={16} className="beta-detail-td">
                           {!scanHasRequiredFeatures(s) && (
